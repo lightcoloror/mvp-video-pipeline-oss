@@ -1,0 +1,9 @@
+{
+  "schema": "video_knowledge_pipeline.video_workbench.v1",
+  "timeline_count": 2,
+  "operator_boundary": {
+    "static_local_html": true,
+    "no_cloud_call": true,
+    "no_media_processing": true
+  }
+}

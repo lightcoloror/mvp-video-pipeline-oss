@@ -1,0 +1,15 @@
+{
+  "schema": "video_creation_pipeline.script_anchor.v1",
+  "anchors": [
+    {
+      "story_segment_ref": "segment-04",
+      "status": "confirmed",
+      "quote": "正式治疗前，再支付二十一万七千多。",
+      "timeline_start_s": 0.0,
+      "timeline_end_s": 6.0,
+      "evidence_refs": [
+        "evidence:synthetic-invoice"
+      ]
+    }
+  ]
+}

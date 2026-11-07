@@ -1,0 +1,10 @@
+{
+  "schema": "lecture_webui_bundle.v1",
+  "title": "离线剪辑契约样例",
+  "run_artifact_registry_json": "run-artifact-registry.json",
+  "source_arbitrated_transcript_json": "source-arbitrated-transcript.json",
+  "transcript_source_arbitration_json": "transcript-source-arbitration.json",
+  "smart_summary_input_pack": "exports/smart-summary-input-pack.json",
+  "smart_summary_chapters": "exports/smart-summary-chapters.json",
+  "video_workbench_json": "video-workbench.json"
+}

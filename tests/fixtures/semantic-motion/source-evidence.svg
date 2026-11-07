@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200">
+  <rect width="900" height="1200" fill="#ffffff"/>
+  <rect x="52" y="52" width="796" height="1096" rx="8" fill="#f7f8f5" stroke="#245b5a" stroke-width="4"/>
+  <text x="90" y="140" fill="#173d3c" font-size="52" font-family="sans-serif" font-weight="700">合成费用清单</text>
+  <text x="90" y="220" fill="#4b5b5a" font-size="30" font-family="sans-serif">仅用于离线测试，不代表真实医疗票据</text>
+  <line x1="90" y1="280" x2="810" y2="280" stroke="#9ab5b4" stroke-width="3"/>
+  <text x="110" y="470" fill="#334746" font-size="34" font-family="sans-serif">项目名称</text>
+  <text x="480" y="470" fill="#334746" font-size="34" font-family="sans-serif">金额</text>
+  <rect x="92" y="680" width="716" height="160" rx="10" fill="#fff" stroke="#d55f45" stroke-width="8"/>
+  <text x="120" y="750" fill="#173d3c" font-size="38" font-family="sans-serif">合成治疗项目</text>
+  <text x="520" y="750" fill="#173d3c" font-size="42" font-family="sans-serif" font-weight="700">217000.00</text>
+  <path d="M130 800 H420" stroke="#d55f45" stroke-width="18" stroke-linecap="round"/>
+  <text x="90" y="1080" fill="#4b5b5a" font-size="26" font-family="sans-serif">所有姓名、编号、机构均为虚构</text>
+</svg>

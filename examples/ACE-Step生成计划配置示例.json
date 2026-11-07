@@ -1,0 +1,15 @@
+{
+  "purpose": "commercial",
+  "device": "cuda",
+  "candidates_per_segment": 3,
+  "random_seed": 20260805,
+  "inference_steps": 8,
+  "guidance_scale": 7.0,
+  "segment_overrides": {
+    "opening": {
+      "bpm": 84,
+      "keyscale": "C Major",
+      "timesignature": "4"
+    }
+  }
+}

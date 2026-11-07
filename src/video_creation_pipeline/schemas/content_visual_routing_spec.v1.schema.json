@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.content_visual_routing_spec.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "scenes"],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.content_visual_routing_spec.v1"},
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "scene_id",
+          "content_kind",
+          "communication_goal",
+          "generation_allowed"
+        ],
+        "properties": {
+          "scene_id": {"type": "string", "minLength": 1},
+          "content_kind": {
+            "enum": [
+              "evidence_document",
+              "concept_explanation",
+              "process_sequence",
+              "comparison",
+              "number_explanation",
+              "real_world_action",
+              "emotional_story",
+              "speaker_connection",
+              "transition_or_emphasis",
+              "music_driven_promo"
+            ]
+          },
+          "communication_goal": {"type": "string", "minLength": 1},
+          "generation_allowed": {"type": "boolean"},
+          "preferred_route": {
+            "enum": [
+              "auto",
+              "hyperframes_evidence_focus",
+              "hyperframes_music_to_video",
+              "remotion_knowledge_animation",
+              "remotion_kinetic_typography",
+              "existing_media_broll",
+              "provider_generated_broll",
+              "missing_material"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

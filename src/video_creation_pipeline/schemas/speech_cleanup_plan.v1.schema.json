@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lightcoloror.local/video_creation_pipeline/speech_cleanup_plan.v1.schema.json",
+  "title": "Speech Cleanup Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_audio",
+    "output",
+    "profile",
+    "noise_kinds",
+    "mains_hz",
+    "filter_spec",
+    "filter_chain",
+    "source_provenance",
+    "execution_handoff",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.speech_cleanup_plan.v1"
+    },
+    "source_audio": {
+      "$ref": "#/$defs/artifact"
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "codec",
+        "sample_rate"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "codec": {
+          "const": "pcm_s24le"
+        },
+        "sample_rate": {
+          "const": 48000
+        }
+      }
+    },
+    "profile": {
+      "enum": [
+        "gentle",
+        "strong",
+        "original"
+      ]
+    },
+    "noise_kinds": {
+      "type": "array",
+      "minItems": 0,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "broadband_hiss",
+          "mains_hum"
+        ]
+      }
+    },
+    "mains_hz": {
+      "enum": [
+        50,
+        60
+      ]
+    },
+    "filter_spec": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "options"
+        ],
+        "properties": {
+          "name": {
+            "enum": [
+              "highpass",
+              "bandreject",
+              "afftdn",
+              "anull"
+            ]
+          },
+          "options": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "filter_chain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_provenance": {
+      "type": "object"
+    },
+    "execution_handoff": {
+      "type": "object"
+    },
+    "authority_boundary": {
+      "type": "object"
+    },
+    "plan_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "processing_review": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "audition_feedback": {
+      "type": [
+        "object",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "bytes",
+        "sha256",
+        "content_kind",
+        "canonical_sha256"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "content_kind": {
+          "enum": [
+            "binary",
+            "json"
+          ]
+        },
+        "canonical_sha256": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

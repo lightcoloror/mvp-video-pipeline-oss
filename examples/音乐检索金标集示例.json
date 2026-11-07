@@ -1,0 +1,45 @@
+{
+  "schema": "video_creation_pipeline.music_retrieval_gold_set.v1",
+  "queries": [
+    {
+      "segment_id": "gold-query-01",
+      "relevant": [{"asset_id": "calm-01", "window_id": "calm-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-02",
+      "relevant": [{"asset_id": "tense-01", "window_id": "tense-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-03",
+      "relevant": [{"asset_id": "warm-01", "window_id": "warm-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-04",
+      "relevant": [{"asset_id": "cold-01", "window_id": "cold-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-05",
+      "relevant": [{"asset_id": "hopeful-01", "window_id": "hopeful-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-06",
+      "relevant": [{"asset_id": "melancholy-01", "window_id": "melancholy-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-07",
+      "relevant": [{"asset_id": "urgent-01", "window_id": "urgent-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-08",
+      "relevant": [{"asset_id": "intimate-01", "window_id": "intimate-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-09",
+      "relevant": [{"asset_id": "epic-01", "window_id": "epic-01-main"}]
+    },
+    {
+      "segment_id": "gold-query-10",
+      "relevant": [{"asset_id": "neutral-01", "window_id": "neutral-01-main"}]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "schema": "video_creation_pipeline.remote_execution_policy.v2",
+  "enabled": true,
+  "tasks": [
+    "script_analysis"
+  ],
+  "authorization": {
+    "kind": "vkp_consent_v2",
+    "consent_path": "<project-root>\\model-connector-consent.json"
+  }
+}

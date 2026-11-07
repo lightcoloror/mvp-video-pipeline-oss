@@ -1,0 +1,37 @@
+{
+  "schema": "video_knowledge_pipeline.run_artifact_registry.v1",
+  "run_count": 3,
+  "status_counts": {
+    "completed": 3
+  },
+  "runs": [
+    {
+      "run_id": "transcript-source-arbitration",
+      "run_type": "transcript_source_arbitration",
+      "status": "completed",
+      "artifact_count": 2,
+      "failed_count": 0,
+      "run_json": "runs/transcript-source-arbitration/run.json"
+    },
+    {
+      "run_id": "temporal-visual-analysis",
+      "run_type": "temporal_visual_analysis",
+      "status": "completed",
+      "artifact_count": 2,
+      "failed_count": 0,
+      "run_json": "runs/temporal-visual-analysis/run.json"
+    },
+    {
+      "run_id": "smart-summary-chapter-pack",
+      "run_type": "smart_summary_chapter_pack",
+      "status": "completed",
+      "artifact_count": 2,
+      "failed_count": 0,
+      "run_json": "runs/smart-summary-chapter-pack/run.json"
+    }
+  ],
+  "operator_boundary": {
+    "local_only": true,
+    "no_cloud_call": true
+  }
+}

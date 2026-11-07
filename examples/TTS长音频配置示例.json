@@ -1,0 +1,48 @@
+{
+  "schema": "video_creation_pipeline.tts_config.v1",
+  "intended_use": "research_noncommercial",
+  "provider": {
+    "id": "chattts-local-research",
+    "kind": "local_adapter",
+    "model": "ChatTTS",
+    "source_commit": "77b89ee281cd479f5b1a787ada330dc975ca1f2a",
+    "license_scope": "代码 AGPL-3.0+；模型 CC BY-NC 4.0",
+    "commercial_use_allowed": false
+  },
+  "voice_profile": {
+    "profile_id": "中文女声-研究样例",
+    "speaker_embedding_ref": "voices/中文女声-研究样例.json",
+    "seed": 42,
+    "temperature": 0.3,
+    "top_p": 0.7,
+    "top_k": 20
+  },
+  "term_rules": [
+    {
+      "find": "SKU",
+      "replace": "库存单位"
+    },
+    {
+      "find": "Codex",
+      "replace": "扣代克斯"
+    }
+  ],
+  "chunk_policy": {
+    "max_chars": 140,
+    "max_tokens": 180,
+    "max_estimated_duration_s": 18,
+    "chars_per_second": 4.2,
+    "retry_limit": 3,
+    "pause_ms": {
+      "paragraph": 520,
+      "sentence": 360,
+      "clause": 180,
+      "hard_split": 80,
+      "end": 0
+    }
+  },
+  "run_registry": {
+    "reference": "项目现有 run registry",
+    "authoritative": true
+  }
+}

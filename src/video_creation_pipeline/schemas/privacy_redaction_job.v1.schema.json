@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.privacy_redaction_job.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "created_at",
+    "mode",
+    "input",
+    "output_path",
+    "targets",
+    "sentryblur",
+    "cloakframe",
+    "parameters",
+    "execution_policy",
+    "job_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.privacy_redaction_job.v1"},
+    "created_at": {"type": "string", "minLength": 1},
+    "mode": {"enum": ["mask_all", "preserve_authorized_subject"]},
+    "input": {"$ref": "#/$defs/artifact"},
+    "output_path": {"type": "string", "minLength": 1},
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["face", "plate", "manual_region"]}
+    },
+    "sentryblur": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "executable",
+        "executable_sha256",
+        "source_commit",
+        "tool_version",
+        "models",
+        "model_hash",
+        "model_root",
+        "model_root_sha256"
+      ],
+      "properties": {
+        "executable": {"type": ["string", "null"]},
+        "executable_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "source_commit": {"const": "ded52d269b6e8e19dbbaf79f353426da3a228a98"},
+        "tool_version": {"type": "string", "minLength": 1},
+        "models": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["target", "artifact"],
+            "properties": {
+              "target": {"enum": ["face", "plate"]},
+              "artifact": {"$ref": "#/$defs/artifact"}
+            }
+          }
+        },
+        "model_hash": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "model_root": {"type": ["string", "null"]},
+        "model_root_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "cloakframe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_commit", "executable", "executable_sha256"],
+      "properties": {
+        "source_commit": {"const": "abdf376799e88d4762d4534cfdf620a91f621c8f"},
+        "executable": {"type": ["string", "null"]},
+        "executable_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "style",
+        "dilation",
+        "window",
+        "pixel_size",
+        "blur_strength",
+        "confidence",
+        "gpu",
+        "manual_regions",
+        "cloakframe_required",
+        "execution_route"
+      ],
+      "properties": {
+        "style": {"enum": ["pixelate", "gaussian", "solid"]},
+        "dilation": {"type": "integer", "minimum": 0, "maximum": 512},
+        "window": {"type": "integer", "minimum": 0, "maximum": 301},
+        "pixel_size": {"type": "integer", "minimum": 2, "maximum": 256},
+        "blur_strength": {"type": "integer", "minimum": 3, "maximum": 511},
+        "confidence": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "gpu": {"type": "boolean"},
+        "cloakframe_required": {"type": "boolean"},
+        "execution_route": {
+          "enum": ["sentryblur_cli", "cloakframe_gui", "blocked_unsupported_solid"]
+        },
+        "manual_regions": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/manualRegion"}
+        }
+      }
+    },
+    "execution_policy": {"$ref": "#/$defs/executionPolicy"},
+    "job_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "anyOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "manualRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region_id", "start_s", "end_s", "rect"],
+      "properties": {
+        "region_id": {"type": "string", "minLength": 1},
+        "start_s": {"type": "number", "minimum": 0},
+        "end_s": {"type": "number", "exclusiveMinimum": 0},
+        "rect": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": {"type": "number", "minimum": 0, "maximum": 1},
+            "y": {"type": "number", "minimum": 0, "maximum": 1},
+            "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+            "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+          }
+        }
+      }
+    },
+    "executionPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "requires_explicit_execution",
+        "automatic_fallback",
+        "rescan_required",
+        "automatic_publish",
+        "source_media_modified",
+        "network_model_download_allowed"
+      ],
+      "properties": {
+        "candidate_only": {"const": true},
+        "requires_explicit_execution": {"const": true},
+        "automatic_fallback": {"const": false},
+        "rescan_required": {"const": true},
+        "automatic_publish": {"const": false},
+        "source_media_modified": {"const": false},
+        "network_model_download_allowed": {"const": false}
+      }
+    }
+  }
+}

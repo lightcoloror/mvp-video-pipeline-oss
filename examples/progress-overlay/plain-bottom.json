@@ -1,0 +1,10 @@
+{
+  "mode": "plain",
+  "position": "bottom",
+  "margin_x_px": 64,
+  "edge_offset_px": 250,
+  "bar_height_px": 12,
+  "track_color": "46505C",
+  "fill_color": "44DDBB",
+  "color_reason": "深色底上的中性轨道与高对比播放进度；底部距离需按本次平台安全区调整。"
+}

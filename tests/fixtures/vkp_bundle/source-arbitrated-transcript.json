@@ -1,0 +1,15 @@
+{
+  "schema": "video_knowledge_pipeline.source_arbitrated_transcript.v1",
+  "segments": [
+    {
+      "start": 0,
+      "end": 5.2,
+      "text": "今天演示 Playwright MCP。"
+    },
+    {
+      "start": 5.2,
+      "end": 11.0,
+      "text": "然后检查运行结果。"
+    }
+  ]
+}

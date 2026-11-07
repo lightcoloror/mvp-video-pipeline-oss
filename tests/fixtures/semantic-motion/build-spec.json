@@ -1,0 +1,131 @@
+{
+  "asset_id": "synthetic-invoice",
+  "media_type": "image/svg+xml",
+  "evidence_status": "verified",
+  "authorization_status": "authorized_local_candidate",
+  "deidentified": true,
+  "width": 1080,
+  "height": 1920,
+  "fps": 30,
+  "duration_s": 6.0,
+  "cues": [
+    {
+      "cue_id": "focus-expense-04",
+      "story_segment_ref": "segment-04",
+      "full_frame_first": true,
+      "target_rect": {
+        "x": 0.1,
+        "y": 0.55,
+        "width": 0.8,
+        "height": 0.18
+      },
+      "focus_destination": {
+        "x": 0.09,
+        "y": 0.22,
+        "width": 0.6,
+        "height": 0.28
+      },
+      "focus_recipe": [
+        "full_to_focus",
+        "dim_context",
+        "box_highlight",
+        "marker_highlight",
+        "leader_line_label",
+        "focus_to_full"
+      ],
+      "label": {
+        "text": "正式治疗费用",
+        "rect": {
+          "x": 0.72,
+          "y": 0.32,
+          "width": 0.23,
+          "height": 0.1
+        }
+      },
+      "timing": {
+        "timeline_start_s": 0.0,
+        "full_frame_s": 1.2,
+        "enter_s": 0.6,
+        "hold_s": 3.4,
+        "exit_s": 0.8
+      },
+      "protected_regions": [
+        {
+          "id": "subtitle",
+          "rect": {
+            "x": 0.11,
+            "y": 0.65,
+            "width": 0.65,
+            "height": 0.08
+          }
+        },
+        {
+          "id": "watermark",
+          "rect": {
+            "x": 0.8,
+            "y": 0.05,
+            "width": 0.15,
+            "height": 0.05
+          }
+        },
+        {
+          "id": "disclaimer",
+          "rect": {
+            "x": 0.09,
+            "y": 0.77,
+            "width": 0.68,
+            "height": 0.07
+          }
+        }
+      ],
+      "layout_decision": {
+        "semantic_purpose": "show the complete authorized evidence before focusing the relevant amount",
+        "peer_item_count": 1,
+        "selected_layout": "fullscreen_evidence",
+        "layout_candidates": [
+          {
+            "layout": "fullscreen_evidence",
+            "reason": "the evidence must remain readable and preserve source context"
+          }
+        ],
+        "selection_reason": "full-screen evidence is the only primary reading target",
+        "person_window": {
+          "visible": false,
+          "selected_corner": null,
+          "corner_candidates": [],
+          "placement_reason": "no person remains visible while the evidence is read",
+          "information_space_yielded": true,
+          "exception_reason": null
+        },
+        "human_composition_review": {
+          "status": "approved",
+          "reviewed_by": "fixture-human",
+          "reviewed_at": "2026-08-20T22:00:00+08:00",
+          "dimensions": {
+            "primary_information": "pass",
+            "space_yield": "pass",
+            "visual_balance": "pass"
+          }
+        }
+      },
+      "watermark": {
+        "text": "合成测试",
+        "rect": {
+          "x": 0.8,
+          "y": 0.05,
+          "width": 0.15,
+          "height": 0.05
+        }
+      },
+      "disclaimer": {
+        "text": "合成材料，仅验证动效候选，不代表真实费用或结果。",
+        "rect": {
+          "x": 0.09,
+          "y": 0.77,
+          "width": 0.68,
+          "height": 0.07
+        }
+      }
+    }
+  ]
+}

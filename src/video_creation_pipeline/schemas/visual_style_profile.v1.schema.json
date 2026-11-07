@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.visual_style_profile.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "preset_id",
+    "tokens",
+    "renderer_bindings",
+    "evidence_policy",
+    "authority_boundary",
+    "profile_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.visual_style_profile.v1"},
+    "preset_id": {
+      "enum": [
+        "paper_cutout",
+        "editorial_clean",
+        "documentary_warm",
+        "technical_diagram",
+        "evidence_neutral"
+      ]
+    },
+    "tokens": {
+      "type": "object",
+      "required": ["colors", "typography", "material", "depth", "motion"]
+    },
+    "renderer_bindings": {
+      "type": "object",
+      "required": ["remotion", "hyperframes", "provider_prompt"]
+    },
+    "evidence_policy": {
+      "type": "object",
+      "required": [
+        "source_pixels_must_remain_unstyled",
+        "factual_labels_must_come_from_evidence",
+        "style_may_change_framing_not_evidence"
+      ]
+    },
+    "authority_boundary": {"type": "object"},
+    "profile_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

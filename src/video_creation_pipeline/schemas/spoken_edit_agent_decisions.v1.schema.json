@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.spoken_edit_agent_decisions.v1",
+  "title": "口播净剪 Agent 决策 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "judge_packet_sha256",
+    "reviewed_fulltext_sha256",
+    "status",
+    "review",
+    "decisions",
+    "authority_boundary",
+    "decisions_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.spoken_edit_agent_decisions.v1"
+    },
+    "judge_packet_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "reviewed_fulltext_sha256": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "awaiting_agent_context_review",
+        "agent_review_complete"
+      ]
+    },
+    "review": {
+      "type": "object"
+    },
+    "decisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "decision_id",
+          "kind",
+          "action",
+          "start",
+          "end",
+          "reason",
+          "confidence"
+        ],
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "candidate_id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "pause",
+              "filler",
+              "connective",
+              "demo",
+              "retry_previous_take",
+              "false_start",
+              "misstatement_restart",
+              "incomplete_phrase",
+              "stutter_restart",
+              "manual_context_deletion"
+            ]
+          },
+          "action": {
+            "enum": [
+              "keep",
+              "delete",
+              "compress",
+              "review_required"
+            ]
+          },
+          "start": {
+            "type": "number",
+            "minimum": 0
+          },
+          "end": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "preserve_s": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "where": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "object",
+            "description": "Advisory only; does not authorize compilation."
+          },
+          "pause_review": {
+            "type": "object",
+            "required": [
+              "semantic_role",
+              "audio_checked",
+              "context_checked",
+              "evidence"
+            ],
+            "properties": {
+              "semantic_role": {
+                "enum": [
+                  "unknown",
+                  "ordinary",
+                  "emphasis",
+                  "emotion",
+                  "topic_change",
+                  "breath",
+                  "turn_taking"
+                ]
+              },
+              "audio_checked": {
+                "type": "boolean"
+              },
+              "context_checked": {
+                "type": "boolean"
+              },
+              "evidence": {
+                "type": "string"
+              },
+              "override_reason": {
+                "type": "string"
+              }
+            }
+          },
+          "reason": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "context": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object"
+    },
+    "decisions_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "protected_events": {
+      "type": "array"
+    },
+    "boundary_review": {
+      "type": "object"
+    },
+    "rough_audio_review": {
+      "type": "object"
+    },
+    "clip_gains": {
+      "type": "array"
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

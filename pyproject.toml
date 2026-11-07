@@ -1,0 +1,106 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-creation-pipeline"
+version = "0.8.1"
+description = "Hybrid local/remote video creation pipeline with read-only VKP Bundle integration"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "MODEL_ASSET_LICENSES.md"]
+authors = [{ name = "lightcoloror" }]
+requires-python = ">=3.11"
+dependencies = ["jsonschema>=4.23,<5", "psutil>=5.9,<8", "rfc3339-validator>=0.1.4,<1"]
+keywords = ["video", "ffmpeg", "workflow", "content-production"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Topic :: Multimedia :: Video",
+]
+
+[project.urls]
+Homepage = "https://github.com/lightcoloror/mvp-video-pipeline-oss"
+Repository = "https://github.com/lightcoloror/mvp-video-pipeline-oss.git"
+Issues = "https://github.com/lightcoloror/mvp-video-pipeline-oss/issues"
+Security = "https://github.com/lightcoloror/mvp-video-pipeline-oss/security"
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10"]
+video-use-review = ["fonttools>=4,<5", "pillow>=10,<13", "numpy>=1.26,<3"]
+dev = ["build>=1.2,<2", "ruff>=0.15,<1"]
+music-msclap = ["msclap==1.3.3"]
+smart-reframe-scenes = ["scenedetect==0.7.1", "opencv-python-headless>=4.10,<5"]
+smart-reframe-tracking = ["norfair==2.3.0"]
+smart-reframe-qa = ["supervision==0.30.1"]
+smart-reframe-mediapipe = ["mediapipe>=0.10.21,<0.11"]
+smart-reframe-images = ["pyvips>=3,<4"]
+
+[project.scripts]
+video-artifact-lifecycle = "video_creation_pipeline.artifact_lifecycle_cli:main"
+build-vkp-edit-job = "video_creation_pipeline.cli:main"
+video-provider-handoff = "video_creation_pipeline.provider_cli:main"
+video-reference-remix = "video_creation_pipeline.remix_cli:main"
+video-tts-pipeline = "video_creation_pipeline.tts_cli:main"
+video-creative-contracts = "video_creation_pipeline.creative_cli:main"
+video-material-workflow = "video_creation_pipeline.material_cli:main"
+video-decomposition-adoption = "video_creation_pipeline.decomposition_cli:main"
+video-music-pipeline = "video_creation_pipeline.music_cli:main"
+video-music-msclap = "video_creation_pipeline.music_msclap_cli:main"
+video-music-acestep = "video_creation_pipeline.music_acestep_cli:main"
+video-music-timing-qa = "video_creation_pipeline.music_timing_qa_cli:main"
+video-stock-media = "video_creation_pipeline.stock_media_cli:main"
+video-content-brief = "video_creation_pipeline.content_video_cli:main"
+video-canonical-demo = "video_creation_pipeline.demo_cli:main"
+video-gateway-consumer = "video_creation_pipeline.gateway_consumer_cli:main"
+video-semantic-motion = "video_creation_pipeline.semantic_motion_cli:main"
+video-hyperframes-renderkit = "video_creation_pipeline.hyperframes_renderkit_cli:main"
+video-privacy-gate = "video_creation_pipeline.privacy_gate_cli:main"
+video-photo-layout = "video_creation_pipeline.photo_layout_cli:main"
+video-remotion-skill = "video_creation_pipeline.remotion_skill_cli:main"
+video-seedance-prompt = "video_creation_pipeline.seedance_prompt_cli:main"
+video-video-use-review = "video_creation_pipeline.video_use_review_cli:main"
+video-jianying-draft = "video_creation_pipeline.jianying_draft_cli:main"
+video-spoken-rough-cut = "video_creation_pipeline.spoken_rough_cut_cli:main"
+video-capability-truth = "video_creation_pipeline.capability_truth_cli:main"
+video-insurance-content-gate = "video_creation_pipeline.insurance_content_gate_cli:main"
+video-speech-cleanup = "video_creation_pipeline.speech_cleanup_cli:main"
+video-background-processing = "video_creation_pipeline.background_processing_cli:main"
+video-color-processing = "video_creation_pipeline.color_processing_cli:main"
+video-visual-routing = "video_creation_pipeline.visual_routing_cli:main"
+video-title-cover = "video_creation_pipeline.title_cover_cli:main"
+video-smart-reframe = "video_creation_pipeline.smart_reframe_cli:main"
+video-final-layout-safety = "video_creation_pipeline.final_layout_safety_cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+video_creation_pipeline = ["schemas/*.json", "policies/*.json"]
+
+[tool.setuptools.exclude-package-data]
+"*" = [
+  "*.bin",
+  "*.ckpt",
+  "*.gguf",
+  "*.onnx",
+  "*.pt",
+  "*.pth",
+  "*.safetensors",
+  "*.wav",
+  "*.mp3",
+  "*.mp4",
+]
+
+[tool.ruff]
+extend-exclude = ["pytest-cache-files-*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

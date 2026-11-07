@@ -1,0 +1,126 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.hyperframes_render_preflight_receipt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_assurance_plan",
+    "status",
+    "selected_route",
+    "observed_host",
+    "compatibility_scan",
+    "motion_identity",
+    "decision",
+    "authority_boundary",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.hyperframes_render_preflight_receipt.v1"},
+    "source_assurance_plan": {"$ref": "#/$defs/artifact"},
+    "status": {
+      "enum": [
+        "passed_for_official_hyperframes_faithful",
+        "blocked_for_renderkit_accelerated_handoff"
+      ]
+    },
+    "selected_route": {
+      "enum": ["official_hyperframes_faithful", "renderkit_linux_intel_h264_handoff"]
+    },
+    "observed_host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["system", "machine"],
+      "properties": {
+        "system": {"type": "string", "minLength": 1},
+        "machine": {"type": "string", "minLength": 1}
+      }
+    },
+    "compatibility_scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "project_scan_sha256",
+        "scanned_files",
+        "blocker_count",
+        "review_count",
+        "recommended_backend",
+        "production_eligible_for_layered",
+        "limitation"
+      ],
+      "properties": {
+        "artifact": {"$ref": "#/$defs/artifact"},
+        "project_scan_sha256": {"$ref": "#/$defs/sha256"},
+        "scanned_files": {"type": "integer", "minimum": 1},
+        "blocker_count": {"type": "integer", "minimum": 0},
+        "review_count": {"type": "integer", "minimum": 0},
+        "recommended_backend": {"type": "string", "minLength": 1},
+        "production_eligible_for_layered": {"type": "boolean"},
+        "limitation": {"type": "string", "minLength": 1}
+      }
+    },
+    "motion_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanism", "upstream_motion_contract", "reason"],
+      "properties": {
+        "mechanism": {"const": "semantic_plan_and_managed_project_artifact_hashes"},
+        "upstream_motion_contract": {"const": "not_used_for_native_waapi_authoring"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "official_route_allowed",
+        "accelerated_route_allowed",
+        "reason",
+        "static_scan_is_visual_proof"
+      ],
+      "properties": {
+        "official_route_allowed": {"type": "boolean"},
+        "accelerated_route_allowed": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1},
+        "static_scan_is_visual_proof": {"const": false}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "render_execution_performed",
+        "automatic_fallback_performed",
+        "external_provider_called",
+        "upload_performed",
+        "publish_performed"
+      ],
+      "properties": {
+        "render_execution_performed": {"const": false},
+        "automatic_fallback_performed": {"const": false},
+        "external_provider_called": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false}
+      }
+    },
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,190 @@
+{
+  "schema": "video_creation_pipeline.insurance_content_policy_pack.v1",
+  "policy_id": "insurance-content-cn-candidate-2026-08",
+  "version": "1.0.0",
+  "jurisdiction": "CN",
+  "reviewed_at": "2026-08-20T00:00:00+08:00",
+  "review_due_at": "2026-09-29T23:59:59+08:00",
+  "official_sources": [
+    {
+      "source_id": "nfra-insurance-sales-2023-2",
+      "title": "保险销售行为管理办法",
+      "authority": "国家金融监督管理总局",
+      "url": "https://www.nfra.gov.cn/cn/view/pages/governmentDetail.html?docId=1129945&generaltype=1&itemId=",
+      "published_at": "2023-09-28T00:00:00+08:00",
+      "effective_from": "2024-03-01T00:00:00+08:00",
+      "lifecycle": "effective"
+    },
+    {
+      "source_id": "nfra-internet-insurance-2020-13",
+      "title": "互联网保险业务监管办法",
+      "authority": "国家金融监督管理总局",
+      "url": "https://www.nfra.gov.cn/cn/view/pages/rulesDetail.html?docId=949137&generaltype=1&itemId=4214",
+      "published_at": "2020-12-14T00:00:00+08:00",
+      "effective_from": "2021-02-01T00:00:00+08:00",
+      "lifecycle": "effective"
+    },
+    {
+      "source_id": "nfra-suitability-2025-7",
+      "title": "金融机构产品适当性管理办法",
+      "authority": "国家金融监督管理总局",
+      "url": "https://www.nfra.gov.cn/cn/view/pages/ItemDetail.html?docId=1217183&generaltype=0&itemId=4098",
+      "published_at": "2025-07-11T00:00:00+08:00",
+      "effective_from": "2026-02-01T00:00:00+08:00",
+      "lifecycle": "effective"
+    },
+    {
+      "source_id": "multiagency-network-marketing-2026-9",
+      "title": "金融产品网络营销管理办法",
+      "authority": "中国人民银行等八部门",
+      "url": "https://www.nfra.gov.cn/cn/view/pages/ItemDetail.html?docId=1255778&itemId=928",
+      "published_at": "2026-04-24T00:00:00+08:00",
+      "effective_from": "2026-09-30T00:00:00+08:00",
+      "lifecycle": "future"
+    }
+  ],
+  "categories": [
+    "claim_certainty", "underwriting_certainty", "return_implication",
+    "misleading_comparison", "regulatory_endorsement", "false_scarcity",
+    "inducement", "medical_advice", "product_facts_and_limits"
+  ],
+  "evidence_types": [
+    "product_terms", "product_current_status", "assumptions_and_limitations",
+    "institution_review_authorization", "privacy_scan_report", "subject_authorization",
+    "medical_source", "medical_boundary", "claim_process_source", "official_source"
+  ],
+  "role_requirements": [
+    {
+      "role": "customer_case",
+      "severity": "block",
+      "required_evidence_types": ["privacy_scan_report", "subject_authorization"],
+      "source_ids": ["nfra-insurance-sales-2023-2"]
+    },
+    {
+      "role": "product_explanation",
+      "severity": "fact_check",
+      "required_evidence_types": ["product_terms", "product_current_status", "assumptions_and_limitations"],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"]
+    },
+    {
+      "role": "medical_explanation",
+      "severity": "fact_check",
+      "required_evidence_types": ["medical_source", "medical_boundary"],
+      "source_ids": ["nfra-insurance-sales-2023-2"]
+    },
+    {
+      "role": "sales_call_to_action",
+      "severity": "compliance_review",
+      "required_evidence_types": ["institution_review_authorization"],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"]
+    }
+  ],
+  "rules": [
+    {
+      "rule_id": "claim_guarantee",
+      "category": "claim_certainty",
+      "severity": "block",
+      "detection": "literal_any",
+      "patterns": ["一定赔", "百分之百赔", "肯定能赔", "保证理赔", "买了就赔", "什么都赔", "全都能报"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "customer_case", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": [],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"],
+      "guidance": "不得把具体理赔结果表述为确定承诺，应回到合同责任、除外责任和实际审核条件。"
+    },
+    {
+      "rule_id": "underwriting_guarantee",
+      "category": "underwriting_certainty",
+      "severity": "block",
+      "detection": "literal_any",
+      "patterns": ["一定能买", "保证承保", "肯定能过", "无条件承保", "谁都能买"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "customer_case", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": [],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-suitability-2025-7"],
+      "guidance": "承保取决于产品规则、健康告知和核保结论，不得预先保证。"
+    },
+    {
+      "rule_id": "guaranteed_return",
+      "category": "return_implication",
+      "severity": "block",
+      "detection": "literal_any",
+      "patterns": ["稳赚不赔", "保本保收益", "保证收益", "零风险高收益", "收益百分百"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": [],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"],
+      "guidance": "不得承诺不确定收益或隐藏假设、费用和风险条件。"
+    },
+    {
+      "rule_id": "regulator_endorsement",
+      "category": "regulatory_endorsement",
+      "severity": "block",
+      "detection": "literal_any",
+      "patterns": ["监管推荐", "银保监会推荐", "金融监管总局推荐", "国家背书", "政府背书", "监管保证"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": [],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"],
+      "guidance": "不得利用审核、备案或监管机构名义形成产品保证或推荐印象。"
+    },
+    {
+      "rule_id": "improper_ranking",
+      "category": "misleading_comparison",
+      "severity": "compliance_review",
+      "detection": "literal_any",
+      "patterns": ["全网第一", "最划算", "性价比最高", "行业第一", "秒杀同类", "碾压同类"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": ["official_source", "assumptions_and_limitations"],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"],
+      "guidance": "排名和比较必须有真实、准确、同口径资料并完整披露限制，简单排名仍需人工复核。"
+    },
+    {
+      "rule_id": "scarcity_or_price_change",
+      "category": "false_scarcity",
+      "severity": "compliance_review",
+      "detection": "literal_any",
+      "patterns": ["马上停售", "即将停售", "最后机会", "马上涨价", "即将涨价", "最后一天"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "product_explanation", "sales_call_to_action"],
+      "required_evidence_types": ["product_current_status", "official_source"],
+      "source_ids": ["nfra-insurance-sales-2023-2"],
+      "guidance": "停售或价格变化必须绑定保险公司正式公告及有效日期，不得制造虚假紧迫感。"
+    },
+    {
+      "rule_id": "off_contract_inducement",
+      "category": "inducement",
+      "severity": "compliance_review",
+      "detection": "literal_any",
+      "patterns": ["返现", "返佣", "送礼", "回扣", "额外赠送"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "sales_call_to_action"],
+      "required_evidence_types": ["institution_review_authorization"],
+      "source_ids": ["nfra-insurance-sales-2023-2"],
+      "guidance": "合同外利益、返佣或赠礼表达必须由机构合规确认。"
+    },
+    {
+      "rule_id": "medical_certainty",
+      "category": "medical_advice",
+      "severity": "block",
+      "detection": "literal_any",
+      "patterns": ["一定治愈", "保证治愈", "包治", "无需就医", "替代医生", "肯定能治好"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "customer_case", "medical_explanation"],
+      "required_evidence_types": [],
+      "source_ids": ["nfra-insurance-sales-2023-2"],
+      "guidance": "不得把个案或科普信息变成确定疗效承诺或替代临床判断。"
+    },
+    {
+      "rule_id": "product_number_claim",
+      "category": "product_facts_and_limits",
+      "severity": "fact_check",
+      "detection": "regex_any",
+      "patterns": ["\\d+(?:\\.\\d+)?%", "\\d+(?:\\.\\d+)?(?:万|元|岁|年|天)"],
+      "applies_to_roles": ["title", "hook", "script", "subtitle", "overlay_text", "cover_text", "product_explanation"],
+      "required_evidence_types": ["product_terms", "product_current_status", "assumptions_and_limitations"],
+      "source_ids": ["nfra-insurance-sales-2023-2", "nfra-internet-insurance-2020-13"],
+      "guidance": "产品数字必须绑定条款或正式资料、日期、假设、适用条件和关键限制。"
+    }
+  ],
+  "authority_boundary": {
+    "candidate_policy_only": true,
+    "legal_opinion": false,
+    "automatic_rewrite": false,
+    "automatic_publish": false
+  },
+  "policy_pack_sha256": "d4191c43af27311d7c98bf5634e7176e39259841f3cac59b823fb48e6c889376"
+}

@@ -1,0 +1,93 @@
+{
+  "schema": "video_creation_pipeline.reframe_profiles.v1",
+  "version": "1.1.0",
+  "profiles": {
+    "preview_vertical_9_16": {
+      "aspect_ratio": "9:16",
+      "width": 360,
+      "height": 640,
+      "safe_zones": {
+        "top": 0.08,
+        "right": 0.06,
+        "bottom": 0.18,
+        "left": 0.06
+      },
+      "face_target_y": 0.38,
+      "minimum_face_height_ratio": 0.14,
+      "face_headroom_ratio": 0.60,
+      "source": "project_synthetic_and_sample_preview_profile",
+      "effective_date": "2026-08-23"
+    },
+    "production_vertical_9_16_720": {
+      "aspect_ratio": "9:16",
+      "width": 720,
+      "height": 1280,
+      "safe_zones": {
+        "top": 0.08,
+        "right": 0.06,
+        "bottom": 0.18,
+        "left": 0.06
+      },
+      "face_target_y": 0.38,
+      "minimum_face_height_ratio": 0.14,
+      "face_headroom_ratio": 0.60,
+      "source": "project_production_vertical_profile",
+      "effective_date": "2026-08-24"
+    },
+    "generic_vertical_9_16": {
+      "aspect_ratio": "9:16",
+      "width": 1080,
+      "height": 1920,
+      "safe_zones": {
+        "top": 0.08,
+        "right": 0.06,
+        "bottom": 0.18,
+        "left": 0.06
+      },
+      "face_target_y": 0.38,
+      "minimum_face_height_ratio": 0.14,
+      "face_headroom_ratio": 0.60,
+      "source": "project_conservative_generic_profile",
+      "effective_date": "2026-08-23"
+    },
+    "generic_portrait_4_5": {
+      "aspect_ratio": "4:5",
+      "width": 1080,
+      "height": 1350,
+      "safe_zones": {
+        "top": 0.07,
+        "right": 0.06,
+        "bottom": 0.12,
+        "left": 0.06
+      },
+      "face_target_y": 0.4,
+      "minimum_face_height_ratio": 0.13,
+      "face_headroom_ratio": 0.60,
+      "source": "project_conservative_generic_profile",
+      "effective_date": "2026-08-23"
+    },
+    "generic_square_1_1": {
+      "aspect_ratio": "1:1",
+      "width": 1080,
+      "height": 1080,
+      "safe_zones": {
+        "top": 0.07,
+        "right": 0.07,
+        "bottom": 0.12,
+        "left": 0.07
+      },
+      "face_target_y": 0.4,
+      "minimum_face_height_ratio": 0.12,
+      "face_headroom_ratio": 0.60,
+      "source": "project_conservative_generic_profile",
+      "effective_date": "2026-08-23"
+    }
+  },
+  "policy": {
+    "profiles_are_versioned_candidates": true,
+    "platform_ui_may_change": true,
+    "independent_composition_per_ratio": true,
+    "mechanical_cross_ratio_crop_forbidden": true,
+    "automatic_publish": false
+  }
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "index": 1,
+    "start": 0,
+    "end": 5.2,
+    "transcript": "今天演示 play right m c p。",
+    "corrected_transcript": "今天演示 Playwright MCP。",
+    "visual_route": "semantic_frame",
+    "visual_text": "Playwright MCP 控制台",
+    "visual_understanding": {
+      "summary": "浏览器自动化控制台"
+    },
+    "temporal_frame_paths": [
+      "frames/timeline-0001-00.jpg",
+      "frames/timeline-0001-01.jpg"
+    ],
+    "temporal_visual_understanding": {
+      "event_sequence": [
+        "打开控制台",
+        "运行浏览器任务"
+      ],
+      "confidence": 0.91
+    }
+  },
+  {
+    "index": 2,
+    "start": 5.2,
+    "end": 11.0,
+    "transcript": "然后检查运行结果。",
+    "visual_route": "document_visual",
+    "ocr_text": "任务完成 2/2",
+    "quality_issues": [
+      "tile_result_needs_review"
+    ],
+    "temporal_frame_paths": [
+      "frames/timeline-0002-00.jpg",
+      "frames/timeline-0002-01.jpg"
+    ],
+    "temporal_visual_understanding": {
+      "event_sequence": [
+        "查看任务结果",
+        "确认完成状态"
+      ],
+      "confidence": 0.86
+    }
+  }
+]

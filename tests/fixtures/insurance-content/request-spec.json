@@ -1,0 +1,37 @@
+{
+  "created_at": "2026-08-20T12:00:00+08:00",
+  "distribution_channel": "synthetic_fixture",
+  "content": [
+    {
+      "content_id": "synthetic-product-explanation",
+      "role": "product_explanation",
+      "path": "safe-product-script.txt"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "synthetic-product-terms",
+      "evidence_type": "product_terms",
+      "supports_rule_ids": ["*"],
+      "valid_from": "2026-08-01T00:00:00+08:00",
+      "valid_until": "2026-09-29T23:59:59+08:00",
+      "path": "product-terms.txt"
+    },
+    {
+      "evidence_id": "synthetic-product-status",
+      "evidence_type": "product_current_status",
+      "supports_rule_ids": ["*"],
+      "valid_from": "2026-08-01T00:00:00+08:00",
+      "valid_until": "2026-09-29T23:59:59+08:00",
+      "path": "product-current-status.txt"
+    },
+    {
+      "evidence_id": "synthetic-limitations",
+      "evidence_type": "assumptions_and_limitations",
+      "supports_rule_ids": ["*"],
+      "valid_from": "2026-08-01T00:00:00+08:00",
+      "valid_until": "2026-09-29T23:59:59+08:00",
+      "path": "assumptions-and-limitations.txt"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+include LICENSE
+include README.md
+include THIRD_PARTY_NOTICES.md
+include MODEL_ASSET_LICENSES.md
+include SECURITY.md
+
+recursive-include src *.py
+recursive-include tests *.py *.json *.md *.txt
+recursive-include examples *.json
+
+prune .git
+prune .github
+prune .ruff_cache
+prune .test-runtime
+prune .test-tmp
+prune .test-write-check
+prune .uv-cache
+prune build
+prune dist
+prune media
+prune models
+prune output
+prune outputs
+prune source-reviews
+prune weights
+prune workspace
+
+global-exclude __pycache__ *.py[cod] .DS_Store Thumbs.db .env .env.*
+global-exclude *.7z *.gz *.rar *.tar *.zip
+global-exclude *.bin *.ckpt *.gguf *.onnx *.pt *.pth *.safetensors
+global-exclude *.avi *.flac *.gif *.jpeg *.jpg *.m4a *.mkv *.mov *.mp3 *.mp4 *.png *.wav *.webm *.webp

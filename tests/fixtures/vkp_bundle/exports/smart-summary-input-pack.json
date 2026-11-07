@@ -1,0 +1,26 @@
+{
+  "schema": "video_knowledge_pipeline.smart_summary_input_pack.v1",
+  "transcript_source_label": "source_arbitrated_transcript",
+  "term_summary": {
+    "high_confidence_terms": [
+      {
+        "canonical_term": "Playwright MCP",
+        "source": "OCR + human review"
+      }
+    ],
+    "needs_review_terms": [],
+    "timeline_replacements": [
+      {
+        "timeline_index": 1,
+        "original": "play right m c p",
+        "replacement": "Playwright MCP"
+      }
+    ]
+  },
+  "evidence_trace": {
+    "summary": {
+      "temporal_understanding_items": 2,
+      "ocr_or_ebook_items": 2
+    }
+  }
+}

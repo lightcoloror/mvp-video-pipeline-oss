@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.hyperframes_render_assurance_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_semantic_motion_plan",
+    "managed_project",
+    "renderkit_source",
+    "selected_route",
+    "route_policy",
+    "motion_identity",
+    "acceptance_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.hyperframes_render_assurance_plan.v1"},
+    "source_semantic_motion_plan": {"$ref": "#/$defs/artifact"},
+    "managed_project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root", "owner", "html", "meta"],
+      "properties": {
+        "root": {"type": "string", "minLength": 1},
+        "owner": {"$ref": "#/$defs/artifact"},
+        "html": {"$ref": "#/$defs/artifact"},
+        "meta": {"$ref": "#/$defs/artifact"}
+      }
+    },
+    "renderkit_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_url",
+        "source_root",
+        "source_commit",
+        "project_license_status",
+        "delivery_script",
+        "motion_contract_script",
+        "version_lock",
+        "custom_runtime"
+      ],
+      "properties": {
+        "repo_url": {"const": "https://github.com/xiaotianfotos/HyperFrames-RenderKit"},
+        "source_root": {"type": "string", "minLength": 1},
+        "source_commit": {"const": "3bec38942ad1b4040c96968771afe00bf9fd8802"},
+        "project_license_status": {"const": "not_granted_at_reviewed_commit"},
+        "delivery_script": {"$ref": "#/$defs/artifact"},
+        "motion_contract_script": {"$ref": "#/$defs/artifact"},
+        "version_lock": {"$ref": "#/$defs/artifact"},
+        "custom_runtime": {
+          "oneOf": [{"$ref": "#/$defs/artifact"}, {"type": "null"}]
+        }
+      }
+    },
+    "selected_route": {
+      "enum": ["official_hyperframes_faithful", "renderkit_linux_intel_h264_handoff"]
+    },
+    "route_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "automatic_fallback_allowed",
+        "static_scan_role",
+        "official_renderer",
+        "accelerated_scope"
+      ],
+      "properties": {
+        "automatic_fallback_allowed": {"const": false},
+        "static_scan_role": {"enum": ["evidence_only", "accelerated_route_hard_gate"]},
+        "official_renderer": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["version", "source_commit"],
+          "properties": {
+            "version": {"const": "0.7.109"},
+            "source_commit": {"const": "67edb01bf4aa2f5931e838e46e14e0f51a5809ee"}
+          }
+        },
+        "accelerated_scope": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "platform",
+            "encoder",
+            "output_alpha_supported",
+            "current_host_matches",
+            "custom_runtime_bound"
+          ],
+          "properties": {
+            "platform": {"const": "linux_x86_64"},
+            "encoder": {"const": "intel_vaapi_h264"},
+            "output_alpha_supported": {"const": false},
+            "current_host_matches": {"type": "boolean"},
+            "custom_runtime_bound": {"type": "boolean"}
+          }
+        }
+      }
+    },
+    "motion_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mechanism", "upstream_motion_contract", "reason"],
+      "properties": {
+        "mechanism": {"const": "semantic_plan_and_managed_project_artifact_hashes"},
+        "upstream_motion_contract": {"const": "not_used_for_native_waapi_authoring"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "acceptance_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "representative_dynamic_sample_required_for_acceleration",
+        "consecutive_frame_motion_oracle_required_for_acceleration",
+        "deterministic_double_run_required_for_acceleration",
+        "exact_frame_and_audio_contract_required",
+        "color_contract_required",
+        "bounded_resource_budget_required",
+        "atomic_output_promotion_required",
+        "command_success_alone_is_sufficient"
+      ],
+      "properties": {
+        "representative_dynamic_sample_required_for_acceleration": {"const": true},
+        "consecutive_frame_motion_oracle_required_for_acceleration": {"const": true},
+        "deterministic_double_run_required_for_acceleration": {"const": true},
+        "exact_frame_and_audio_contract_required": {"const": true},
+        "color_contract_required": {"const": true},
+        "bounded_resource_budget_required": {"const": true},
+        "atomic_output_promotion_required": {"const": true},
+        "command_success_alone_is_sufficient": {"const": false}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "render_execution_performed",
+        "external_provider_called",
+        "upload_performed",
+        "publish_performed",
+        "automatic_fallback_performed",
+        "second_ffmpeg_outlet_created"
+      ],
+      "properties": {
+        "candidate_only": {"const": true},
+        "render_execution_performed": {"const": false},
+        "external_provider_called": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false},
+        "automatic_fallback_performed": {"const": false},
+        "second_ffmpeg_outlet_created": {"const": false}
+      }
+    },
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    }
+  }
+}

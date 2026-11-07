@@ -1,0 +1,567 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.title_cover_candidate_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_project_plan",
+    "source_spec",
+    "project_plan_sha256",
+    "base_premise",
+    "platform_profiles",
+    "candidates",
+    "selection",
+    "process_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.title_cover_candidate_plan.v1"},
+    "source_project_plan": {"$ref": "#/$defs/artifact"},
+    "source_spec": {"$ref": "#/$defs/artifact"},
+    "project_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "base_premise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_title", "audience", "thesis"],
+      "properties": {
+        "base_title": {"type": "string", "minLength": 1},
+        "audience": {"type": "string", "minLength": 1},
+        "thesis": {"type": "string", "minLength": 1}
+      }
+    },
+    "platform_profiles": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/platformProfile"}
+    },
+    "publication_title_profiles": {
+      "type": "object",
+      "additionalProperties": {"$ref": "#/$defs/publicationTitleProfile"}
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/candidate"}
+    },
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "candidate_id",
+        "selection_is_experiment_hypothesis",
+        "creative_approval_claimed"
+      ],
+      "properties": {
+        "status": {"enum": ["unselected", "working_candidate"]},
+        "candidate_id": {
+          "oneOf": [
+            {"type": "string", "minLength": 1},
+            {"type": "null"}
+          ]
+        },
+        "selection_is_experiment_hypothesis": {"type": "boolean"},
+        "creative_approval_claimed": {"const": false}
+      }
+    },
+    "routing_selection": {"$ref": "#/$defs/routingSelection"},
+    "process_policy": {"$ref": "#/$defs/processPolicy"},
+    "authority_boundary": {"$ref": "#/$defs/authorityBoundary"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [
+            {"$ref": "#/$defs/sha256"},
+            {"type": "null"}
+          ]
+        }
+      }
+    },
+    "safeZone": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "platformProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_id",
+        "width",
+        "height",
+        "aspect_ratio",
+        "purpose",
+        "safe_zone",
+        "renderer",
+        "small_size_preview_width_px"
+      ],
+      "properties": {
+        "profile_id": {"type": "string", "minLength": 1},
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1},
+        "aspect_ratio": {"enum": ["16:9", "4:3", "3:4", "9:16"]},
+        "purpose": {"type": "string", "minLength": 1},
+        "safe_zone": {"$ref": "#/$defs/safeZone"},
+        "renderer": {"const": "existing_remotion_still"},
+        "small_size_preview_width_px": {"const": 360}
+      }
+    },
+    "publicationTitleProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform_id",
+        "hard_max_chars",
+        "recommended_min_chars",
+        "recommended_max_chars",
+        "core_prefix_max_chars",
+        "count_method",
+        "hard_limit_enforcement",
+        "recommended_range_enforcement",
+        "recommendation_scope",
+        "platform_ui_recheck_before_publish"
+      ],
+      "properties": {
+        "platform_id": {"enum": ["douyin", "xiaohongshu", "wechat_channels", "bilibili"]},
+        "hard_max_chars": {"type": "integer", "minimum": 1},
+        "recommended_min_chars": {"type": "integer", "minimum": 1},
+        "recommended_max_chars": {"type": "integer", "minimum": 1},
+        "core_prefix_max_chars": {"type": "integer", "minimum": 1},
+        "count_method": {"const": "unicode_code_points_after_trim"},
+        "hard_limit_enforcement": {"const": "fail_closed"},
+        "recommended_range_enforcement": {"const": "warning_only"},
+        "recommendation_scope": {"const": "chinese_case_video_working_range_not_platform_optimum"},
+        "platform_ui_recheck_before_publish": {"const": true}
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true
+    },
+    "coverHypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visual_focus", "audience_promise", "click_reason", "overlay_text"],
+      "properties": {
+        "visual_focus": {"type": "string", "minLength": 1, "maxLength": 240},
+        "audience_promise": {"type": "string", "minLength": 1, "maxLength": 240},
+        "click_reason": {"type": "string", "minLength": 1, "maxLength": 240},
+        "overlay_text": {"type": "string", "maxLength": 24}
+      }
+    },
+    "coverSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_kind", "availability", "source_note"],
+      "properties": {
+        "source_kind": {
+          "enum": ["dedicated_photo", "video_frame", "evidence_visual", "typography_only"]
+        },
+        "availability": {"enum": ["planned", "available"]},
+        "source_note": {"type": "string", "minLength": 1, "maxLength": 240},
+        "artifact": {"$ref": "#/$defs/artifact"}
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "strategy",
+        "title",
+        "cover_hypothesis",
+        "opening_payoff_binding",
+        "cover_source",
+        "profile_ids",
+        "render_readiness"
+      ],
+      "properties": {
+        "candidate_id": {"type": "string", "minLength": 1, "maxLength": 80},
+        "strategy": {
+          "enum": [
+            "searchable",
+            "curiosity",
+            "evidence_led",
+            "story_scene",
+            "creator_service_action",
+            "customer_testimonial",
+            "evidence_focus",
+            "numeric_contrast",
+            "process_sequence",
+            "option_decision",
+            "tradeoff",
+            "service_boundary",
+            "personal_experience",
+            "editorial_metaphor"
+          ]
+        },
+        "title": {"type": "string", "minLength": 1, "maxLength": 100},
+        "title_route": {
+          "enum": [
+            "search_answer",
+            "browse_conflict",
+            "evidence_result",
+            "decision_tradeoff",
+            "service_action",
+            "customer_quote",
+            "boundary_explainer"
+          ]
+        },
+        "publication_titles": {
+          "type": "object",
+          "additionalProperties": {"type": "string", "minLength": 1, "maxLength": 80},
+          "propertyNames": {
+            "enum": ["douyin", "xiaohongshu", "wechat_channels", "bilibili"]
+          }
+        },
+        "publication_title_assessments": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/publicationTitleAssessment"},
+          "propertyNames": {
+            "enum": ["douyin", "xiaohongshu", "wechat_channels", "bilibili"]
+          }
+        },
+        "cover_hypothesis": {"$ref": "#/$defs/coverHypothesis"},
+        "opening_payoff_binding": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scene_id", "payoff_summary", "evidence_refs"],
+          "properties": {
+            "scene_id": {"type": "string", "minLength": 1},
+            "payoff_summary": {"type": "string", "minLength": 1, "maxLength": 240},
+            "evidence_refs": {
+              "type": "array",
+              "minItems": 1,
+              "items": {"$ref": "#/$defs/evidenceRef"}
+            }
+          }
+        },
+        "cover_source": {"$ref": "#/$defs/coverSource"},
+        "routing_assessment": {"$ref": "#/$defs/routingAssessment"},
+        "profile_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "render_readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "render_eligible", "visual_quality_review_required"],
+          "properties": {
+            "status": {
+              "enum": ["ready_for_remotion_still_candidate", "blocked_requires_safe_layout_source_binding"]
+            },
+            "render_eligible": {"type": "boolean"},
+            "visual_quality_review_required": {"const": true}
+          }
+        }
+      }
+    },
+    "publicationTitleAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "char_count",
+        "within_hard_limit",
+        "within_recommended_range",
+        "quality_status",
+        "title_route",
+        "core_prefix_review_chars",
+        "semantic_review_required"
+      ],
+      "properties": {
+        "char_count": {"type": "integer", "minimum": 1},
+        "within_hard_limit": {"const": true},
+        "within_recommended_range": {"type": "boolean"},
+        "quality_status": {"enum": ["recommended_range", "usable_needs_length_review"]},
+        "title_route": {
+          "enum": [
+            "search_answer",
+            "browse_conflict",
+            "evidence_result",
+            "decision_tradeoff",
+            "service_action",
+            "customer_quote",
+            "boundary_explainer"
+          ]
+        },
+        "core_prefix_review_chars": {"type": "integer", "minimum": 1},
+        "semantic_review_required": {
+          "const": [
+            "accuracy",
+            "single_primary_promise",
+            "important_words_front_loaded",
+            "opening_payoff",
+            "title_cover_complementarity",
+            "target_audience_fit"
+          ]
+        }
+      }
+    },
+    "routingScores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_fit",
+        "visual_asset_strength",
+        "information_gap",
+        "credibility",
+        "title_complementarity",
+        "small_preview_readability",
+        "target_audience_fit"
+      ],
+      "properties": {
+        "content_fit": {"type": "integer", "minimum": 0, "maximum": 5},
+        "visual_asset_strength": {"type": "integer", "minimum": 0, "maximum": 5},
+        "information_gap": {"type": "integer", "minimum": 0, "maximum": 5},
+        "credibility": {"type": "integer", "minimum": 0, "maximum": 5},
+        "title_complementarity": {"type": "integer", "minimum": 0, "maximum": 5},
+        "small_preview_readability": {"type": "integer", "minimum": 0, "maximum": 5},
+        "target_audience_fit": {"type": "integer", "minimum": 0, "maximum": 5}
+      }
+    },
+    "routingScoreWeights": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "content_fit",
+        "visual_asset_strength",
+        "information_gap",
+        "credibility",
+        "title_complementarity",
+        "small_preview_readability",
+        "target_audience_fit"
+      ],
+      "properties": {
+        "content_fit": {"const": 25},
+        "visual_asset_strength": {"const": 20},
+        "information_gap": {"const": 20},
+        "credibility": {"const": 10},
+        "title_complementarity": {"const": 10},
+        "small_preview_readability": {"const": 10},
+        "target_audience_fit": {"const": 5}
+      }
+    },
+    "routingHardGates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fact_accurate",
+        "authorization_confirmed",
+        "privacy_cleared",
+        "medical_insurance_boundary_passed",
+        "opening_payoff_supported"
+      ],
+      "properties": {
+        "fact_accurate": {"const": true},
+        "authorization_confirmed": {"const": true},
+        "privacy_cleared": {"const": true},
+        "medical_insurance_boundary_passed": {"const": true},
+        "opening_payoff_supported": {"const": true}
+      }
+    },
+    "routingAssessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["hard_gates", "scores", "total_score", "selected_rank"],
+      "properties": {
+        "hard_gates": {"$ref": "#/$defs/routingHardGates"},
+        "scores": {"$ref": "#/$defs/routingScores"},
+        "total_score": {"type": "integer", "minimum": 0, "maximum": 100},
+        "selected_rank": {"type": "integer", "minimum": 1, "maximum": 3}
+      }
+    },
+    "routingSelection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selection_method",
+        "candidate_limit",
+        "considered_candidate_count",
+        "selected_candidate_ids",
+        "score_weights",
+        "hard_gate_fields",
+        "diversity_policy",
+        "ctr_prediction_claimed"
+      ],
+      "properties": {
+        "selection_method": {"const": "weighted_content_formula_routing"},
+        "candidate_limit": {"enum": [2, 3]},
+        "considered_candidate_count": {"type": "integer", "minimum": 2, "maximum": 11},
+        "selected_candidate_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "score_weights": {"$ref": "#/$defs/routingScoreWeights"},
+        "hard_gate_fields": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "diversity_policy": {"const": "tie_break_only"},
+        "ctr_prediction_claimed": {"const": false}
+      }
+    },
+    "processPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_strategies",
+        "candidate_generation_aids",
+        "opening_payoff_review_aid",
+        "frame_shortlist_method",
+        "frame_shortlist_reference",
+        "dedicated_cover_capture_preferred",
+        "title_and_overlay_must_be_complementary",
+        "insurance_content_scan_required_before_candidate_render",
+        "visual_qa_required_after_render",
+        "renderer",
+        "platform_native_test_metric",
+        "ctr_only_optimization_forbidden"
+      ],
+      "properties": {
+        "candidate_strategies": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "candidate_generation_aids": {"const": ["dbs-xhs-title"]},
+        "opening_payoff_review_aid": {"const": "dbs-hook"},
+        "frame_shortlist_method": {"const": "scene_change_plus_uniform_samples"},
+        "frame_shortlist_reference": {"const": "thumbnail-video MIT source review"},
+        "dedicated_cover_capture_preferred": {"const": true},
+        "title_and_overlay_must_be_complementary": {"const": true},
+        "insurance_content_scan_required_before_candidate_render": {"const": true},
+        "visual_qa_required_after_render": {
+          "const": [
+            "dimensions",
+            "small_size_readability",
+            "text_overflow",
+            "blur",
+            "eyes_and_face",
+            "subject_occlusion",
+            "safe_zone",
+            "duplicate_frame"
+          ]
+        },
+        "renderer": {"const": "existing_remotion_still"},
+        "platform_native_test_metric": {"const": "watch_time_share_or_platform_equivalent"},
+        "ctr_only_optimization_forbidden": {"const": true},
+        "candidate_formula_pool": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "selection_method": {"const": "weighted_content_formula_routing"},
+        "routing_score_weights": {"$ref": "#/$defs/routingScoreWeights"},
+        "routing_hard_gates": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "candidate_limit": {"enum": [2, 3]},
+        "diversity_tiebreak_only": {"const": true},
+        "publication_title_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "platforms",
+            "hard_limit_source",
+            "hard_limit_is_release_gate",
+            "recommended_range_is_warning_only",
+            "shortest_complete_promise_not_shortest_possible",
+            "important_words_front_loaded",
+            "series_and_branding_at_end",
+            "one_primary_promise",
+            "title_routes",
+            "platform_ui_recheck_before_publish"
+          ],
+          "properties": {
+            "platforms": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {"enum": ["douyin", "xiaohongshu", "wechat_channels", "bilibili"]}
+            },
+            "hard_limit_source": {"const": "user_confirmed_platform_ui_2026_08_26"},
+            "hard_limit_is_release_gate": {"const": true},
+            "recommended_range_is_warning_only": {"const": true},
+            "shortest_complete_promise_not_shortest_possible": {"const": true},
+            "important_words_front_loaded": {"const": true},
+            "series_and_branding_at_end": {"const": true},
+            "one_primary_promise": {"const": true},
+            "title_routes": {
+              "const": [
+                "search_answer",
+                "browse_conflict",
+                "evidence_result",
+                "decision_tradeoff",
+                "service_action",
+                "customer_quote",
+                "boundary_explainer"
+              ]
+            },
+            "platform_ui_recheck_before_publish": {"const": true}
+          }
+        }
+      }
+    },
+    "authorityBoundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "semantic_accuracy_proven",
+        "creative_approval_claimed",
+        "render_execution_performed",
+        "platform_data_read",
+        "upload_performed",
+        "publish_performed",
+        "second_renderer_created",
+        "second_ffmpeg_outlet_created"
+      ],
+      "properties": {
+        "candidate_only": {"const": true},
+        "semantic_accuracy_proven": {"const": false},
+        "creative_approval_claimed": {"const": false},
+        "render_execution_performed": {"const": false},
+        "platform_data_read": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false},
+        "second_renderer_created": {"const": false},
+        "second_ffmpeg_outlet_created": {"const": false}
+      }
+    }
+  }
+}

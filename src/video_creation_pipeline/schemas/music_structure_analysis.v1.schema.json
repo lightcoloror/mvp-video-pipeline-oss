@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.music_structure_analysis.v1",
+  "title": "音乐结构分析",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "source",
+    "duration_s",
+    "provider",
+    "tempo",
+    "beats",
+    "downbeats",
+    "beat_positions",
+    "segments",
+    "phrase_boundary_candidates",
+    "consumption_policy",
+    "analysis_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.music_structure_analysis.v1"},
+    "status": {"const": "completed"},
+    "source": {"$ref": "#/$defs/artifactReference"},
+    "duration_s": {"type": "number", "exclusiveMinimum": 0},
+    "provider": {
+      "type": "object",
+      "required": ["id", "version", "source_commit", "method", "runtime_status", "automatic_fallback"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": "string", "minLength": 1},
+        "source_commit": {"type": "string", "minLength": 1},
+        "adapted_source_commit": {"type": "string", "minLength": 1},
+        "method": {"type": "string", "minLength": 1},
+        "runtime_status": {"type": "string", "minLength": 1},
+        "automatic_fallback": {"const": false}
+      },
+      "additionalProperties": true
+    },
+    "tempo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bpm", "beats_per_bar", "phrase_bars", "confidence"],
+      "properties": {
+        "bpm": {"type": "number", "minimum": 30, "maximum": 300},
+        "beats_per_bar": {"enum": [3, 4]},
+        "phrase_bars": {"type": "integer", "minimum": 1},
+        "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    },
+    "beats": {"$ref": "#/$defs/times"},
+    "downbeats": {"$ref": "#/$defs/times"},
+    "beat_positions": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 1, "maximum": 4}
+    },
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "end", "label"],
+        "properties": {
+          "start": {"type": "number", "minimum": 0},
+          "end": {"type": "number", "exclusiveMinimum": 0},
+          "label": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "phrase_boundary_candidates": {"$ref": "#/$defs/times"},
+    "consumption_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_only", "may_snap_source_windows", "may_move_semantic_boundary", "automatic_provider_fallback", "source_is_read_only"],
+      "properties": {
+        "candidate_only": {"const": true},
+        "may_snap_source_windows": {"const": true},
+        "may_move_semantic_boundary": {"const": false},
+        "automatic_provider_fallback": {"const": false},
+        "source_is_read_only": {"const": true}
+      }
+    },
+    "analysis_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "times": {
+      "type": "array",
+      "items": {"type": "number", "minimum": 0}
+    },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

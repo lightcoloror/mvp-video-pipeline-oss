@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.jianying_spoken_draft_export_job.v1",
+  "title": "剪映口播净剪草稿任务 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "idempotency_key",
+    "source_spoken_edit_plan",
+    "source_delivery_request",
+    "segments",
+    "canvas",
+    "profile",
+    "vectcut_source",
+    "output_contract",
+    "execution_boundary",
+    "status",
+    "job_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.jianying_spoken_draft_export_job.v1"},
+    "idempotency_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_spoken_edit_plan": {"type": "object"},
+    "source_delivery_request": {"type": "object"},
+    "segments": {"type": "array", "minItems": 1},
+    "canvas": {"type": "object"},
+    "profile": {"const": "jianying_pro_10"},
+    "vectcut_source": {"type": "object"},
+    "output_contract": {"type": "object"},
+    "execution_boundary": {"type": "object"},
+    "status": {"const": "ready_for_candidate_materialization"},
+    "job_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "schema": "video_creation_pipeline.remote_execution_policy.v2",
+  "enabled": true,
+  "provider": "chatcut",
+  "tasks": [
+    "editable_timeline_finishing"
+  ],
+  "route": {
+    "id": "chatcut-mcp",
+    "revision": "replace-with-reviewed-revision"
+  },
+  "authorization": {
+    "kind": "provider_mcp_consent",
+    "reference": "replace-with-provider-authorization-reference",
+    "operator_confirmed": true,
+    "confirmed_at": "2026-07-15T12:00:00+08:00"
+  },
+  "limits": {
+    "max_calls": 8,
+    "max_cost": 20,
+    "currency": "CNY"
+  },
+  "upload": {
+    "allowed": true,
+    "artifacts": [
+      {
+        "path": "<project-root>\\source.mp4",
+        "purpose": "editable_timeline_finishing"
+      }
+    ]
+  }
+}

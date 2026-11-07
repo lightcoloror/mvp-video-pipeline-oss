@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact GitHub-verified public MediaPipe source revision, not a credential"
+condition = "AND"
+regexTarget = "line"
+paths = ['''(?:^|/)src/video_creation_pipeline/reframe_detectors\.py$''']
+regexes = ['''^MEDIAPIPE_COMMIT = \"85c0cdc7d70653888903c88df45962b764296342\"$''']

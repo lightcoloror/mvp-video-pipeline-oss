@@ -1,0 +1,12 @@
+{
+  "reviewer": "替换为实际复核人",
+  "human_full_media_review_completed": true,
+  "decisions": [
+    {
+      "finding_id": "替换为privacy-scan-report中的候选编号",
+      "disposition": "authorized_keep",
+      "authorization_scope": "替换为授权文件中允许保留该内容的具体范围",
+      "note": "例如：受访客户本人正脸和原声已授权；不包含医院、第三方或票据编号"
+    }
+  ]
+}

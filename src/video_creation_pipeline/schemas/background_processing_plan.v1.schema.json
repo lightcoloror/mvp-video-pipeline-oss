@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.background_processing_plan.v1",
+  "title": "Background Processing Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_video",
+    "source_video_summary",
+    "output",
+    "mode",
+    "background",
+    "frame_contract",
+    "provider",
+    "execution_handoff",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.background_processing_plan.v1"},
+    "source_video": {"$ref": "#/$defs/artifact"},
+    "source_video_summary": {"type": "object"},
+    "output": {"type": "object"},
+    "mode": {"enum": ["blur", "replace_color", "replace_image", "transparent"]},
+    "background": {"type": "object"},
+    "frame_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_rate",
+        "media_time_step_s",
+        "width",
+        "height",
+        "source_pixel_format",
+        "source_pattern",
+        "alpha_pattern",
+        "maximum_frame_count",
+        "subject_presence_policy"
+      ],
+      "properties": {
+        "frame_rate": {"type": "number", "exclusiveMinimum": 0},
+        "media_time_step_s": {"type": "number", "exclusiveMinimum": 0},
+        "width": {"type": "integer", "minimum": 2},
+        "height": {"type": "integer", "minimum": 2},
+        "source_pixel_format": {"const": "rgb24"},
+        "source_pattern": {"const": "%06d.png"},
+        "alpha_pattern": {"const": "%04d.png"},
+        "maximum_frame_count": {"const": 9999},
+        "subject_presence_policy": {"const": "required_all_frames"}
+      }
+    },
+    "provider": {"type": "object"},
+    "execution_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frame_extract_outlet",
+        "matting_provider",
+        "composite_outlet",
+        "automatic_provider_fallback"
+      ],
+      "properties": {
+        "frame_extract_outlet": {"type": "string", "minLength": 1},
+        "matting_provider": {"const": "rvm_external_local_provider"},
+        "composite_outlet": {"type": "string", "minLength": 1},
+        "automatic_provider_fallback": {"const": false}
+      }
+    },
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

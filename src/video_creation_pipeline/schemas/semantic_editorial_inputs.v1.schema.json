@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "sha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1
+    },
+    "refs": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "segment_id",
+        "action",
+        "rhetorical_role",
+        "redundancy_group",
+        "keep_reason",
+        "removal_risk",
+        "confidence",
+        "evidence_refs"
+      ],
+      "properties": {
+        "segment_id": {
+          "$ref": "#/$defs/text"
+        },
+        "action": {
+          "enum": [
+            "keep",
+            "delete",
+            "compress",
+            "move",
+            "select_best_example",
+            "review_required"
+          ]
+        },
+        "rhetorical_role": {
+          "enum": [
+            "hook",
+            "claim",
+            "explanation",
+            "evidence",
+            "example",
+            "counterpoint",
+            "recap",
+            "call_to_action"
+          ]
+        },
+        "redundancy_group": {
+          "type": "string"
+        },
+        "keep_reason": {
+          "$ref": "#/$defs/text"
+        },
+        "removal_risk": {
+          "$ref": "#/$defs/text"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "evidence_refs": {
+          "$ref": "#/$defs/refs"
+        },
+        "after_segment_id": {
+          "$ref": "#/$defs/text"
+        },
+        "selected_segment_id": {
+          "$ref": "#/$defs/text"
+        }
+      }
+    },
+    "editorial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "decisions"
+      ],
+      "properties": {
+        "schema": {
+          "const": "video_creation_pipeline.semantic_editorial_spec.v1"
+        },
+        "decisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/decision"
+          }
+        }
+      }
+    },
+    "beat": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "visual_role",
+        "semantic_trigger",
+        "information_advance",
+        "safe_zone",
+        "motion_intensity",
+        "sfx_role",
+        "source_or_evidence_refs",
+        "visual_motif"
+      ],
+      "properties": {
+        "scene_id": {
+          "$ref": "#/$defs/text"
+        },
+        "visual_role": {
+          "enum": [
+            "human_trust",
+            "source_evidence",
+            "knowledge_explanation",
+            "screen_demo",
+            "transition",
+            "emphasis"
+          ]
+        },
+        "semantic_trigger": {
+          "type": "string"
+        },
+        "information_advance": {
+          "type": "string"
+        },
+        "safe_zone": {
+          "$ref": "#/$defs/text"
+        },
+        "motion_intensity": {
+          "enum": [
+            "none",
+            "low",
+            "medium"
+          ]
+        },
+        "sfx_role": {
+          "enum": [
+            "none",
+            "confirmation",
+            "transition",
+            "emphasis"
+          ]
+        },
+        "source_or_evidence_refs": {
+          "$ref": "#/$defs/refs"
+        },
+        "visual_motif": {
+          "$ref": "#/$defs/text"
+        },
+        "cut_basis": {
+          "type": "string"
+        },
+        "transition": {
+          "type": "object"
+        },
+        "emphasis_events": {
+          "type": "array"
+        },
+        "whole_sentence_continuous_motion": {
+          "type": "boolean"
+        }
+      }
+    },
+    "visual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "scenes"
+      ],
+      "properties": {
+        "schema": {
+          "const": "video_creation_pipeline.editorial_visual_spec.v1"
+        },
+        "scenes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/beat"
+          }
+        }
+      }
+    },
+    "screen": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "privacy_preflight",
+        "speaker_notes_visible",
+        "safe_zone_ids",
+        "focus_events",
+        "output"
+      ],
+      "properties": {
+        "schema": {
+          "const": "video_creation_pipeline.screen_recording_profile.v1"
+        },
+        "privacy_preflight": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "notifications_hidden",
+            "address_bar_hidden",
+            "bookmarks_hidden",
+            "sensitive_content_checked"
+          ],
+          "properties": {
+            "notifications_hidden": {
+              "type": "boolean"
+            },
+            "address_bar_hidden": {
+              "type": "boolean"
+            },
+            "bookmarks_hidden": {
+              "type": "boolean"
+            },
+            "sensitive_content_checked": {
+              "type": "boolean"
+            }
+          }
+        },
+        "speaker_notes_visible": {
+          "type": "boolean"
+        },
+        "safe_zone_ids": {
+          "$ref": "#/$defs/refs"
+        },
+        "focus_events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "start_ms",
+              "end_ms",
+              "target_ref",
+              "safe_zone_id"
+            ],
+            "properties": {
+              "start_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end_ms": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "target_ref": {
+                "$ref": "#/$defs/text"
+              },
+              "safe_zone_id": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        },
+        "output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height",
+            "fps"
+          ],
+          "properties": {
+            "width": {
+              "type": "integer",
+              "minimum": 320,
+              "maximum": 7680
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 320,
+              "maximum": 7680
+            },
+            "fps": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 120
+            }
+          }
+        }
+      }
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "plan_sha256",
+        "content_type",
+        "decisions"
+      ],
+      "properties": {
+        "schema": {
+          "const": "video_creation_pipeline.editorial_feedback_spec.v1"
+        },
+        "plan_sha256": {
+          "$ref": "#/$defs/sha"
+        },
+        "content_type": {
+          "$ref": "#/$defs/text"
+        },
+        "decisions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "segment_id",
+              "outcome",
+              "final_choice",
+              "reason",
+              "amount_changed",
+              "time_saved_seconds",
+              "rework_seconds",
+              "marginal_return_stop",
+              "explicit_user_pin"
+            ],
+            "properties": {
+              "segment_id": {
+                "$ref": "#/$defs/text"
+              },
+              "outcome": {
+                "enum": [
+                  "accept",
+                  "edit",
+                  "reject"
+                ]
+              },
+              "final_choice": {
+                "$ref": "#/$defs/text"
+              },
+              "reason": {
+                "$ref": "#/$defs/text"
+              },
+              "amount_changed": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "time_saved_seconds": {
+                "type": "number"
+              },
+              "rework_seconds": {
+                "type": "number",
+                "minimum": 0
+              },
+              "marginal_return_stop": {
+                "type": "boolean"
+              },
+              "explicit_user_pin": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

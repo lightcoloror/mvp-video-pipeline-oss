@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.smart_reframe_request.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "profile_id",
+    "media_role",
+    "fallback_order",
+    "motion_policy",
+    "quality_policy",
+    "execution_policy",
+    "request_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.smart_reframe_request.v1"
+    },
+    "profile_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "media_role": {
+      "enum": [
+        "talking_head",
+        "interview",
+        "presentation",
+        "screen_recording",
+        "document",
+        "chart",
+        "photo",
+        "broll"
+      ]
+    },
+    "fallback_order": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "fixed_crop",
+          "tracked_crop",
+          "speaker_cut",
+          "contain",
+          "blur_pad",
+          "split_layout",
+          "roi_sequence",
+          "reject"
+        ]
+      }
+    },
+    "motion_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "deadband",
+        "minimum_dwell_s",
+        "max_speed_per_s",
+        "max_acceleration_per_s2",
+        "reset_at_shot_boundary"
+      ],
+      "properties": {
+        "deadband": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 1
+        },
+        "minimum_dwell_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_speed_per_s": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "max_acceleration_per_s2": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "reset_at_shot_boundary": {
+          "const": true
+        }
+      }
+    },
+    "quality_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_region_retention",
+        "max_upscale_factor",
+        "safe_zone_violations_allowed",
+        "blind_crop_allowed"
+      ],
+      "properties": {
+        "required_region_retention": {
+          "const": 1.0
+        },
+        "max_upscale_factor": {
+          "type": "number",
+          "minimum": 1
+        },
+        "safe_zone_violations_allowed": {
+          "const": 0
+        },
+        "blind_crop_allowed": {
+          "const": false
+        }
+      }
+    },
+    "execution_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "automatic_crop_enabled",
+        "requires_explicit_candidate_execution",
+        "automatic_publish"
+      ],
+      "properties": {
+        "candidate_only": {
+          "const": true
+        },
+        "automatic_crop_enabled": {
+          "const": false
+        },
+        "requires_explicit_candidate_execution": {
+          "const": true
+        },
+        "automatic_publish": {
+          "const": false
+        }
+      }
+    },
+    "request_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "production_project_type": {
+      "enum": [
+        "spoken",
+        "life",
+        "tutorial"
+      ]
+    },
+    "composition_review": {
+      "type": "object"
+    }
+  }
+}

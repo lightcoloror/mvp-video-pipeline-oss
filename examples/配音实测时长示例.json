@@ -1,0 +1,15 @@
+{
+  "schema": "video_creation_pipeline.voice_measurements.v1",
+  "shots": [
+    {
+      "shot_id": "镜头-001",
+      "audio_path": "work/voice/镜头-001.wav",
+      "measured_duration_s": 2.32
+    },
+    {
+      "shot_id": "镜头-002",
+      "audio_path": "work/voice/镜头-002.wav",
+      "measured_duration_s": 4.1
+    }
+  ]
+}

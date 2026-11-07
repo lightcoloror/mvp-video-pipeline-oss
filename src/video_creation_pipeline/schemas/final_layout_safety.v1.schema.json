@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.invalid/video/final_layout_safety.v1.schema.json",
+  "title": "Final layout safety input for vertical social video",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "layout_id",
+    "duration_seconds",
+    "candidate",
+    "layout_evidence",
+    "required_roles",
+    "reserved_regions",
+    "elements"
+  ],
+  "properties": {
+    "schema_version": {"const": "video-final-layout-safety.v1"},
+    "layout_id": {"$ref": "#/$defs/id"},
+    "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
+    "candidate": {"$ref": "#/$defs/artifact"},
+    "layout_evidence": {"$ref": "#/$defs/artifact"},
+    "ai_disclosure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "stages", "reason"],
+      "properties": {
+        "mode": {"enum": ["ai_assisted", "ai_generated", "no_ai"]},
+        "stages": {
+          "type": "array", "uniqueItems": true,
+          "items": {"enum": ["script", "editing", "illustration", "video", "voice", "music", "other"]}
+        },
+        "reason": {"type": "string", "minLength": 3}
+      },
+      "allOf": [{
+        "if": {"properties": {"mode": {"const": "no_ai"}}},
+        "then": {"properties": {"stages": {"maxItems": 0}}},
+        "else": {"properties": {"stages": {"minItems": 1}}}
+      }]
+    },
+    "required_roles": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"$ref": "#/$defs/role"}
+    },
+    "reserved_regions": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"$ref": "#/$defs/reservedRegion"}
+    },
+    "elements": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/element"}
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,99}$"},
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![A-Za-z]:[\\\\/])(?!/)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$)).+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "expected_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/relativePath"},
+        "expected_sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "role": {
+      "enum": [
+        "subtitle",
+        "watermark",
+        "identity",
+        "institution",
+        "license_number",
+        "ai_label",
+        "disclaimer",
+        "cta",
+        "qr_code",
+        "evidence_focus",
+        "presenter_window",
+        "information_motion"
+      ]
+    },
+    "reservedRegion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["region_id", "region_kind", "rect"],
+      "properties": {
+        "region_id": {"$ref": "#/$defs/id"},
+        "region_kind": {"enum": ["rounded_corner", "platform_overlay", "manual_exclusion"]},
+        "rect": {"$ref": "#/$defs/rect"}
+      }
+    },
+    "element": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "element_id",
+        "role",
+        "start_seconds",
+        "end_seconds",
+        "rect",
+        "critical_content"
+      ],
+      "properties": {
+        "element_id": {"$ref": "#/$defs/id"},
+        "role": {"$ref": "#/$defs/role"},
+        "text": {"type": "string", "minLength": 1},
+        "start_seconds": {"type": "number", "minimum": 0},
+        "end_seconds": {"type": "number", "exclusiveMinimum": 0},
+        "rect": {"$ref": "#/$defs/rect"},
+        "critical_content": {"type": "boolean"},
+        "auxiliary_visibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "reason"],
+          "properties": {
+            "mode": {"const": "fullscreen_or_controls_hidden"},
+            "reason": {"type": "string", "minLength": 3}
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"role": {"const": "ai_label"}}},
+          "then": {"required": ["text"]}
+        },
+        {
+          "if": {"properties": {"critical_content": {"const": false}}},
+          "then": {
+            "required": ["auxiliary_visibility"],
+            "properties": {
+              "role": {"enum": ["watermark", "identity", "institution", "cta", "information_motion"]}
+            }
+          },
+          "else": {"not": {"required": ["auxiliary_visibility"]}}
+        }
+      ]
+    }
+  }
+}

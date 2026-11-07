@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.content_visual_routing_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "inputs",
+    "timing_authority",
+    "style",
+    "scene_routes",
+    "approval_projection",
+    "local_regeneration_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.content_visual_routing_plan.v1"},
+    "inputs": {
+      "type": "object",
+      "required": ["packaging_plan", "routing_spec", "visual_style_profile"]
+    },
+    "timing_authority": {"type": "object"},
+    "style": {
+      "type": "object",
+      "required": ["preset_id", "profile_sha256"]
+    },
+    "scene_routes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "scene_id",
+          "start_s",
+          "end_s",
+          "content_kind",
+          "communication_goal",
+          "visual_route",
+          "renderer",
+          "execution_status",
+          "decision_reason",
+          "material_ready",
+          "evidence_ref_count",
+          "review_stages",
+          "generation_scope"
+        ]
+      }
+    },
+    "approval_projection": {"type": "object"},
+    "local_regeneration_policy": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

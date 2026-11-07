@@ -1,0 +1,109 @@
+{
+  "schema": "lucas.typography_gates.v1",
+  "version": "1.0.0",
+  "updated_at": "2026-08-26T12:13:00+08:00",
+  "updated_by": "Codex (GPT-5.6 Terra)",
+  "governance": {
+    "intent": "Turn device-readable type thresholds into a fail-closed production gate rather than a visual suggestion.",
+    "decision": "Use one canonical, role-aware policy for case-cover stills and 1080x1920 semantic motion; renderers receive only bound values from this file.",
+    "rationale": "A single untyped minimum is wrong for headlines, labels, subtitles and disclosure. Role-specific values preserve reading hierarchy without allowing a crowded layout to shrink primary information.",
+    "evidence": "AI-obsidian/00_Inbox/AI/竖屏HTML字号、布局防重叠与防截断规范-2026-08-17.md; lucas-case-cover-craft platform-and-qa.md; approved mobile preview QA practice.",
+    "effective_scope": "Candidate-only local case-cover rendering and 1080x1920 semantic-motion HTML. It does not authorize publication or replace human mobile-preview review."
+  },
+  "profiles": {
+    "youtube_16_9": {
+      "viewport": {"width": 3840, "height": 2160},
+      "preview": {"width": 360, "height": 203},
+      "hard_gate": true,
+      "roles": {
+        "overlay": {"min_font_px": 192}, "structure": {"min_font_px": 72}, "number": {"min_font_px": 112},
+        "media_label": {"min_font_px": 54}, "tag": {"min_font_px": 46}, "promise": {"min_font_px": 66},
+        "attribution": {"min_font_px": 42}, "ai_disclosure": {"min_font_px": 38}
+      }
+    },
+    "bilibili_16_9": {
+      "viewport": {"width": 1920, "height": 1080},
+      "preview": {"width": 360, "height": 203},
+      "hard_gate": true,
+      "roles": {
+        "overlay": {"min_font_px": 112}, "structure": {"min_font_px": 48}, "number": {"min_font_px": 76},
+        "media_label": {"min_font_px": 36}, "tag": {"min_font_px": 30}, "promise": {"min_font_px": 36},
+        "attribution": {"min_font_px": 24}, "ai_disclosure": {"min_font_px": 22}
+      }
+    },
+    "bilibili_4_3": {
+      "viewport": {"width": 1440, "height": 1080},
+      "preview": {"width": 320, "height": 240},
+      "hard_gate": true,
+      "roles": {
+        "overlay": {"min_font_px": 108}, "structure": {"min_font_px": 48}, "number": {"min_font_px": 72},
+        "media_label": {"min_font_px": 36}, "tag": {"min_font_px": 30}, "promise": {"min_font_px": 36},
+        "attribution": {"min_font_px": 24}, "ai_disclosure": {"min_font_px": 22}
+      }
+    },
+    "vertical_profile_3_4": {
+      "viewport": {"width": 1080, "height": 1440},
+      "preview": {"width": 270, "height": 360},
+      "hard_gate": true,
+      "roles": {
+        "overlay": {"min_font_px": 144}, "structure": {"min_font_px": 56}, "number": {"min_font_px": 92},
+        "media_label": {"min_font_px": 42}, "tag": {"min_font_px": 34}, "promise": {"min_font_px": 44},
+        "attribution": {"min_font_px": 24}, "ai_disclosure": {"min_font_px": 22}
+      }
+    },
+    "vertical_first_frame_9_16": {
+      "viewport": {"width": 1080, "height": 1920},
+      "preview": {"width": 270, "height": 480},
+      "hard_gate": true,
+      "roles": {
+        "overlay": {"min_font_px": 144}, "structure": {"min_font_px": 56}, "number": {"min_font_px": 92},
+        "media_label": {"min_font_px": 42}, "tag": {"min_font_px": 34}, "promise": {"min_font_px": 44},
+        "attribution": {"min_font_px": 24}, "ai_disclosure": {"min_font_px": 22}
+      }
+    },
+    "semantic_motion_1080x1920": {
+      "viewport": {"width": 1080, "height": 1920},
+      "preview": {"width": 270, "height": 480},
+      "hard_gate": true,
+      "roles": {
+        "primary_title": {"min_font_px": 60}, "scene_title": {"min_font_px": 48}, "body": {"min_font_px": 36},
+        "multi_column_body": {"min_font_px": 30}, "key_number": {"min_font_px": 36}, "label": {"min_font_px": 24},
+        "motion_label": {"min_font_px": 36}, "subtitle": {"min_font_px": 48}, "disclosure": {"min_font_px": 22},
+        "watermark": {"min_font_px": 22}
+      }
+    },
+    "social_card_1080x1440": {
+      "viewport": {"width": 1080, "height": 1440},
+      "preview": {"width": 270, "height": 360},
+      "hard_gate": true,
+      "required_roles": ["primary_headline"],
+      "roles": {
+        "primary_headline": {"min_font_px": 60}, "scene_title": {"min_font_px": 48}, "body": {"min_font_px": 36},
+        "multi_column_body": {"min_font_px": 30}, "key_number": {"min_font_px": 36}, "label": {"min_font_px": 24},
+        "disclosure": {"min_font_px": 22}, "attribution": {"min_font_px": 22}
+      }
+    },
+    "article_html_mobile": {
+      "viewport": {"width": 390, "height": 844},
+      "preview": {"width": 390, "height": 844},
+      "hard_gate": true,
+      "required_roles": ["primary_headline", "body"],
+      "roles": {
+        "primary_headline": {"min_font_px": 32}, "scene_title": {"min_font_px": 24}, "body": {"min_font_px": 17},
+        "multi_column_body": {"min_font_px": 16}, "key_number": {"min_font_px": 20}, "label": {"min_font_px": 14},
+        "disclosure": {"min_font_px": 12}, "attribution": {"min_font_px": 12}
+      }
+    },
+    "article_html_desktop": {
+      "viewport": {"width": 1440, "height": 900},
+      "preview": {"width": 1440, "height": 900},
+      "hard_gate": true,
+      "required_roles": ["primary_headline", "body"],
+      "roles": {
+        "primary_headline": {"min_font_px": 48}, "scene_title": {"min_font_px": 30}, "body": {"min_font_px": 18},
+        "multi_column_body": {"min_font_px": 16}, "key_number": {"min_font_px": 24}, "label": {"min_font_px": 14},
+        "disclosure": {"min_font_px": 12}, "attribution": {"min_font_px": 12}
+      }
+    }
+  }
+}

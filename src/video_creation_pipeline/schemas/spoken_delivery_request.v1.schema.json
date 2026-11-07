@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.spoken_delivery_request.v1",
+  "title": "按交付需求选择口播净剪路径",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "deliverable",
+    "selection_basis"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.spoken_delivery_request.v1"
+    },
+    "deliverable": {
+      "enum": [
+        "review",
+        "video",
+        "editable_project"
+      ]
+    },
+    "selection_basis": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000,
+      "pattern": "\\S"
+    },
+    "editor": {
+      "enum": [
+        "jianying",
+        "premiere"
+      ]
+    },
+    "production": {
+      "type": "object",
+      "properties": {
+        "working_copy_assessment": {
+          "type": "object"
+        },
+        "output_purpose": {
+          "enum": [
+            "final_candidate",
+            "working_copy"
+          ]
+        },
+        "export_profile": {
+          "enum": [
+            "source_sdr_h264",
+            "web_sdr_1080"
+          ]
+        },
+        "project_type": {
+          "enum": [
+            "spoken",
+            "life",
+            "tutorial"
+          ]
+        },
+        "audio_edit": {
+          "type": "object"
+        },
+        "restoration_review": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "deliverable": {
+            "const": "editable_project"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "editor"
+        ]
+      },
+      "else": {
+        "not": {
+          "required": [
+            "editor"
+          ]
+        }
+      }
+    }
+  ]
+}

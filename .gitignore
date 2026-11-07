@@ -1,0 +1,76 @@
+# Python bytecode, environments, and test caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.pytype/
+.mypy_cache/
+.pyright/
+pytest-cache-files-*/
+
+# Build and package outputs
+build/
+dist/
+*.egg-info/
+*.whl
+
+# Local configuration and logs
+.env
+.env.*
+!.env.example
+*.log
+*.jsonl
+.cache/
+.uv-cache/
+
+# Runtime, review, model, and generated-output roots
+.test-tmp/
+.test-runtime/
+.test-write-check/
+artifacts/
+cache/
+checkpoints/
+media/
+models/
+output/
+outputs/
+source-reviews/
+weights/
+workspace/
+
+# Model weights, checkpoints, and archives
+*.bin
+*.ckpt
+*.gguf
+*.onnx
+*.pt
+*.pth
+*.safetensors
+*.7z
+*.gz
+*.rar
+*.tar
+*.zip
+
+# Media and generated images
+*.avi
+*.flac
+*.gif
+*.jpeg
+*.jpg
+*.m4a
+*.mkv
+*.mov
+*.mp3
+*.mp4
+*.png
+*.wav
+*.webm
+*.webp
+
+# OS metadata
+.DS_Store
+Thumbs.db

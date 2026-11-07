@@ -1,0 +1,12 @@
+{
+  "schema": "video_knowledge_pipeline.transcript_source_arbitration.v1",
+  "status": "completed",
+  "quality_summary": {
+    "status": "passed",
+    "conflict_count": 1,
+    "reviewed_count": 1
+  },
+  "summary": {
+    "quality_status": "completed"
+  }
+}

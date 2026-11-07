@@ -1,0 +1,17 @@
+{
+  "version": "creator_production_v1",
+  "review": {"default": "source_time_range", "media_copies_created": 0, "sample_window_s": 3.0, "sample_coverage": "representative_only"},
+  "working_copy": {"max_useful_fraction": 0.25, "min_estimated_reduction_fraction": 0.70, "min_estimated_reduction_bytes": 536870912, "full_source_assessment_required": true, "original_deletion_allowed": false},
+  "color": {"sdr_output": "bt709", "automatic_metadata_relabel": false, "unknown_input_requires_review": true, "unsupported_hdr_log_conversion": "block_and_review_original"},
+  "restoration": {"default": "off", "max_stabilization_scale": 1.15, "degradation_flags": ["eye_change", "teeth_change", "text_change", "temporal_flicker", "background_warp", "excessive_crop"], "comparison_required": true},
+  "audio": {"split_edit_default": "off", "room_tone_default": "off", "mono_cancellation_warning_db": -12.0, "channel_imbalance_warning_db": 12.0, "automatic_downmix": false},
+  "profiles": {
+    "spoken": {"priorities": ["meaning", "voice", "readability"], "composition_checks": ["eyes", "headroom", "key_objects", "stable_subject"], "audio_checks": ["voice", "room_tone", "channel_balance", "mono_compatibility"]},
+    "life": {"priorities": ["reaction", "ambience", "action_tail"], "composition_checks": ["eyes", "hands", "key_objects", "relationship", "stable_subject"], "audio_checks": ["response", "room_tone", "channel_balance", "mono_compatibility"]},
+    "tutorial": {"priorities": ["operation", "step_state", "result"], "composition_checks": ["hands", "operation_area", "readable_text", "key_objects", "stable_subject"], "audio_checks": ["instruction", "room_tone", "channel_balance", "mono_compatibility"]}
+  },
+  "export_profiles": {
+    "source_sdr_h264": {"container": "mp4", "video_codec": "h264", "pixel_format": "yuv420p", "audio_codec": "aac", "sample_rate": 48000, "fps_policy": "preserve_timestamps", "size_policy": "preserve", "color_policy": "preserve_known_sdr", "crf": 18},
+    "web_sdr_1080": {"container": "mp4", "video_codec": "h264", "pixel_format": "yuv420p", "audio_codec": "aac", "sample_rate": 48000, "fps_policy": "preserve_timestamps", "size_policy": "fit_1920x1080_no_upscale_orientation_aware", "color_policy": "require_bt709", "crf": 18}
+  }
+}

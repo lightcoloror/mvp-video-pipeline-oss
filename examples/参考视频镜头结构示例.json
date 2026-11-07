@@ -1,0 +1,46 @@
+{
+  "schema": "video_creation_pipeline.reference_recipe.v1",
+  "reference": {
+    "title": "参考视频结构示例",
+    "source_role": "仅用于结构与节奏候选",
+    "analysis_status": "待人工校对"
+  },
+  "shots": [
+    {
+      "shot_id": "镜头-001",
+      "start_s": 0,
+      "end_s": 2.4,
+      "script": "先展示结果",
+      "requirements": {
+        "scene": "产品完成态近景",
+        "action": "缓慢推近",
+        "shot_size": "近景",
+        "avoid": ["竞品品牌", "平台水印"]
+      }
+    },
+    {
+      "shot_id": "镜头-002",
+      "start_s": 2.4,
+      "end_s": 5.8,
+      "script": "演示核心卖点",
+      "requirements": {
+        "scene": "实际使用场景",
+        "action": "完整演示一次",
+        "shot_size": "中景",
+        "avoid": ["遮挡产品", "重复上一镜头构图"]
+      }
+    },
+    {
+      "shot_id": "镜头-003",
+      "start_s": 5.8,
+      "end_s": 8.2,
+      "script": "给出行动提示",
+      "requirements": {
+        "scene": "产品与包装同框",
+        "action": "静态停留",
+        "shot_size": "全景",
+        "avoid": ["价格承诺", "未经确认的功效表述"]
+      }
+    }
+  ]
+}

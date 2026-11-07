@@ -1,0 +1,14 @@
+{
+  "version": "creator_editing_v1",
+  "take_selection": {"order": ["complete", "meaning_accuracy", "natural_delivery", "quality_score"], "default_candidate": "last_recorded_take", "chronological_preference": true, "exception_flags": ["incomplete", "misstatement", "quality_problem", "unique_information_in_other_take"], "unique_information_review_required": true},
+  "boundaries": {"protected_event_kinds": ["laughter", "response", "breath", "action_tail", "speech", "other"], "review_radius_s": 0.6, "opening_and_ending_review_required": true},
+  "audio_splices": {"default_fade_s": 0.01, "maximum_fade_s": 0.02, "mode": "edge_fades_without_overlap", "audition_required": true},
+  "loudness": {"profile_required": true, "rough_cut_window_s": 3.0, "rough_cut_spread_warning_db": 6.0, "final_mix_remeasurement_required": true,
+    "segment_leveling": {"required_at_rough_cut": true, "metric": "speech_duration_weighted_PCM_RMS_dBFS", "natural_band_db": 1.0, "max_gain_db": 6.0, "max_spread_db": 3.0, "max_adjacent_difference_db": 3.0, "application_tolerance_db": 1.0, "post_application_remeasurement_required": true, "local_window_s": 1.5, "local_spread_warning_db": 6.0}},
+  "speech_cleanup": {"default_profile": "gentle", "strong_requires_review": true, "degradation_flags": ["metallic_voice", "consonants_lost", "breath_pumping"]},
+  "bgm": {"existing_policy": "spoken-bgm-policy.v1.json", "allow_none": true, "respect_protected_sound": true},
+  "subtitles": {"max_lines": 2, "max_chars_per_line": 18, "reading_speed_warning_cps": 9.0, "minimum_duration_warning_s": 0.7, "auto_shrink": false, "semantic_breaks_required": true},
+  "visuals": {"fixed_interval_cutting": false, "information_advance_required": true, "trigger_kinds": ["information", "action", "gaze", "reaction", "location", "time", "structure"]},
+  "transitions": {"default": "cut", "exception_reason_required": true, "max_simultaneous_primary_emphasis": 1, "whole_sentence_continuous_motion": false},
+  "timebase": {"default_speed": 1.0, "speed_change_requires_audition": true, "dependent_roles": ["subtitles", "sound_effects", "chapters", "progress", "review"]}
+}

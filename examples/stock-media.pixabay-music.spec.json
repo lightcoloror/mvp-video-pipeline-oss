@@ -1,0 +1,14 @@
+{
+  "asset_id": "pixabay-calm-example",
+  "media_type": "music",
+  "source_id": "pixabay",
+  "item_url": "https://pixabay.com/music/replace-with-real-item-page/",
+  "license_id": "pixabay-content-license",
+  "title": "替换为素材标题",
+  "author": "替换为素材作者",
+  "description": "平静、克制的纯音乐示例",
+  "tags": ["calm", "instrumental", "warm"],
+  "download_method": "manual",
+  "downloaded_at": "2026-08-15T20:00:00+08:00",
+  "attribution_text": ""
+}

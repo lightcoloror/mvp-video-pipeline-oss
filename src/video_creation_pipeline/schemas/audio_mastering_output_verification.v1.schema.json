@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.audio_mastering_output_verification.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_plan",
+    "source_plan_sha256",
+    "mastered_audio",
+    "measurement_log",
+    "measurement_pass_receipt",
+    "policy",
+    "tolerances",
+    "measurements",
+    "checks",
+    "readiness",
+    "authority_boundary",
+    "verification_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.audio_mastering_output_verification.v1"
+    },
+    "source_plan": {"$ref": "#/$defs/artifact"},
+    "source_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "mastered_audio": {"$ref": "#/$defs/artifact"},
+    "measurement_log": {"$ref": "#/$defs/artifact"},
+    "measurement_pass_receipt": {"$ref": "#/$defs/artifact"},
+    "policy": {"type": "object"},
+    "tolerances": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "integrated_lufs_tolerance_lu",
+        "true_peak_ceiling_tolerance_db",
+        "lra_ceiling_tolerance_lu"
+      ],
+      "properties": {
+        "integrated_lufs_tolerance_lu": {"type": "number", "minimum": 0},
+        "true_peak_ceiling_tolerance_db": {"type": "number", "minimum": 0},
+        "lra_ceiling_tolerance_lu": {"type": "number", "minimum": 0}
+      }
+    },
+    "measurements": {"$ref": "#/$defs/measurements"},
+    "checks": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/check"}
+    },
+    "readiness": {"$ref": "#/$defs/readiness"},
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measurement_only",
+        "candidate_only",
+        "creative_approval_claimed",
+        "release_eligible",
+        "automatic_upload",
+        "automatic_publish",
+        "single_ffmpeg_outlet"
+      ],
+      "properties": {
+        "measurement_only": {"const": true},
+        "candidate_only": {"const": true},
+        "creative_approval_claimed": {"const": false},
+        "release_eligible": {"const": false},
+        "automatic_upload": {"const": false},
+        "automatic_publish": {"const": false},
+        "single_ffmpeg_outlet": {
+          "const": "video_creation_pipeline.single_ffmpeg_outlet"
+        }
+      }
+    },
+    "verification_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256", "bytes", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 0},
+        "content_kind": {"enum": ["json", "text", "binary"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["input_i", "input_tp", "input_lra", "input_thresh", "target_offset"],
+      "properties": {
+        "input_i": {"type": "number"},
+        "input_tp": {"type": "number"},
+        "input_lra": {"type": "number"},
+        "input_thresh": {"type": "number"},
+        "target_offset": {"type": "number"}
+      }
+    },
+    "check": {
+      "type": "object",
+      "required": ["id", "status", "blocking", "actual"],
+      "properties": {
+        "id": {
+          "enum": ["integrated_lufs", "true_peak_ceiling", "loudness_range_ceiling"]
+        },
+        "status": {"enum": ["passed", "failed"]},
+        "blocking": {"const": true},
+        "actual": {"type": "number"},
+        "target": {"type": "number"},
+        "tolerance": {"type": "number", "minimum": 0},
+        "maximum": {"type": "number"}
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "technical_ready",
+        "release_eligible",
+        "blocking_failure_count",
+        "blocking_failures",
+        "next_action"
+      ],
+      "properties": {
+        "status": {"enum": ["passed", "failed"]},
+        "technical_ready": {"type": "boolean"},
+        "release_eligible": {"const": false},
+        "blocking_failure_count": {"type": "integer", "minimum": 0},
+        "blocking_failures": {
+          "type": "array",
+          "items": {
+            "enum": ["integrated_lufs", "true_peak_ceiling", "loudness_range_ceiling"]
+          },
+          "uniqueItems": true
+        },
+        "next_action": {"enum": ["human_audio_review", "fix_audio_mastering"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema": "video_creation_pipeline.provider_receipt.v1",
+  "request_id": "replace-with-provider-request-id",
+  "request_sha256": "replace-with-provider-request-sha256",
+  "provider": "chatcut",
+  "route": {
+    "id": "chatcut-mcp",
+    "revision": "replace-with-reviewed-revision"
+  },
+  "task": "editable_timeline_finishing",
+  "status": "completed",
+  "published": false,
+  "fallback_used": false,
+  "usage": {
+    "calls": 1,
+    "cost": 0,
+    "currency": "CNY"
+  },
+  "outputs": [
+    {
+      "path": "<project-root>\\provider-output.json",
+      "bytes": 1234,
+      "sha256": "replace-with-output-sha256",
+      "role": "candidate_timeline",
+      "acceptance_status": "candidate_only"
+    }
+  ]
+}

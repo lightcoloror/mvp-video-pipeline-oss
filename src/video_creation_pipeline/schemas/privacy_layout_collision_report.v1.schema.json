@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.privacy_layout_collision_report.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_semantic_motion_plan",
+    "source_privacy_exclusion_zones",
+    "redaction_order",
+    "cues",
+    "summary",
+    "authority_boundary",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.privacy_layout_collision_report.v1"},
+    "source_semantic_motion_plan": {"$ref": "#/$defs/artifact"},
+    "source_privacy_exclusion_zones": {"$ref": "#/$defs/artifact"},
+    "redaction_order": {"enum": ["redaction_before_graphics", "redaction_after_graphics"]},
+    "cues": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/cue"}},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["collision_count", "geometry_gate_passed", "status"],
+      "properties": {
+        "collision_count": {"type": "integer", "minimum": 0},
+        "geometry_gate_passed": {"type": "boolean"},
+        "status": {"enum": ["passed_candidate_only", "blocked", "review_required"]}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_only", "publish_allowed", "final_privacy_rescan_required"],
+      "properties": {
+        "candidate_only": {"const": true},
+        "publish_allowed": {"const": false},
+        "final_privacy_rescan_required": {"const": true}
+      }
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "collision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "element_id",
+        "element_rect",
+        "privacy_region_id",
+        "privacy_rect",
+        "intersection_area",
+        "occludes_sensitive_subject",
+        "would_be_redacted"
+      ],
+      "properties": {
+        "element_id": {"type": "string", "minLength": 1},
+        "element_rect": {"$ref": "#/$defs/rect"},
+        "privacy_region_id": {"type": "string", "minLength": 1},
+        "privacy_rect": {"$ref": "#/$defs/rect"},
+        "intersection_area": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "occludes_sensitive_subject": {"const": true},
+        "would_be_redacted": {"type": "boolean"}
+      }
+    },
+    "cue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cue_id", "start_s", "end_s", "collisions", "selected_fallback", "geometry_gate_passed"],
+      "properties": {
+        "cue_id": {"type": "string", "minLength": 1},
+        "start_s": {"type": "number", "minimum": 0},
+        "end_s": {"type": "number", "exclusiveMinimum": 0},
+        "collisions": {"type": "array", "items": {"$ref": "#/$defs/collision"}},
+        "selected_fallback": {"enum": ["none", "fullscreen_evidence", "omit_optional_motion", "blocked"]},
+        "geometry_gate_passed": {"type": "boolean"}
+      }
+    }
+  }
+}

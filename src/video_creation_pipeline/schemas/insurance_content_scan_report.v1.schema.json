@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.insurance_content_scan_report.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "created_at", "source_request", "policy_pack", "content", "evidence",
+    "findings", "evidence_gaps", "readiness", "limitations", "authority_boundary", "report_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.insurance_content_scan_report.v1"},
+    "created_at": {"type": "string", "minLength": 1},
+    "source_request": {"$ref": "#/$defs/artifact"},
+    "policy_pack": {"$ref": "#/$defs/artifact"},
+    "content": {"type": "array", "items": {"type": "object"}},
+    "evidence": {"type": "array", "items": {"type": "object"}},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": [
+          "finding_id", "rule_id", "category", "severity", "content_id", "content_role",
+          "json_pointer_or_line", "span_start", "span_end", "matched_length", "match_sha256",
+          "missing_evidence_types", "disposition", "source_ids", "raw_match_stored"
+        ],
+        "properties": {
+          "finding_id": {"type": "string", "pattern": "^insurance-[0-9a-f]{20}$"},
+          "rule_id": {"type": "string", "minLength": 1},
+          "category": {"type": "string", "minLength": 1},
+          "severity": {"enum": ["block", "compliance_review", "fact_check"]},
+          "content_id": {"type": "string", "minLength": 1},
+          "content_role": {"type": "string", "minLength": 1},
+          "json_pointer_or_line": {"type": "string", "minLength": 1},
+          "span_start": {"type": "integer", "minimum": 0},
+          "span_end": {"type": "integer", "minimum": 1},
+          "matched_length": {"type": "integer", "minimum": 1},
+          "match_sha256": {"$ref": "#/$defs/sha256"},
+          "missing_evidence_types": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+          "disposition": {"enum": ["blocked_expression", "manual_compliance_review", "missing_evidence", "evidence_bound_signal"]},
+          "source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "raw_match_stored": {"const": false}
+        }
+      }
+    },
+    "evidence_gaps": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["gap_id", "content_role", "severity", "missing_evidence_types", "source_ids"],
+        "properties": {
+          "gap_id": {"type": "string", "pattern": "^insurance-gap-[0-9a-f]{20}$"},
+          "content_role": {"type": "string", "minLength": 1},
+          "severity": {"enum": ["block", "compliance_review", "fact_check"]},
+          "missing_evidence_types": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+          "source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}}
+        }
+      }
+    },
+    "readiness": {
+      "type": "object", "additionalProperties": false,
+      "required": [
+        "status", "machine_scan_complete", "finding_count", "evidence_gap_count", "blocking_count",
+        "machine_gate_passed", "render_candidate_eligible", "human_release_review_required", "publish_authorized"
+      ],
+      "properties": {
+        "status": {"enum": ["blocked", "needs_compliance_review", "needs_fact_check", "review_ready_candidate"]},
+        "machine_scan_complete": {"const": true},
+        "finding_count": {"type": "integer", "minimum": 0},
+        "evidence_gap_count": {"type": "integer", "minimum": 0},
+        "blocking_count": {"type": "integer", "minimum": 0},
+        "machine_gate_passed": {"type": "boolean"},
+        "render_candidate_eligible": {"type": "boolean"},
+        "human_release_review_required": {"const": true},
+        "publish_authorized": {"const": false}
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "authority_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate_detection_only", "legal_conclusion", "automatic_rewrite", "automatic_upload", "automatic_publish"],
+      "properties": {
+        "candidate_detection_only": {"const": true},
+        "legal_conclusion": {"const": false},
+        "automatic_rewrite": {"const": false},
+        "automatic_upload": {"const": false},
+        "automatic_publish": {"const": false}
+      }
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    }
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.capability_truth.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "observed_at",
+    "policy",
+    "repository_provenance",
+    "doctor_evidence",
+    "test_evidence",
+    "source_receipts",
+    "evidence",
+    "capabilities",
+    "summary",
+    "authority_boundary",
+    "matrix_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.capability_truth.v1"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "test_freshness_hours",
+        "doctor_freshness_hours",
+        "doctor_or_tests_alone_can_promote",
+        "unknown_receipt_schema_allowed",
+        "real_media_requires_explicit_scope_evidence"
+      ],
+      "properties": {
+        "test_freshness_hours": {"type": "number", "exclusiveMinimum": 0},
+        "doctor_freshness_hours": {"type": "number", "exclusiveMinimum": 0},
+        "doctor_or_tests_alone_can_promote": {"const": false},
+        "unknown_receipt_schema_allowed": {"const": false},
+        "real_media_requires_explicit_scope_evidence": {"const": true}
+      }
+    },
+    "repository_provenance": {"$ref": "#/$defs/repository"},
+    "doctor_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact", "status", "age_hours", "fresh"],
+      "properties": {
+        "artifact": {"$ref": "#/$defs/artifact"},
+        "status": {"enum": ["fresh", "stale"]},
+        "age_hours": {"type": "number", "minimum": 0},
+        "fresh": {"type": "boolean"}
+      }
+    },
+    "test_evidence": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/test_evidence"}
+      ]
+    },
+    "source_receipts": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "evidence": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/evidence"}
+    },
+    "capabilities": {"$ref": "#/$defs/capability_map"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verified_real_media", "verified_synthetic", "handoff_only", "blocked"],
+      "properties": {
+        "verified_real_media": {"type": "integer", "minimum": 0},
+        "verified_synthetic": {"type": "integer", "minimum": 0},
+        "handoff_only": {"type": "integer", "minimum": 0},
+        "blocked": {"type": "integer", "minimum": 0}
+      }
+    },
+    "authority_boundary": {"$ref": "#/$defs/authority_boundary"},
+    "matrix_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "git_head", "worktree_dirty", "git_identity_is_semantic_gate"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "git_head": {
+          "oneOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "worktree_dirty": {"type": "boolean"},
+        "git_identity_is_semantic_gate": {"const": false}
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    },
+    "test_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "schema_version",
+        "status",
+        "passed",
+        "fresh",
+        "repository_matches",
+        "completed_at",
+        "age_hours",
+        "purpose",
+        "adapter"
+      ],
+      "properties": {
+        "artifact": {"$ref": "#/$defs/artifact"},
+        "schema_version": {"const": "windows-test-runtime-command-receipt.v3"},
+        "status": {"enum": ["fresh_pass", "stale_pass", "repository_mismatch", "failed"]},
+        "passed": {"type": "boolean"},
+        "fresh": {"type": "boolean"},
+        "repository_matches": {"type": "boolean"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "age_hours": {"type": "number", "minimum": 0},
+        "purpose": {"type": "string"},
+        "adapter": {"enum": ["pytest", "unittest"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "receipt",
+        "receipt_schema",
+        "supporting_receipts",
+        "capability_ids",
+        "validation_status",
+        "evidence_scope",
+        "revalidated_at",
+        "candidate_only",
+        "real_media_proof",
+        "provider_called",
+        "automatic_fallback_used",
+        "upload_performed",
+        "publish_performed"
+      ],
+      "properties": {
+        "evidence_id": {"type": "string", "pattern": "^evidence-[0-9a-f]{16}$"},
+        "receipt": {"$ref": "#/$defs/artifact"},
+        "receipt_schema": {"type": "string", "minLength": 1},
+        "supporting_receipts": {
+          "type": "array",
+          "maxItems": 8,
+          "items": {"$ref": "#/$defs/artifact"}
+        },
+        "capability_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "validation_status": {"const": "valid"},
+        "evidence_scope": {
+          "enum": ["synthetic_fixture", "authorized_real_media", "unclassified_local_candidate"]
+        },
+        "revalidated_at": {"type": "string", "format": "date-time"},
+        "candidate_only": {"const": true},
+        "real_media_proof": {"type": "boolean"},
+        "provider_called": {"const": false},
+        "automatic_fallback_used": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false}
+      }
+    },
+    "capability_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_candidate_pipeline",
+        "hyperframes_semantic_motion",
+        "remotion_scene_media_render",
+        "licensed_audio_mix",
+        "privacy_candidate_scan",
+        "nle_import",
+        "real_person_gold_e2e",
+        "person_background_processing",
+        "automatic_publish"
+      ],
+      "properties": {
+        "canonical_candidate_pipeline": {"$ref": "#/$defs/capability"},
+        "hyperframes_semantic_motion": {"$ref": "#/$defs/capability"},
+        "remotion_scene_media_render": {"$ref": "#/$defs/capability"},
+        "licensed_audio_mix": {"$ref": "#/$defs/capability"},
+        "speech_noise_cleanup": {"$ref": "#/$defs/capability"},
+        "privacy_candidate_scan": {"$ref": "#/$defs/capability"},
+        "privacy_dynamic_layout_avoidance": {"$ref": "#/$defs/capability"},
+        "nle_import": {"$ref": "#/$defs/capability"},
+        "real_person_gold_e2e": {"$ref": "#/$defs/capability"},
+        "person_background_processing": {"$ref": "#/$defs/capability"},
+        "basic_color_processing": {"$ref": "#/$defs/capability"},
+        "smart_reframe_candidate": {"$ref": "#/$defs/capability"},
+        "automatic_publish": {"$ref": "#/$defs/capability"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "status",
+        "contract_mode",
+        "contract_ready",
+        "runtime_ready",
+        "doctor_status",
+        "doctor_fresh",
+        "managed_tests_fresh_pass",
+        "execution_evidence_present",
+        "execution_scope",
+        "fresh_e2e_pass",
+        "real_media_proof",
+        "candidate_only",
+        "evidence_ids",
+        "reason",
+        "current_online",
+        "provider_called",
+        "automatic_fallback_used",
+        "publish_authorized"
+      ],
+      "properties": {
+        "capability_id": {"type": "string", "minLength": 1},
+        "status": {"enum": ["verified_real_media", "verified_synthetic", "handoff_only", "blocked"]},
+        "contract_mode": {"enum": ["executable", "handoff", "blocked"]},
+        "contract_ready": {"type": "boolean"},
+        "runtime_ready": {"type": "boolean"},
+        "doctor_status": {"type": "string", "minLength": 1},
+        "doctor_fresh": {"type": "boolean"},
+        "managed_tests_fresh_pass": {"type": "boolean"},
+        "execution_evidence_present": {"type": "boolean"},
+        "execution_scope": {
+          "enum": ["none", "synthetic_fixture", "authorized_real_media", "unclassified_local_candidate"]
+        },
+        "fresh_e2e_pass": {"type": "boolean"},
+        "real_media_proof": {"type": "boolean"},
+        "candidate_only": {"type": "boolean"},
+        "evidence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^evidence-[0-9a-f]{16}$"}
+        },
+        "reason": {"type": "string", "minLength": 1},
+        "current_online": {"const": false},
+        "provider_called": {"const": false},
+        "automatic_fallback_used": {"const": false},
+        "publish_authorized": {"const": false}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_online",
+        "provider_called",
+        "automatic_fallback_used",
+        "upload_performed",
+        "publish_authorized",
+        "truth_is_release_authorization"
+      ],
+      "properties": {
+        "current_online": {"const": false},
+        "provider_called": {"const": false},
+        "automatic_fallback_used": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_authorized": {"const": false},
+        "truth_is_release_authorization": {"const": false}
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "duration_s": 30.0,
+  "windows": [
+    {
+      "window_id": "main",
+      "start_s": 0.0,
+      "end_s": 30.0,
+      "structure_label": "main",
+      "structure_confidence": 0.8,
+      "descriptors": {
+        "valence": 0.6,
+        "arousal": 0.3,
+        "tension": 0.2,
+        "intimacy_scale": 0.5,
+        "warmth": 0.7,
+        "movement": 0.3,
+        "engagement": 0.3
+      },
+      "vocal_probability": 0.0,
+      "tags": ["calm", "instrumental", "warm"],
+      "loopable": true
+    }
+  ],
+  "analyzer": {
+    "id": "reviewed-manual-analysis",
+    "model": "operator-tags",
+    "version": "1",
+    "source_commit": "not-applicable",
+    "execution_location": "local",
+    "model_license": "not-applicable",
+    "automatic_fallback_used": false
+  }
+}

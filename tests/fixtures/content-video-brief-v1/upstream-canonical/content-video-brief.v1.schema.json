@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.lightcolor/content-video-brief.v1.schema.json",
+  "title": "研究证据驱动的视频创作简报",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "brief_id",
+    "content_id",
+    "mode",
+    "title",
+    "thesis",
+    "audience",
+    "target_duration_seconds",
+    "chapters",
+    "scenes",
+    "forbidden_expressions",
+    "unknowns",
+    "review_gate",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": { "const": "content-video-brief.v1" },
+    "brief_id": { "type": "string", "pattern": "^vbrief-[a-z0-9][a-z0-9-]{7,63}$" },
+    "content_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{5,79}$" },
+    "mode": { "const": "draft_only" },
+    "title": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "thesis": { "type": "string", "minLength": 1 },
+    "audience": { "type": "string", "minLength": 1 },
+    "target_duration_seconds": { "type": "integer", "minimum": 15, "maximum": 7200 },
+    "chapters": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/chapter" }
+    },
+    "scenes": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/scene" }
+    },
+    "forbidden_expressions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" }
+    },
+    "review_gate": { "$ref": "#/$defs/reviewGate" },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "$defs": {
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ref_type", "ref_id"],
+      "properties": {
+        "ref_type": { "enum": ["claim", "evidence", "source", "contradiction", "unknown"] },
+        "ref_id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "chapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chapter_id", "title", "purpose", "narration_draft", "evidence_refs"],
+      "properties": {
+        "chapter_id": { "type": "string", "pattern": "^chapter-[0-9]{2}$" },
+        "title": { "type": "string", "minLength": 1 },
+        "purpose": { "type": "string", "minLength": 1 },
+        "target_duration_seconds": { "type": "integer", "minimum": 5 },
+        "narration_draft": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } }
+      }
+    },
+    "visualLead": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lead_id", "description", "status", "evidence_role"],
+      "properties": {
+        "lead_id": { "type": "string", "pattern": "^visual-lead-[0-9]{2}$" },
+        "description": { "type": "string", "minLength": 1 },
+        "status": { "const": "candidate" },
+        "upstream_status": { "enum": ["candidate", "reviewed"] },
+        "evidence_role": { "enum": ["contextual", "explanatory", "data", "quotation", "none"] },
+        "evidence_refs": { "type": "array", "items": { "$ref": "#/$defs/evidenceRef" } },
+        "rights_note": { "type": "string" },
+        "boundary_note": { "type": "string" }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_id",
+        "chapter_ref",
+        "purpose",
+        "narration_draft",
+        "evidence_refs",
+        "visual_leads",
+        "subtitle_candidates"
+      ],
+      "properties": {
+        "scene_id": { "type": "string", "pattern": "^scene-[0-9]{2}$" },
+        "chapter_ref": { "type": "string", "pattern": "^chapter-[0-9]{2}$" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "narration_draft": { "type": "string", "minLength": 1 },
+        "evidence_refs": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/evidenceRef" } },
+        "visual_leads": { "type": "array", "items": { "$ref": "#/$defs/visualLead" } },
+        "subtitle_candidates": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+      }
+    },
+    "unknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unknown_id", "text", "handling"],
+      "properties": {
+        "unknown_id": { "type": "string", "minLength": 1 },
+        "text": { "type": "string", "minLength": 1 },
+        "handling": { "enum": ["exclude-from-narration", "label-as-unknown", "requires-review"] }
+      }
+    },
+    "reviewGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "reasons", "required_reviews", "publication_boundary"],
+      "properties": {
+        "status": { "enum": ["required", "blocked"] },
+        "reasons": { "type": "array", "items": { "type": "string" } },
+        "required_reviews": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "publication_boundary": { "const": "manual-only" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "research_id",
+        "input_schema_id",
+        "input_sha256",
+        "adapter",
+        "adapter_version",
+        "generated_at",
+        "offline_only",
+        "external_api_called",
+        "model_memory_used_as_evidence",
+        "upstream_input_files"
+      ],
+      "properties": {
+        "research_id": { "type": "string", "minLength": 1 },
+        "input_schema_id": { "type": "string", "minLength": 1 },
+        "input_sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "adapter": { "const": "research-output-to-content" },
+        "adapter_version": { "type": "string", "minLength": 1 },
+        "generated_at": { "type": "string", "format": "date-time" },
+        "manifest_ref": { "type": "string" },
+        "offline_only": { "const": true },
+        "external_api_called": { "const": false },
+        "model_memory_used_as_evidence": { "const": false },
+        "upstream_input_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path", "sha256", "status"],
+            "properties": {
+              "path": { "type": "string" },
+              "sha256": { "type": ["string", "null"], "pattern": "^[a-f0-9]{64}$" },
+              "status": { "enum": ["present", "missing"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

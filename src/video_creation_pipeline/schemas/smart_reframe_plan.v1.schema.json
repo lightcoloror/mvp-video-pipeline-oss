@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.smart_reframe_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "inputs",
+    "source_metadata",
+    "target_profile",
+    "shots",
+    "summary",
+    "renderer_handoff",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.smart_reframe_plan.v1"},
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_media", "request", "evidence"],
+      "properties": {
+        "source_media": {"type": "object"},
+        "request": {"type": "object"},
+        "evidence": {"type": "array", "items": {"type": "object"}}
+      }
+    },
+    "source_metadata": {
+      "type": "object",
+      "required": [
+        "width",
+        "height",
+        "duration_s",
+        "fps",
+        "has_audio",
+        "media_kind",
+        "mime_type"
+      ]
+    },
+    "target_profile": {
+      "type": "object",
+      "required": [
+        "profile_id",
+        "catalog_version",
+        "profile_sha256",
+        "width",
+        "height",
+        "safe_zones"
+      ]
+    },
+    "shots": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "shot_id",
+          "start_s",
+          "end_s",
+          "strategy",
+          "required_evidence_ids",
+          "preferred_evidence_ids",
+          "keyframes",
+          "interpolation",
+          "motion_policy",
+          "reason_codes",
+          "quality_estimate",
+          "candidate_only"
+        ],
+        "properties": {
+          "shot_id": {"type": "string"},
+          "start_s": {"type": "number", "minimum": 0},
+          "end_s": {"type": "number", "exclusiveMinimum": 0},
+          "strategy": {
+            "enum": [
+              "fixed_crop",
+              "tracked_crop",
+              "speaker_cut",
+              "contain",
+              "blur_pad",
+              "split_layout",
+              "roi_sequence",
+              "reject"
+            ]
+          },
+          "required_evidence_ids": {"type": "array", "items": {"type": "string"}},
+          "preferred_evidence_ids": {"type": "array", "items": {"type": "string"}},
+          "keyframes": {"type": "array", "items": {"type": "object"}},
+          "interpolation": {"enum": ["hold", "linear"]},
+          "motion_policy": {"type": "object"},
+          "reason_codes": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+          "quality_estimate": {"type": "object"},
+          "candidate_only": {"const": true}
+        }
+      }
+    },
+    "summary": {"type": "object"},
+    "renderer_handoff": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.music_timing_qa.v1",
+  "title": "口播配乐时间与可懂度质量报告",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "status", "source", "cue_plan", "segments", "ducking", "release_gate", "report_sha256"],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.music_timing_qa.v1"},
+    "status": {"enum": ["candidate_only_passed", "blocked"]},
+    "source": {"$ref": "#/$defs/artifactReference"},
+    "cue_plan": {"$ref": "#/$defs/artifactReference"},
+    "segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["segment_id", "delta_lu"],
+        "properties": {
+          "segment_id": {"type": "string", "minLength": 1},
+          "functional_role": {"type": "string"},
+          "mix_profile": {"type": "object"},
+          "source_window": {"type": "object"},
+          "analysis_reference": {"$ref": "#/$defs/artifactReference"},
+          "delta_lu": {
+            "type": "object",
+            "required": ["dialogue_lufs", "music_lufs", "delta_lu", "target_delta_lu", "status", "safe_gain_correction_db", "automatic_music_boost_applied"],
+            "properties": {
+              "dialogue_lufs": {"type": "number"},
+              "music_lufs": {"type": "number"},
+              "delta_lu": {"type": "number"},
+              "target_delta_lu": {"type": "object"},
+              "status": {"enum": ["within_target", "music_too_prominent", "music_subtle_user_review"]},
+              "safe_gain_correction_db": {"type": "number", "maximum": 0},
+              "automatic_music_boost_applied": {"const": false}
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "ducking": {
+      "type": "object",
+      "required": ["short_pause_count", "short_pause_rate_per_minute", "release_ms", "status", "recommended_release_ms", "automatic_change_allowed"],
+      "properties": {
+        "short_pause_count": {"type": "integer", "minimum": 0},
+        "short_pause_rate_per_minute": {"type": "number", "minimum": 0},
+        "release_ms": {"type": "integer", "minimum": 50, "maximum": 2000},
+        "status": {"enum": ["passed", "review_release_for_pumping"]},
+        "recommended_release_ms": {"type": "integer", "minimum": 50, "maximum": 2000},
+        "automatic_change_allowed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "release_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["technical_qa_is_publish_approval", "music_too_prominent_blocks_candidate", "subtle_music_requires_only_creative_review", "candidate_only"],
+      "properties": {
+        "technical_qa_is_publish_approval": {"const": false},
+        "music_too_prominent_blocks_candidate": {"const": true},
+        "subtle_music_requires_only_creative_review": {"const": true},
+        "candidate_only": {"const": true}
+      }
+    },
+    "report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}

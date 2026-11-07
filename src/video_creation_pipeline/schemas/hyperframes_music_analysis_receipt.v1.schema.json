@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.hyperframes_music_analysis_receipt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "source",
+    "source_audio",
+    "output_audiomap",
+    "execution",
+    "authority_boundary",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.hyperframes_music_analysis_receipt.v1"
+    },
+    "status": {"const": "completed_local_analysis"},
+    "source": {"type": "object"},
+    "source_audio": {"type": "object"},
+    "output_audiomap": {"type": "object"},
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "python_executable",
+        "analyzer",
+        "ffmpeg",
+        "returncode",
+        "log",
+        "timeout_s"
+      ],
+      "properties": {
+        "python_executable": {"type": "string", "minLength": 1},
+        "analyzer": {"type": "object"},
+        "ffmpeg": {"type": "object"},
+        "returncode": {"const": 0},
+        "log": {"type": "object"},
+        "timeout_s": {"type": "number", "exclusiveMinimum": 0}
+      }
+    },
+    "authority_boundary": {"type": "object"},
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "schema": "video_creation_pipeline.material_candidates.v1",
+  "shots": [
+    {
+      "shot_id": "镜头-001",
+      "candidates": [
+        {
+          "asset_id": "素材-成品近景-01",
+          "path": "assets/成品近景01.mp4",
+          "confidence": 0.86,
+          "score_components": {
+            "semantic": 0.9,
+            "visual": 0.82,
+            "quality": 0.87
+          },
+          "source_media_id": "拍摄批次-A",
+          "room_id": "工作台",
+          "composition_id": "正面近景",
+          "reason": "语义、景别和清晰度匹配"
+        }
+      ]
+    },
+    {
+      "shot_id": "镜头-002",
+      "candidates": [
+        {
+          "asset_id": "素材-功能演示-02",
+          "path": "assets/功能演示02.mp4",
+          "confidence": 0.79,
+          "score_components": {
+            "semantic": 0.88,
+            "visual": 0.72,
+            "quality": 0.77
+          },
+          "source_media_id": "拍摄批次-B",
+          "room_id": "厨房",
+          "composition_id": "侧面中景",
+          "reason": "动作完整，构图与上一镜头不同"
+        }
+      ]
+    },
+    {
+      "shot_id": "镜头-003",
+      "candidates": [
+        {
+          "asset_id": "素材-包装全景-03",
+          "path": "assets/包装全景03.mp4",
+          "confidence": 0.58,
+          "score_components": {
+            "semantic": 0.61,
+            "visual": 0.56,
+            "quality": 0.57
+          },
+          "source_media_id": "拍摄批次-C",
+          "room_id": "工作台",
+          "composition_id": "俯拍全景",
+          "reason": "主体较小，默认阈值下应标记缺素材"
+        }
+      ]
+    }
+  ]
+}

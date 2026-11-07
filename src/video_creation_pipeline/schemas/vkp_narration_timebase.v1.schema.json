@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lightcoloror.github.io/video-knowledge-pipeline/schemas/narration-timebase.v1.schema.json",
+  "title": "VKP Narration Timebase v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "contract_version",
+    "closure_run_id",
+    "status",
+    "downstream_ready",
+    "candidate_only",
+    "review_required",
+    "source_identity_sha256",
+    "artifacts",
+    "duration_ms",
+    "timestamp_basis",
+    "sentence_segments",
+    "semantic_segments",
+    "chapters",
+    "long_video_resume",
+    "human_review",
+    "projection_resume",
+    "downstream_time_authority",
+    "upstream_version_and_invalidation",
+    "review_gaps",
+    "operator_boundary",
+    "contract_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_knowledge_pipeline.narration_timebase.v1"},
+    "contract_version": {"const": "1.0.0"},
+    "closure_run_id": {"type": "string", "minLength": 1, "maxLength": 120},
+    "status": {"enum": ["complete_draft", "degraded_draft"]},
+    "downstream_ready": {"type": "boolean"},
+    "candidate_only": {"const": true},
+    "review_required": {"const": true},
+    "source_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "duration_ms": {"type": "integer", "minimum": 1},
+    "artifacts": {"type": "object"},
+    "timestamp_basis": {
+      "type": "object",
+      "required": ["timestamp_basis", "origin", "unit", "numerator", "denominator", "tolerance_ms", "adapter_offset_applied_ms", "offset_application"],
+      "properties": {
+        "timestamp_basis": {"const": "absolute_media_milliseconds"},
+        "origin": {"const": "media_start"},
+        "unit": {"const": "milliseconds"},
+        "numerator": {"const": 1},
+        "denominator": {"const": 1000},
+        "tolerance_ms": {"type": "integer", "minimum": 0, "maximum": 1000},
+        "fps": {"type": ["number", "null"], "exclusiveMinimum": 0},
+        "sample_rate_hz": {"type": ["integer", "null"], "minimum": 1},
+        "adapter_offset_applied_ms": {"const": 0},
+        "offset_application": {"const": "upstream_already_applied_once"}
+      },
+      "additionalProperties": false
+    },
+    "sentence_segments": {"type": "array", "items": {"$ref": "#/$defs/timedSegment"}},
+    "semantic_segments": {"type": "array", "items": {"$ref": "#/$defs/timedSegment"}},
+    "chapters": {"type": "array", "items": {"$ref": "#/$defs/timedSegment"}},
+    "long_video_resume": {"type": "object"},
+    "human_review": {"type": "object"},
+    "projection_resume": {"type": "object"},
+    "downstream_time_authority": {"type": "object"},
+    "upstream_version_and_invalidation": {"type": "object"},
+    "review_gaps": {"type": "array", "items": {"type": "object"}},
+    "operator_boundary": {"type": "object"},
+    "contract_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timedSegment": {
+      "type": "object",
+      "required": ["segment_id", "start_ms", "end_ms", "source_index", "timestamp_basis"],
+      "properties": {
+        "segment_id": {"type": "string", "minLength": 1},
+        "start_ms": {"type": "integer", "minimum": 0},
+        "end_ms": {"type": "integer", "minimum": 0},
+        "source_index": {"type": "integer", "minimum": 0},
+        "timestamp_basis": {"const": "absolute_media_milliseconds"},
+        "human_boundary_confirmed": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

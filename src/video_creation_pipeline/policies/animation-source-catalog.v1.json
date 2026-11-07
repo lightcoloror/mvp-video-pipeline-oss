@@ -1,0 +1,2215 @@
+{
+  "schema": "video_creation_pipeline.animation_source_catalog.v1",
+  "version": "1.0.1-share",
+  "updated_at": "2026-10-27",
+  "actor": "Codex (GPT-6)",
+  "purpose": "Explicit semantic source recommendations inside the existing scene route; no automatic execution.",
+  "existing_consumers": {
+    "source_catalog": "python scripts/semantic_editorial.py animation-catalog",
+    "scene_recommendation": "python scripts/semantic_editorial.py object-scene-route --help",
+    "rendering": "Use an explicitly verified renderer and existing time-bound media contracts."
+  },
+  "techniques": {
+    "diagram": {
+      "label": "关系、权限与流程图",
+      "projects": [
+        "diagram-design",
+        "anything2explainer",
+        "anatomy"
+      ],
+      "checks": [
+        "节点、边、允许/阻断、隔离与审计必须有明确含义",
+        "数据归属与流向按事实逐条核对；不得把许可移动画成原始数据汇集",
+        "检查完整画面、接缝、事件边界和过渡中间帧"
+      ]
+    },
+    "anatomy_mechanism": {
+      "label": "器件结构与机构动作",
+      "projects": [
+        "anatomy",
+        "threejs"
+      ],
+      "checks": [
+        "同一状态同时驱动按压接触、连线、灯与读数",
+        "核对接触临界点前后、重复与乱序取帧"
+      ]
+    },
+    "algorithm_trace": {
+      "label": "算法与路径搜索",
+      "projects": [
+        "pathcraft",
+        "anything2explainer",
+        "canvas2d"
+      ],
+      "checks": [
+        "每步状态来自真实 solver trace 或明确标注的示意，保留候选集和评分语义",
+        "预先计算好的最终路径逐段出现不等于搜索过程",
+        "核对每步前沿、终止条件与答案路径"
+      ]
+    },
+    "collage": {
+      "label": "纸质拼贴与剪纸",
+      "projects": [
+        "paper-cut",
+        "mg-styles-15"
+      ],
+      "checks": [
+        "先完整静帧，拆少量活动层，核对静态重建，再安排动作",
+        "检查 alpha 白边、投影、相机、引线与中文标签依赖",
+        "模型画字不作为精确中文标签"
+      ]
+    },
+    "sticker": {
+      "label": "贴纸与综艺贴图",
+      "projects": [
+        "mg-styles-15",
+        "paper-cut"
+      ],
+      "checks": [
+        "核对素材白边、阴影、落位和缩放的一体关系",
+        "使用现有 expressive_captions 或完整原镜头，检查中文实际字宽与留白"
+      ]
+    },
+    "kinetic_type": {
+      "label": "字体与排版动效",
+      "projects": [
+        "mg-styles-15",
+        "open-design"
+      ],
+      "checks": [
+        "字体加载后测量最长中文文案，不用英文平均字宽",
+        "分别检查 16:9/9:16 的文本边界、关键停留帧与安全区"
+      ]
+    },
+    "continuous_transform": {
+      "label": "一镜到底与连续变形",
+      "projects": [
+        "onetake",
+        "mg-styles-15",
+        "canvas2d"
+      ],
+      "checks": [
+        "列出形状、位置与相机的入出状态，调整段长后更新接缝映射",
+        "边界集合必须非空，核对前后帧与乱序采样",
+        "不以硬切隐藏未实现的形态过渡"
+      ]
+    },
+    "character_performance": {
+      "label": "角色动作与情绪",
+      "projects": [
+        "claudeanimationbase",
+        "pdoomvideo",
+        "p5js",
+        "p5brush"
+      ],
+      "checks": [
+        "共享角色定义；动机、动作与反应有因果次序",
+        "核对关键姿态、动作弧线、角色一致性和章节接缝"
+      ]
+    },
+    "song_pv": {
+      "label": "完整歌曲 PV",
+      "projects": [
+        "pdoomvideo",
+        "claudeanimationbase",
+        "hypit"
+      ],
+      "checks": [
+        "统一完整音轨；全局歌曲时间映射到章节局部时间",
+        "章节各绘完整画面，共享角色由统一层维护",
+        "检查角色一致性、动作弧线、章节接缝、完整音轨与 contact sheet"
+      ]
+    },
+    "watercolor": {
+      "label": "水彩与水墨",
+      "projects": [
+        "p5js",
+        "p5brush",
+        "claudeanimationbase"
+      ],
+      "checks": [
+        "固定随机种子与笔触参数；核对 WEBGL 和依赖版本",
+        "同一帧重复采样应可复现；核对纸感与静帧配色连续性"
+      ]
+    },
+    "illustration": {
+      "label": "Canvas 2D 插画",
+      "projects": [
+        "canvas2d",
+        "mg-styles-15"
+      ],
+      "checks": [
+        "先确定完整构图、层级与局部对象，再投影到帧时间"
+      ]
+    },
+    "sketch": {
+      "label": "粗线与手绘草图",
+      "projects": [
+        "roughjs",
+        "canvas2d"
+      ],
+      "checks": [
+        "固定随机种子，线条抖动表达材质而不是跨帧闪烁"
+      ]
+    },
+    "three_d": {
+      "label": "三维空间与机构",
+      "projects": [
+        "threejs",
+        "blender"
+      ],
+      "checks": [
+        "三维表达实际空间或机构关系；先复用已有 stage_timeline/slider_crank 组件",
+        "检查遮挡、投影、相机、坐标与采样时间"
+      ]
+    },
+    "clay": {
+      "label": "黏土材质动画",
+      "projects": [
+        "blender",
+        "threejs"
+      ],
+      "checks": [
+        "材质、灯光、形变和模型须在现有 Blender 模块基础上适配",
+        "检查法线、阴影、接触、相机与渲染资源预算"
+      ]
+    },
+    "mathematics": {
+      "label": "数学几何与公式推演",
+      "projects": [
+        "manim"
+      ],
+      "checks": [
+        "公式与几何步骤来自可验证推导；保留对象身份",
+        "精确曲线和变形先查现有 Manim 模块；检查等式与中间状态"
+      ]
+    },
+    "whiteboard": {
+      "label": "板书与笔迹揭示",
+      "projects": [
+        "manim",
+        "roughjs"
+      ],
+      "checks": [
+        "笔迹顺序与讲解一致，不裁掉公式限定条件",
+        "仅复用帧输出，保持既有 FFmpeg 出口"
+      ]
+    },
+    "data_chart": {
+      "label": "数据与图表动画",
+      "projects": [
+        "anything2explainer"
+      ],
+      "checks": [
+        "复用已有 data_visualization contract/adapter，绑定真实数据、单位与来源",
+        "坐标、分母、时间区间与颜色含义一致，动画不得伪造变化"
+      ]
+    },
+    "interactive_web": {
+      "label": "网页交互与事件动画",
+      "projects": [
+        "motion-web",
+        "anatomy",
+        "pathcraft"
+      ],
+      "checks": [
+        "检查鼠标、滚轮、重置、窗口变化与无交互状态",
+        "不要求无关口播、字幕与 NLE；交互展示不等于视频 seek"
+      ]
+    },
+    "narration": {
+      "label": "口播与语义 B-roll",
+      "projects": [
+        "hypit",
+        "leaderai-media-toolkit",
+        "anything2explainer"
+      ],
+      "checks": [
+        "原声及当前词/句锚点是时间证据，不按汉字数估时",
+        "音画各自提供信息；保留否定词、限定与原始片段映射"
+      ]
+    },
+    "image_motion": {
+      "label": "照片局部运动",
+      "projects": [
+        "paper-cut",
+        "claude-code-video-toolkit"
+      ],
+      "checks": [
+        "静帧构图先通过，移动范围保留主体与边界",
+        "复用帧输出和既有单一编码出口，禁止默认远端配音"
+      ]
+    },
+    "editing": {
+      "label": "可编辑工程与交付",
+      "projects": [
+        "openfilm",
+        "hypit",
+        "filmcraft",
+        "opencut"
+      ],
+      "checks": [
+        "区分参考实现、现有 handoff 与真正原生工程",
+        "工程可重开、素材可定位、修改能重渲染且原声与时间映射一致",
+        "OpenCut rewrite 不按路线图宣称时间线已实现"
+      ]
+    },
+    "rendering": {
+      "label": "渲染与采样",
+      "projects": [
+        "hyperframes",
+        "remotion",
+        "leaderai-media-toolkit",
+        "multiplane",
+        "inkling"
+      ],
+      "checks": [
+        "优先现有 HyperFrames/Remotion outlet；新渲染器先复核依赖与受控样片",
+        "性能比较固定场景、分辨率、帧率、快门与硬件；作者性能数字保留来源边界"
+      ]
+    },
+    "style_exploration": {
+      "label": "风格样片与提示词参考",
+      "projects": [
+        "mg-styles-15",
+        "paper-cut",
+        "skillry"
+      ],
+      "checks": [
+        "完整静帧与镜头源码优先；广泛形容词不代替具体构图、颜色、节奏与动作",
+        "风格请求不授权远程生成或素材上传"
+      ]
+    },
+    "native_generated_collage": {
+      "label": "原生生成式拼贴参考",
+      "projects": [
+        "gbro-collage-broll",
+        "minimax-paper-collage"
+      ],
+      "checks": [
+        "仅参考方法；必须另外确认供应商、素材上传及费用授权",
+        "精确文字、连续身份与可编辑图层不能由生成结果保证"
+      ]
+    }
+  },
+  "projects": [
+    {
+      "id": "mg-styles-15",
+      "name": "mg-styles-15",
+      "layer": "shot",
+      "repository": "https://github.com/Vincentwei1021/mg-styles-15",
+      "source_commit": "49052d80bfaf9fa8412cc9710530e5e95a3b8d8c",
+      "inputs": "time seconds + scene objects/cues + fonts",
+      "outputs": "SVG/DOM frame via window.renderAt(t); optional sticker assets",
+      "dependencies": [
+        "Browser",
+        "local fonts",
+        "Pillow/rembg only for sticker preprocessing"
+      ],
+      "use_when": "Reuse complete shot composition and state transition with provenance",
+      "not_suitable_for": "Universal style component API; all 15 styles claimed tested",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "selected_shot_renderAt",
+      "constraints": [
+        "Complete authored shots, not generic parameterized templates; adapt objects/camera/fonts together.",
+        "Only selected flat-vector frames tested with substituted fonts; no 15-style runtime claim.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "demos/01-flat-vector/index.html",
+          "commit": "49052d80bfaf9fa8412cc9710530e5e95a3b8d8c",
+          "symbols": [
+            "NS",
+            "S",
+            "QS",
+            "NOLINK",
+            "C",
+            "el",
+            "G",
+            "f3",
+            "tf",
+            "vis",
+            "rng",
+            "clamp",
+            "lerp",
+            "inv",
+            "E",
+            "bezier",
+            "spring",
+            "springV",
+            "kick",
+            "pop",
+            "hump",
+            "cues",
+            "FR",
+            "cv"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "demos/01-flat-vector/cues.json",
+          "commit": "49052d80bfaf9fa8412cc9710530e5e95a3b8d8c",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "demos/19-paperclip/tools/stickers.py",
+          "commit": "49052d80bfaf9fa8412cc9710530e5e95a3b8d8c",
+          "symbols": [
+            "disk",
+            "clean_alpha",
+            "cutout",
+            "card",
+            "unlabel"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "pdoomvideo",
+      "name": "PDoomVideo",
+      "layer": "workflow",
+      "repository": "https://github.com/JohnHeibel/PDoomVideo",
+      "source_commit": "fa546a38092e75f2b079e6a86d6abc54dd525d17",
+      "inputs": "song/local time + chapter duration + shared cast",
+      "outputs": "full frame/chapter scene",
+      "dependencies": [
+        "p5.js",
+        "p5.brush",
+        "font and asset closure"
+      ],
+      "use_when": "Chapter ownership; complete-frame contract; performance-heavy story scenes",
+      "not_suitable_for": "Chinese forced alignment; generic automatic film completion",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "chapter_local_time",
+      "constraints": [
+        "Keep shared character definitions, chapter-owned complete backgrounds and global-to-local time.",
+        "Approximate English karaoke is not Chinese word alignment.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "src/timeline.js",
+          "commit": "fa546a38092e75f2b079e6a86d6abc54dd525d17",
+          "symbols": [
+            "CH",
+            "chapter",
+            "WIPES",
+            "WIPE_TR",
+            "METER",
+            "pdoomAt",
+            "LOOPS",
+            "drawWorld",
+            "placeholder",
+            "cornerMeter",
+            "WIPE_COLS",
+            "wipe",
+            "karaoke",
+            "drawKaraokeText"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "src/ch/c01_lab.js",
+          "commit": "fa546a38092e75f2b079e6a86d6abc54dd525d17",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "ANIMATION_GUIDE.md",
+          "commit": "fa546a38092e75f2b079e6a86d6abc54dd525d17",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "claudeanimationbase",
+      "name": "ClaudeAnimationBase",
+      "layer": "shot",
+      "repository": "https://github.com/JohnHeibel/ClaudeAnimationBase",
+      "source_commit": "0ac8bf2b31942376cb6b8c4074715595d512acd2",
+      "inputs": "absolute time + character action/emotion state",
+      "outputs": "posed character scene and render pipeline",
+      "dependencies": [
+        "p5.js",
+        "p5.brush",
+        "browser",
+        "FFmpeg"
+      ],
+      "use_when": "Readable action-reaction-hold and character performance",
+      "not_suitable_for": "Using existence-only frame cache as source-valid cache; unchecked clip FFmpeg exit",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "pure_time_scene",
+      "constraints": [
+        "Recheck frame cache against source changes; clip encode path ignores return code in reviewed source.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "src/core.js",
+          "commit": "0ac8bf2b31942376cb6b8c4074715595d512acd2",
+          "symbols": [
+            "W",
+            "BPM",
+            "TAU",
+            "PAL",
+            "clamp",
+            "lerp",
+            "ease",
+            "easeOut",
+            "backOut",
+            "hash",
+            "bpOf",
+            "jit",
+            "boilSeed",
+            "seg",
+            "frac",
+            "beatN",
+            "pulse",
+            "pulse2",
+            "wob",
+            "easeIn",
+            "elasticOut",
+            "kf",
+            "mixCol",
+            "shakeXY"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "src/scenes/demo.js",
+          "commit": "0ac8bf2b31942376cb6b8c4074715595d512acd2",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "render.mjs",
+          "commit": "0ac8bf2b31942376cb6b8c4074715595d512acd2",
+          "symbols": [
+            "args",
+            "CHROMES",
+            "playwrightChromes",
+            "CHROME",
+            "fps",
+            "run",
+            "times",
+            "span",
+            "fields",
+            "ANGLE",
+            "gpu",
+            "sandbox",
+            "browser",
+            "openPage",
+            "frameOf",
+            "lengthOf"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "onetake",
+      "name": "OneTake",
+      "layer": "shot",
+      "repository": "https://github.com/feitangyuan/onetake",
+      "source_commit": "013a61ac8d98883c73733f59c06e49e9ba444f14",
+      "inputs": "monotonic time anchors; motion parameters; precomputed simulation",
+      "outputs": "numeric transforms; camera samples; timeWarp mapping",
+      "dependencies": [
+        "JavaScript/browser",
+        "Python checks optional"
+      ],
+      "use_when": "Same object/space across stages; explicit continuous temporal mapping",
+      "not_suitable_for": "Assuming free repo includes showcase film sources; zero-boundary score as visual pass",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "precomputed_then_sampled",
+      "constraints": [
+        "Free repository does not include all showcase film source.",
+        "Zero evaluable boundaries still yield continuity=1; require nonempty boundary evidence.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "lib/motion.js",
+          "commit": "013a61ac8d98883c73733f59c06e49e9ba444f14",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "lib/ui_kit.js",
+          "commit": "013a61ac8d98883c73733f59c06e49e9ba444f14",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "scripts/probe.py",
+          "commit": "013a61ac8d98883c73733f59c06e49e9ba444f14",
+          "symbols": [
+            "comp_url",
+            "collect_page",
+            "collect",
+            "_weight",
+            "_jaccard",
+            "short",
+            "continuity",
+            "moves_of",
+            "curves",
+            "plot_speeds",
+            "report",
+            "framing",
+            "main"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "paper-cut",
+      "name": "Paper-Cut",
+      "layer": "workflow",
+      "repository": "https://github.com/aijiduonadegou/Paper-Cut",
+      "source_commit": "4b77204bcd609156cd10037bf82d615ccc100abd",
+      "inputs": "hero frame + limited layers + assembly/project data",
+      "outputs": "composition/layer contract and structural validation",
+      "dependencies": [
+        "Python validator",
+        "existing HTML/HyperFrames outlet"
+      ],
+      "use_when": "Approve full composition before a few cutout motions",
+      "not_suitable_for": "Aesthetic acceptance from validator alone; new orchestration pipeline",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Hero frame, 2-4 active layers, reconstruction check, then motion.",
+        "Structure validator does not establish visual quality.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "references/image-led-production.md",
+          "commit": "4b77204bcd609156cd10037bf82d615ccc100abd",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "references/hyperframes-assembly.md",
+          "commit": "4b77204bcd609156cd10037bf82d615ccc100abd",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "scripts/validate_project.py",
+          "commit": "4b77204bcd609156cd10037bf82d615ccc100abd",
+          "symbols": [
+            "load",
+            "main"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "gbro-collage-broll",
+      "name": "GBRO collage B-roll",
+      "layer": "native_generation_reference",
+      "repository": "https://github.com/pyang5166/gbro-collage-broll",
+      "source_commit": "a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91",
+      "inputs": "visual metaphor + image/video references",
+      "outputs": "remote generated B-roll (disabled by route)",
+      "dependencies": [
+        "remote model provider",
+        "Files upload",
+        "FFmpeg"
+      ],
+      "use_when": "Borrow 3-6 object metaphor and stable final composition method",
+      "not_suitable_for": "Precise authorization semantics; automatic upload and original-audio fallback",
+      "adoption": "reference_only",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Default flow uploads assets and uses remote generation; reference only, no automatic fallback.",
+        "Failed audio stripping can return original audio.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "scripts/generate_video.py",
+          "commit": "a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91",
+          "symbols": [
+            "get_api_key",
+            "is_file_uri",
+            "normalize_file_uri",
+            "slugify",
+            "parse_and_validate_duration",
+            "argparse_duration_type",
+            "resolve_or_upload_asset",
+            "download_video_file",
+            "generate_video",
+            "run_job",
+            "main"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "scripts/upload_file.py",
+          "commit": "a1a4ee2e2abf7d44e460026b706d0c72c2cf8a91",
+          "symbols": [
+            "get_api_key",
+            "detect_mime_type",
+            "upload_file",
+            "wait_for_active",
+            "main"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "minimax-paper-collage",
+      "name": "MiniMax paper collage",
+      "layer": "native_generation_reference",
+      "repository": "https://github.com/MiniMax-AI/MiniMax-H3",
+      "source_commit": "d21241f0a4b3acbb34c97dae47fa417b7065e438",
+      "inputs": "single visual claim + approved still and color field",
+      "outputs": "native-Hub prompt/workflow for stop-motion collage",
+      "dependencies": [
+        "MiniMax native Hub image/video/audio tools"
+      ],
+      "use_when": "Base-main-secondary object order, tactile SFX, final hold policy",
+      "not_suitable_for": "Local renderer, precise labels/layers, raw provider integration",
+      "adoption": "reference_only",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Requires native Hub tools; not a portable Codex runtime.",
+        "Exact text and editable layers require separate deterministic authoring.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "skills/paper-collage-explainer-generator/SKILL.md",
+          "commit": "d21241f0a4b3acbb34c97dae47fa417b7065e438",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "anything2explainer",
+      "name": "anything2explainer",
+      "layer": "shot",
+      "repository": "https://github.com/Vincentwei1021/anything2explainer",
+      "source_commit": "735c79c8724e897e8971cd59dde7e5aa11e4d6ce",
+      "inputs": "typed shot content + Remotion frame + shared UI",
+      "outputs": "Chinese mechanism shot and approximate text-fit helper",
+      "dependencies": [
+        "React",
+        "Remotion",
+        "relative UI/font dependency closure"
+      ],
+      "use_when": "Adapt complete Chinese explanatory shots and revision recipes",
+      "not_suitable_for": "Blindly moving SC18 without shared UI; hardcoded timing as narration alignment",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "remotion_frame",
+      "constraints": [
+        "Use complete TSX/import closure and narration/revision records.",
+        "SC18 visualizes an authored HNSW route; it is not a verified live solver.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "examples/rag/shots_src/G4/SC18.tsx",
+          "commit": "735c79c8724e897e8971cd59dde7e5aa11e4d6ce",
+          "symbols": [
+            "F0",
+            "B_COL",
+            "LX",
+            "DOTS",
+            "SCAN",
+            "HX",
+            "LAYER_Y",
+            "LAYER_T0",
+            "PATH_NODES",
+            "COUNTS",
+            "toXY",
+            "LAYER_PTS",
+            "LAYER_EDGES",
+            "SEGS",
+            "PATH_END",
+            "TARGET",
+            "planePts",
+            "SC18"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "template/src/common/textfit.ts",
+          "commit": "735c79c8724e897e8971cd59dde7e5aa11e4d6ce",
+          "symbols": [
+            "EM_HEAVY",
+            "EM_WIDE",
+            "EM_ORB",
+            "EM_TECH",
+            "textEm",
+            "charCount",
+            "textW",
+            "fitSize"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "motion-web",
+      "name": "motion-web",
+      "layer": "shot",
+      "repository": "https://github.com/feitangyuan/motion-web",
+      "source_commit": "5f4e40f1253e11e28850d08dce28b9b7e4320115",
+      "inputs": "mouse + incremental Verlet state + browser frame",
+      "outputs": "interactive typography/web effect",
+      "dependencies": [
+        "browser",
+        "state reset or precomputed simulation"
+      ],
+      "use_when": "Reference interaction/visual vocabulary; web-specific output",
+      "not_suitable_for": "Arbitrary-time deterministic video export without state adapter",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "interactive",
+        "still"
+      ],
+      "clock": "stateful_interactive",
+      "constraints": [
+        "Mouse/Verlet accumulated state needs recorded input and precomputation for deterministic video.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "cases/char-curtain/index.html",
+          "commit": "5f4e40f1253e11e28850d08dce28b9b7e4320115",
+          "symbols": [
+            "SOURCE",
+            "main",
+            "CHARS",
+            "COLS",
+            "ROWS",
+            "ROW_SPACING",
+            "CARD_W",
+            "GRAVITY",
+            "DRAG",
+            "SOLVER_PASSES",
+            "HOME_PULL",
+            "MOUSE_RADIUS",
+            "MOUSE_FORCE",
+            "MOUSE_Y_BIAS",
+            "BOUNCE",
+            "SPEED_FOR_FULL_FADE",
+            "GUST_PER_NOTCH",
+            "GUST_DECAY",
+            "Node",
+            "Link",
+            "canvas",
+            "ctx",
+            "nodes",
+            "links"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "data/visual-bank.json",
+          "commit": "5f4e40f1253e11e28850d08dce28b9b7e4320115",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "openfilm",
+      "name": "OpenFilm",
+      "layer": "editor",
+      "repository": "https://github.com/openfilm/openfilm",
+      "source_commit": "ea8cf6dcbb367065ce16d75e9784dbe2ab3e013c",
+      "inputs": "film document/selector override + timed HTML scene",
+      "outputs": "persisted JSON document and DOM overrides",
+      "dependencies": [
+        "Node.js ESM",
+        "browser DOM for overrides"
+      ],
+      "use_when": "Editable shot metadata/overrides while keeping source scene",
+      "not_suitable_for": "Assuming it replaces story design or existing canonical timeline",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "DOM clip IDs and selectors bind edits; Canvas internals do not become editable layers automatically.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "packages/openfilm/src/film-doc.mjs",
+          "commit": "ea8cf6dcbb367065ce16d75e9784dbe2ab3e013c",
+          "symbols": [
+            "FILM_FILE",
+            "DEFAULT_STAGE",
+            "SPEED_MIN",
+            "SPEED_MAX",
+            "TRIM_EPS",
+            "STILL_EXTENSIONS",
+            "isStill",
+            "soundRole",
+            "ADDRESS",
+            "srcHref",
+            "srcPath",
+            "isPage",
+            "SOUND_EXTENSIONS",
+            "VIDEO_EXTENSIONS",
+            "clipKind",
+            "kindOf",
+            "hasPicture",
+            "isObject",
+            "isFinite",
+            "isPositive",
+            "pair",
+            "CLIP_FIELDS",
+            "KEPT_ATTRIBUTE",
+            "KEPT_TRACK_ATTRIBUTE"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "packages/openfilm/src/overrides.mjs",
+          "commit": "ea8cf6dcbb367065ce16d75e9784dbe2ab3e013c",
+          "symbols": [
+            "override",
+            "linesOf",
+            "restore"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "hypit",
+      "name": "Hypit",
+      "layer": "editor",
+      "repository": "https://github.com/hypit-ai/hypit",
+      "source_commit": "e26d9142fd8a6f78bf4f3cdb800d6205f4ecca16",
+      "inputs": "speech evidence sample units + token IDs + original transcript",
+      "outputs": "word time evidence, narrative anchor records",
+      "dependencies": [
+        "TypeScript",
+        "provider-specific ASR separate"
+      ],
+      "use_when": "Preserve word identities and factual timing during edit",
+      "not_suitable_for": "Automatically installing/running WhisperX; manufacturing missing boundaries",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "source_sample_anchors",
+      "constraints": [
+        "Missing sample/time evidence must remain missing; reject phrase timing without anchors.",
+        "WhisperX preparation may download models; local-files-only inference is a separate stage.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "packages/speech-evidence/src/transcript-document.ts",
+          "commit": "e26d9142fd8a6f78bf4f3cdb800d6205f4ecca16",
+          "symbols": [
+            "SAMPLE_RATE",
+            "seconds",
+            "transcriptDocumentFromEvidence",
+            "assert",
+            "parseTranscriptWords",
+            "wordsAt",
+            "searchable",
+            "phraseRanges"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "packages/script/src/narrative.ts",
+          "commit": "e26d9142fd8a6f78bf4f3cdb800d6205f4ecca16",
+          "symbols": [
+            "turnForRegion",
+            "projectCaption",
+            "captionDocument",
+            "narrativeCaptionBinding",
+            "captionDocumentValue",
+            "segmentSerializations",
+            "narrativeSegmentExcerptValue",
+            "narrativeDialogueTextValue",
+            "narrativeSpeechTextValue",
+            "narrativeSelectionValue",
+            "narrativeMomentValue",
+            "narrativeValue",
+            "serializeSpeech",
+            "serializeDialogue",
+            "serializeCaption"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "leaderai-media-toolkit",
+      "name": "LeaderAI media toolkit",
+      "layer": "renderer",
+      "repository": "https://github.com/AzenYes/leaderai-media-toolkit",
+      "source_commit": "f7445d9f900b1189a9a257040b934cbe98f51a41",
+      "inputs": "seek(t,frameT) HTML scene; timed words + explicit local font",
+      "outputs": "partial render frames/video; pixel-width subtitle segmentation",
+      "dependencies": [
+        "Playwright/browser",
+        "FFmpeg",
+        "Python font measurements"
+      ],
+      "use_when": "Local region rerender, font readiness and timed subtitle methods",
+      "not_suitable_for": "Default font fetch/Whisper model download; replacing approved narration with silent text",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "seek_time_frame_time",
+      "constraints": [
+        "Font choices may fetch the whole manifest; workers need bounded local budget.",
+        "Use measured font widths and original audio anchors; ASR model availability must be checked separately.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "skills/lead-knowledge-animation/scripts/render.mjs",
+          "commit": "f7445d9f900b1189a9a257040b934cbe98f51a41",
+          "symbols": [
+            "a",
+            "html",
+            "query",
+            "probe",
+            "meta",
+            "fps",
+            "scale",
+            "N",
+            "shutter",
+            "t0",
+            "f0",
+            "frames",
+            "workers",
+            "out",
+            "tmp",
+            "timeOf",
+            "total",
+            "started",
+            "allErrors",
+            "vf",
+            "args",
+            "r"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "skills/lead-knowledge-animation/scripts/_pw.mjs",
+          "commit": "f7445d9f900b1189a9a257040b934cbe98f51a41",
+          "symbols": [
+            "loadPlaywright",
+            "parseArgs",
+            "fileUrl",
+            "buildUrl",
+            "FONT_ERR",
+            "loadPage",
+            "openFilm",
+            "shot",
+            "diffPng",
+            "ffmpegBin"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "skills/lead-media-edit/scripts/make_subtitles.py",
+          "commit": "f7445d9f900b1189a9a257040b934cbe98f51a41",
+          "symbols": [
+            "ts_ass",
+            "ts_srt",
+            "Metric",
+            "asr_chars",
+            "align",
+            "tokenize",
+            "segment_sentence",
+            "clean_display",
+            "main"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "multiplane",
+      "name": "Multiplane",
+      "layer": "renderer",
+      "repository": "https://github.com/LBEILC/Multiplane",
+      "source_commit": "e20b8451703a4ecfd79ca41f380b9d79d2fb926f",
+      "inputs": "time-addressable SHOT.render(t) frames with shutter samples/cuts",
+      "outputs": "motion-blurred composited frames and video",
+      "dependencies": [
+        "Node >=24",
+        "Chrome",
+        "post-install browser download"
+      ],
+      "use_when": "Only investigate if measured existing-renderer gap requires blur or depth quality",
+      "not_suitable_for": "Unverified 0.3.7 benchmark as this machine result; silent engine replacement",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Reviewed 0.3.14 requires Node >=24 and postinstall browser download.",
+        "Author 0.3.7 benchmark is not local verification; keep scene, shutter, hardware and linear-light reference fixed.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "src/post.mjs",
+          "commit": "e20b8451703a4ecfd79ca41f380b9d79d2fb926f",
+          "symbols": [
+            "postArgs",
+            "scaleArgs",
+            "DEFAULT_ADAPTIVE_BLUR",
+            "resolveScale",
+            "imageDifference",
+            "resizeImage",
+            "resolveQuality",
+            "resolvePost",
+            "localMotionDifference",
+            "blurSampleReport",
+            "sampleTimes",
+            "nestedSampleGrids",
+            "linear",
+            "transfer",
+            "transferTable",
+            "linearToByte",
+            "averageLinear",
+            "grainTables",
+            "grainTable",
+            "addGrain",
+            "createPostCapture"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "package.json",
+          "commit": "e20b8451703a4ecfd79ca41f380b9d79d2fb926f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "tools/install-browser.mjs",
+          "commit": "e20b8451703a4ecfd79ca41f380b9d79d2fb926f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "anatomy",
+      "name": "Anatomy",
+      "layer": "shot",
+      "repository": "https://github.com/wheresryan22/anatomy",
+      "source_commit": "1482e8469b0a9e0d8cc18ea2740a01423d29ae80",
+      "inputs": "isometric objects + single mechanical state",
+      "outputs": "SVG geometry, matching labels, mechanism pose",
+      "dependencies": [
+        "Node/ESM kit",
+        "browser rAF simulation"
+      ],
+      "use_when": "Physical structure/condition-dependent state and occlusion explanation",
+      "not_suitable_for": "Unmodified dt integration as seek(t); abstract governance implied as real device",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "interactive",
+        "still"
+      ],
+      "clock": "stateful_interactive",
+      "constraints": [
+        "One state must drive button contact, circuit and lamp; rAF spring state is not video seek.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "kit/iso-kit.mjs",
+          "commit": "e9488296a44211c42701ff71705b7901470ec78f",
+          "symbols": [
+            "AZIMUTH",
+            "ELEVATION",
+            "SHADES",
+            "RADIANS",
+            "UNIT",
+            "cameraOf",
+            "iso",
+            "towardViewer",
+            "depthOf",
+            "tenth",
+            "pathOf",
+            "joinPaths",
+            "roundedPlan",
+            "signedArea",
+            "oriented",
+            "convexHull",
+            "runsOf",
+            "extrude",
+            "ringOf",
+            "slabOf",
+            "circleRing",
+            "cylinder",
+            "insetPlan",
+            "onTop"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "references/motion.md",
+          "commit": "1482e8469b0a9e0d8cc18ea2740a01423d29ae80",
+          "symbols": [
+            "tick",
+            "run",
+            "RigLive",
+            "flash",
+            "moving"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "diagram-design",
+      "name": "Diagram Design",
+      "layer": "shot",
+      "repository": "https://github.com/cathrynlavery/diagram-design",
+      "source_commit": "97d795138448f6a739a0cebc3d9beb37a42077f1",
+      "inputs": "semantic type + nodes/edges + trust boundary + stage",
+      "outputs": "editable SVG/HTML semantic diagram and discrete state reveal",
+      "dependencies": [
+        "browser",
+        "replace remote fonts locally"
+      ],
+      "use_when": "Secure paths, denied routes, PASS/FAIL/SKIPPED/NOT REACHED and audit endpoint",
+      "not_suitable_for": "Continuous object morphing; claiming setTimeout step template is arbitrary-time video",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "interactive",
+        "still"
+      ],
+      "clock": "stateful_interactive",
+      "constraints": [
+        "Reuse trust boundary, allowed/blocked path, isolation and audit semantics.",
+        "setTimeout/CSS steps need time adaptation; do not animate false data movement.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "skills/diagram-design/references/semantic-patterns.md",
+          "commit": "97d795138448f6a739a0cebc3d9beb37a42077f1",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "open-design",
+      "name": "OpenDesign",
+      "layer": "shot",
+      "repository": "https://github.com/nexu-io/open-design",
+      "source_commit": "325494e5a1e5858f7aa63bd71d7f326bdf911e7f",
+      "inputs": "template content + branching nodes + timings",
+      "outputs": "decision-tree HTML composition",
+      "dependencies": [
+        "GSAP",
+        "external runtime/font closure"
+      ],
+      "use_when": "Reference already-authored decision-tree structure before creating new one",
+      "not_suitable_for": "Verified user identity match; callback mutation claimed seek-safe without test",
+      "adoption": "source_adaptation",
+      "identity_status": "provisional",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "callback_timeline_requires_seek_test",
+      "constraints": [
+        "Identity is provisional; selected frame-decision-tree uses GSAP callbacks and 15s wrapper/12s child.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "plugins/_official/video-templates/frame-decision-tree/source/compositions/decision_tree.html",
+          "commit": "325494e5a1e5858f7aa63bd71d7f326bdf911e7f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "plugins/_official/video-templates/frame-decision-tree/template.json",
+          "commit": "325494e5a1e5858f7aa63bd71d7f326bdf911e7f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "opencut",
+      "name": "OpenCut",
+      "layer": "editor",
+      "repository": "https://github.com/OpenCut-app/OpenCut",
+      "source_commit": "e668010778568641babef2cc40be4703ae6916d6",
+      "inputs": "native desktop UI state or Classic web timeline (different projects)",
+      "outputs": "native timeline placeholder; Classic scene export",
+      "dependencies": [
+        "native Rust UI vs Classic web runtime"
+      ],
+      "use_when": "Compare editor output interchange only if explicitly needed",
+      "not_suitable_for": "Equating current native placeholder with Classic complete web export",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Main Rust rewrite timeline is a placeholder; distinguish reviewed Classic implementation.",
+        "Classic IndexedDB/OPFS and mediated export do not prove bit-identical audio.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "apps/desktop/src/panels/timeline.rs",
+          "commit": "e668010778568641babef2cc40be4703ae6916d6",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "filmcraft",
+      "name": "FilmCraft",
+      "layer": "editor",
+      "repository": "https://github.com/storytold/filmcraft",
+      "source_commit": "10d626ccc4888e0f020f9ca314c2bc9148ded4f4",
+      "inputs": "native project schema and local authenticated control request",
+      "outputs": "native film project/control responses; generic handoff metadata requires a separate adapter",
+      "dependencies": [
+        "Rust native app",
+        "localhost control token"
+      ],
+      "use_when": "Manual shot handoff and native format comparison when editor requested",
+      "not_suitable_for": "Calling manual handoff importable native project; treating schema13 docs as schema15 implementation",
+      "adoption": "source_adaptation",
+      "identity_status": "provisional",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Identity is provisional; .fcproj schema 15 implementation differs from older docs.",
+        "Generic handoff metadata is not a native .fcproj file.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "crates/format/src/lib.rs",
+          "commit": "10d626ccc4888e0f020f9ca314c2bc9148ded4f4",
+          "symbols": [
+            "generator",
+            "encode",
+            "encode_with_view",
+            "detect_version",
+            "decode",
+            "migrate_with"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "apps/filmcraft/src/control_server.rs",
+          "commit": "10d626ccc4888e0f020f9ca314c2bc9148ded4f4",
+          "symbols": [
+            "CONNECTION_TIMEOUT",
+            "start"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "pathcraft",
+      "name": "Pathcraft",
+      "layer": "shot",
+      "repository": "https://github.com/Kind0419/Pathcraft",
+      "source_commit": "5745fd5034ab03610f909b7f5ba5b78034b6a6ed",
+      "inputs": "grid/cost/algorithm config -> search events; playhead",
+      "outputs": "solver metrics/events and Canvas replay",
+      "dependencies": [
+        "React",
+        "TypeScript",
+        "worker/browser"
+      ],
+      "use_when": "Algorithm state explanation with causal event visibility",
+      "not_suitable_for": "RWE permission algorithm; final-path retrospective reveal claimed online discovery; MP4 pipeline",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "interactive",
+        "still"
+      ],
+      "clock": "stateful_interactive",
+      "constraints": [
+        "planner.ts reexports real graph solvers; display trace and computed final path are distinct.",
+        "Final-path reveal is not evidence of every search-frontier decision.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "src/lib/solvers/graph.ts",
+          "commit": "5745fd5034ab03610f909b7f5ba5b78034b6a6ed",
+          "symbols": [
+            "graphLabel",
+            "planGraph"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "src/components/CanvasView.tsx",
+          "commit": "5745fd5034ab03610f909b7f5ba5b78034b6a6ed",
+          "symbols": [
+            "layoutFor",
+            "roundRect",
+            "pathsEqual",
+            "trimPath",
+            "resamplePath",
+            "CanvasView"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "src/hooks/usePlan.ts",
+          "commit": "5745fd5034ab03610f909b7f5ba5b78034b6a6ed",
+          "symbols": [
+            "usePlan"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "canvas2d",
+      "name": "Canvas 2D",
+      "layer": "foundation",
+      "repository": null,
+      "source_commit": null,
+      "inputs": "canvas geometry, style and explicit time",
+      "outputs": "raster canvas frame",
+      "dependencies": [
+        "browser Canvas2D"
+      ],
+      "use_when": "Procedural 2D geometry and original illustrations",
+      "not_suitable_for": "Automatic illustration art direction",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "roughjs",
+      "name": "rough.js",
+      "layer": "foundation",
+      "repository": "https://github.com/rough-stuff/rough",
+      "source_commit": null,
+      "inputs": "paths/shapes + seed/roughness/bowing/fill",
+      "outputs": "rough Canvas/SVG marks",
+      "dependencies": [
+        "JavaScript/browser"
+      ],
+      "use_when": "Hand-drawn mark layer over correct diagram topology",
+      "not_suitable_for": "Wobbly edges that change semantic connectivity",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "p5js",
+      "name": "p5.js",
+      "layer": "foundation",
+      "repository": "https://github.com/processing/p5.js",
+      "source_commit": null,
+      "inputs": "setup/draw scene with explicit simulation time",
+      "outputs": "Canvas/WebGL draw frame",
+      "dependencies": [
+        "browser p5.js"
+      ],
+      "use_when": "Procedural art and performance scenes",
+      "not_suitable_for": "Assuming request draw frame rate equals reliable export clock",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "p5brush",
+      "name": "p5.brush",
+      "layer": "foundation",
+      "repository": "https://github.com/acamposuribe/p5.brush",
+      "source_commit": null,
+      "inputs": "seeded brush/fill/hatch parameters and geometry",
+      "outputs": "watercolor/pencil material drawing",
+      "dependencies": [
+        "compatible p5/WEBGL or standalone WebGL2"
+      ],
+      "use_when": "Paint texture in a version-pinned scene",
+      "not_suitable_for": "Updating old p5 1.x examples to current p5 2.x build without compatibility test",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Current 2.x WEBGL contract is not a drop-in replacement for old p5 scene dependencies.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "threejs",
+      "name": "Three.js",
+      "layer": "foundation",
+      "repository": "https://github.com/mrdoob/three.js",
+      "source_commit": null,
+      "inputs": "scene, camera, mesh, material, light, time",
+      "outputs": "WebGL frame",
+      "dependencies": [
+        "browser WebGL"
+      ],
+      "use_when": "Real 3D structure, depth and occlusion explanation",
+      "not_suitable_for": "3D added to merely decorate a simple process diagram",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Pin and verify renderer dependency versions before adaptation.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "manim",
+      "name": "Manim Community",
+      "layer": "foundation",
+      "repository": "https://github.com/ManimCommunity/manim",
+      "source_commit": "d999d422c9e3e01c2058a722043f0b825d8dd9b8",
+      "inputs": "mathematical scene and animation transforms",
+      "outputs": "rendered frame/video via Manim",
+      "dependencies": [
+        "Python",
+        "render dependencies and fonts"
+      ],
+      "use_when": "Mathematical/algorithmic transformations requiring exact objects",
+      "not_suitable_for": "Assuming source checkout means installed runtime or integrated Chinese voiceover",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "manim/scene/scene.py",
+          "commit": "d999d422c9e3e01c2058a722043f0b825d8dd9b8",
+          "symbols": [
+            "SceneInteractContinue",
+            "SceneInteractRerun",
+            "RerunSceneHandler",
+            "Scene"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "manim/animation/transform.py",
+          "commit": "d999d422c9e3e01c2058a722043f0b825d8dd9b8",
+          "symbols": [
+            "Transform",
+            "ReplacementTransform",
+            "TransformFromCopy",
+            "ClockwiseTransform",
+            "CounterclockwiseTransform",
+            "MoveToTarget",
+            "_MethodAnimation",
+            "ApplyMethod",
+            "ApplyPointwiseFunction",
+            "ApplyPointwiseFunctionToCenter",
+            "FadeToColor",
+            "ScaleInPlace",
+            "ShrinkToCenter",
+            "Restore",
+            "ApplyFunction",
+            "ApplyMatrix",
+            "ApplyComplexFunction",
+            "CyclicReplace",
+            "Swap",
+            "TransformAnimations",
+            "FadeTransform",
+            "FadeTransformPieces"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "blender",
+      "name": "Blender",
+      "layer": "foundation",
+      "repository": "https://github.com/blender/blender",
+      "source_commit": "e8b2855a5e643c5754dca3f65843c12d34e5a57b",
+      "inputs": "3D scene, mesh/rig/material/light/camera and time",
+      "outputs": "render layers/frame/video",
+      "dependencies": [
+        "Blender binary",
+        "assets",
+        "renderer/GPU optional"
+      ],
+      "use_when": "True spatial assets or clay material/lighting needed",
+      "not_suitable_for": "Choosing it for clay prompt label alone; unmeasured rendering cost",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "scripts/modules/bpy_extras/object_utils.py",
+          "commit": "e8b2855a5e643c5754dca3f65843c12d34e5a57b",
+          "symbols": [
+            "add_object_align_init",
+            "object_data_add",
+            "AddObjectHelper",
+            "object_add_grid_scale",
+            "object_add_grid_scale_apply_operator",
+            "world_to_camera_view",
+            "object_report_if_active_shape_key_is_locked"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "hyperframes",
+      "name": "HyperFrames",
+      "layer": "renderer",
+      "repository": "https://github.com/heygen-com/hyperframes",
+      "source_commit": "67edb01bf4aa2f5931e838e46e14e0f51a5809ee",
+      "inputs": "HTML scene + explicit timestamp + local media",
+      "outputs": "checks, snapshots, frame sequence and local MP4",
+      "dependencies": [
+        "pinned source0.7.109",
+        "Node",
+        "browser",
+        "FFmpeg"
+      ],
+      "use_when": "Preferred existing HTML renderer route once source and dependencies close",
+      "not_suitable_for": "Automatically switching to online latest or assuming imported themes style every element",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "packages/cli/bin/hyperframes.mjs",
+          "commit": "67edb01bf4aa2f5931e838e46e14e0f51a5809ee",
+          "symbols": [
+            "error"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "themes/CONTRACT.md",
+          "commit": "67edb01bf4aa2f5931e838e46e14e0f51a5809ee",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "remotion",
+      "name": "Remotion",
+      "layer": "renderer",
+      "repository": "https://github.com/remotion-dev/remotion",
+      "source_commit": "e57eedcb3a6065d7db492696c030a76f6962e169",
+      "inputs": "React composition props + currentFrame/fps",
+      "outputs": "frame/video via existing Remotion project",
+      "dependencies": [
+        "Node",
+        "React",
+        "Remotion",
+        "browser"
+      ],
+      "use_when": "Existing React/TSX shot reuse with frame-native clock",
+      "not_suitable_for": "Aesthetic guarantee from having components; rebuilding runtime",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "packages/core/src/use-current-frame.ts",
+          "commit": "e57eedcb3a6065d7db492696c030a76f6962e169",
+          "symbols": [
+            "useCurrentFrame"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "packages/core/src/Sequence.tsx",
+          "commit": "e57eedcb3a6065d7db492696c030a76f6962e169",
+          "symbols": [
+            "EMPTY_EFFECTS",
+            "RegularSequenceRefForwardingFunction",
+            "RegularSequence",
+            "PremountedPostmountedSequenceRefForwardingFunction",
+            "PremountedPostmountedSequence",
+            "SequenceRefForwardingFunction",
+            "SequenceInner",
+            "SequenceWithoutSchema",
+            "Sequence",
+            "SequenceWithoutFrom"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "inkling",
+      "name": "inkling",
+      "layer": "renderer",
+      "repository": "https://github.com/ahkamboh/inkling",
+      "source_commit": "3a7b2a45ae9d65044f4155c38a1a103a37dff54f",
+      "inputs": "HTML/CSS scene and animation currentTime",
+      "outputs": "browser frames/movie from fixed render parameters",
+      "dependencies": [
+        "Playwright/browser",
+        "FFmpeg"
+      ],
+      "use_when": "Short anthropomorphic CSS explanation references",
+      "not_suitable_for": "Assuming all hardcoded scenes consume theme token; arbitrary-duration exporter",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "24fps CSS currentTime render; lexical scene sort and Windows file URL handling require adaptation.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "scenes/scene1.html",
+          "commit": "3a7b2a45ae9d65044f4155c38a1a103a37dff54f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "styles/themes.css",
+          "commit": "3a7b2a45ae9d65044f4155c38a1a103a37dff54f",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "explanimate",
+      "name": "explanimate",
+      "layer": "shot",
+      "repository": "https://github.com/notpritam/explanimate",
+      "source_commit": "8dd31cc3d8c04981040dbdb6b7da6e6b723e1100",
+      "inputs": "mechanism explanation scene plus shot stage mode",
+      "outputs": "JWT comparison diagram/terminal-state shot",
+      "dependencies": [
+        "React",
+        "TypeScript",
+        "unretrieved composition closure"
+      ],
+      "use_when": "Lifecycle comparison and local focus/result evidence composition",
+      "not_suitable_for": "Claiming entire renderer is frame-driven or all export is static",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Selected scene has no frame clock; composition fetch was unavailable, so export behavior remains unresolved.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "templates/studio/src/scenes/jwt-refresh-flow/Scene.tsx",
+          "commit": "8dd31cc3d8c04981040dbdb6b7da6e6b723e1100",
+          "symbols": [
+            "ACCESS",
+            "REFRESH",
+            "AMBER",
+            "TRACK_X",
+            "TRACK_W",
+            "CELLS",
+            "GAP",
+            "CELL_W",
+            "cellLeft",
+            "dividers",
+            "ACCESS_Y",
+            "REFRESH_Y",
+            "FOCUS",
+            "focusX",
+            "cellStyle"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        },
+        {
+          "upstream_path": "templates/studio/src/shared/primitives/shot.ts",
+          "commit": "8dd31cc3d8c04981040dbdb6b7da6e6b723e1100",
+          "symbols": [
+            "isShotMode",
+            "useShotMode"
+          ],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "claude-code-video-toolkit",
+      "name": "claude-code-video-toolkit",
+      "layer": "renderer",
+      "repository": "https://github.com/digitalsamba/claude-code-video-toolkit",
+      "source_commit": "da3f474c1230d161be1384ef97aec27f73b11636",
+      "inputs": "ordered scenes, voiceover text/assets and config",
+      "outputs": "still zoom/video-loop assembly recipe",
+      "dependencies": [
+        "MoviePy",
+        "default cloud VO provider unless replaced"
+      ],
+      "use_when": "Simple asset montage where continuity is not required",
+      "not_suitable_for": "Mechanism shot with identity continuity; Chinese word count timing assumption",
+      "adoption": "source_adaptation",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "still"
+      ],
+      "clock": "module_specific_requires_binding",
+      "constraints": [
+        "Whitespace-based speech duration is unsuitable for Chinese; gen_vo defaults to Modal cloud.",
+        "Reuse only reviewed local image/camera techniques through existing media outlet.",
+        "No automatic install, upload, network service, or production registration",
+        "Local source availability does not establish runtime or visual acceptance",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "inspect_listed_source_and_dependencies_then_adapt_to_existing_contract",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": [
+        {
+          "upstream_path": "templates/concept-explainer-short/config.json",
+          "commit": "da3f474c1230d161be1384ef97aec27f73b11636",
+          "symbols": [],
+          "read_scope": "Selected upstream source inspected in research; not a complete checkout or runtime certification."
+        }
+      ]
+    },
+    {
+      "id": "skillry",
+      "name": "Skillry Opus 5.5 prompts",
+      "layer": "prompt_reference",
+      "repository": "https://skillry.dev/zh/ai-videos/opus-5-5",
+      "source_commit": null,
+      "inputs": "reference prompt or exact repository identity",
+      "outputs": "reference only",
+      "dependencies": [],
+      "use_when": "optional source discovery",
+      "not_suitable_for": "automatic implementation selection",
+      "adoption": "reference_only",
+      "identity_status": "identified",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "none",
+      "constraints": [
+        "The three broad prompts do not replace geometry, composition, palette, beats and review. Repository snapshots are not supplied by the gallery.",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "confirm_exact_identity_or_inspect_original_prompt_and_source_before_adaptation",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "star-magnet",
+      "name": "star-magnet",
+      "layer": "prompt_reference",
+      "repository": null,
+      "source_commit": null,
+      "inputs": "reference prompt or exact repository identity",
+      "outputs": "reference only",
+      "dependencies": [],
+      "use_when": "optional source discovery",
+      "not_suitable_for": "automatic implementation selection",
+      "adoption": "reference_only",
+      "identity_status": "unresolved",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "none",
+      "constraints": [
+        "A same-name result does not establish the user intended that repository.",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "confirm_exact_identity_or_inspect_original_prompt_and_source_before_adaptation",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    },
+    {
+      "id": "badcat-animate",
+      "name": "badcat-animate",
+      "layer": "prompt_reference",
+      "repository": null,
+      "source_commit": null,
+      "inputs": "reference prompt or exact repository identity",
+      "outputs": "reference only",
+      "dependencies": [],
+      "use_when": "optional source discovery",
+      "not_suitable_for": "automatic implementation selection",
+      "adoption": "reference_only",
+      "identity_status": "unresolved",
+      "deliveries": [
+        "video",
+        "interactive",
+        "still"
+      ],
+      "clock": "none",
+      "constraints": [
+        "No reliably matched repository; ask for exact identity when this source is required.",
+        "Share snapshot omits machine-local paths and receipts; inspect upstream source and bind local evidence before use."
+      ],
+      "next_action": "confirm_exact_identity_or_inspect_original_prompt_and_source_before_adaptation",
+      "local_source": [],
+      "local_evidence": [],
+      "observed_capability": "upstream_reference_only_local_availability_not_exported",
+      "modules": []
+    }
+  ],
+  "change_record": {
+    "intent": "Share reviewed upstream animation modules without exporting workstation metadata.",
+    "decision": "Retain public repository identities, fixed revisions, upstream module paths and semantic technique checks; omit local inventories.",
+    "reason": "Generic push authorization did not cover machine paths and internal source inventory metadata.",
+    "evidence": [
+      "Public upstream repositories and reviewed source paths included per project.",
+      "Missing-local-evidence and optional-integration regression tests."
+    ],
+    "effective_scope": "Repository-neutral source recommendations; local configuration remains unchanged."
+  }
+}

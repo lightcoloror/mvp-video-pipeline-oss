@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.capability_doctor.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "observed_at",
+    "repository",
+    "probes",
+    "capabilities",
+    "authority_boundary",
+    "doctor_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.capability_doctor.v1"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "repository": {"$ref": "#/$defs/repository"},
+    "probes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonical", "hyperframes", "remotion", "privacy"],
+      "properties": {
+        "canonical": {"type": "object"},
+        "hyperframes": {"type": "object"},
+        "remotion": {"type": "object"},
+        "privacy": {"type": "object"},
+        "speech_cleanup": {"type": "object"},
+        "background_processing": {"type": "object"},
+        "color_processing": {"type": "object"}
+        ,"smart_reframe": {"type": "object"}
+      }
+    },
+    "capabilities": {"$ref": "#/$defs/capability_map"},
+    "authority_boundary": {"$ref": "#/$defs/authority_boundary"},
+    "doctor_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "repository": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "git_head", "worktree_dirty", "git_identity_is_semantic_gate"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "git_head": {
+          "oneOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+            {"type": "null"}
+          ]
+        },
+        "worktree_dirty": {"type": "boolean"},
+        "git_identity_is_semantic_gate": {"const": false}
+      }
+    },
+    "capability_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_candidate_pipeline",
+        "hyperframes_semantic_motion",
+        "remotion_scene_media_render",
+        "licensed_audio_mix",
+        "privacy_candidate_scan",
+        "nle_import",
+        "real_person_gold_e2e",
+        "person_background_processing",
+        "automatic_publish"
+      ],
+      "properties": {
+        "canonical_candidate_pipeline": {"$ref": "#/$defs/capability"},
+        "hyperframes_semantic_motion": {"$ref": "#/$defs/capability"},
+        "remotion_scene_media_render": {"$ref": "#/$defs/capability"},
+        "licensed_audio_mix": {"$ref": "#/$defs/capability"},
+        "speech_noise_cleanup": {"$ref": "#/$defs/capability"},
+        "privacy_candidate_scan": {"$ref": "#/$defs/capability"},
+        "privacy_dynamic_layout_avoidance": {"$ref": "#/$defs/capability"},
+        "nle_import": {"$ref": "#/$defs/capability"},
+        "real_person_gold_e2e": {"$ref": "#/$defs/capability"},
+        "person_background_processing": {"$ref": "#/$defs/capability"},
+        "basic_color_processing": {"$ref": "#/$defs/capability"},
+        "smart_reframe_candidate": {"$ref": "#/$defs/capability"},
+        "automatic_publish": {"$ref": "#/$defs/capability"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "contract_mode",
+        "contract_ready",
+        "runtime_ready",
+        "doctor_status",
+        "reason"
+      ],
+      "properties": {
+        "capability_id": {"type": "string", "minLength": 1},
+        "contract_mode": {"enum": ["executable", "handoff", "blocked"]},
+        "contract_ready": {"type": "boolean"},
+        "runtime_ready": {"type": "boolean"},
+        "doctor_status": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_online",
+        "provider_called",
+        "automatic_fallback_used",
+        "upload_performed",
+        "publish_authorized",
+        "truth_is_release_authorization"
+      ],
+      "properties": {
+        "current_online": {"const": false},
+        "provider_called": {"const": false},
+        "automatic_fallback_used": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_authorized": {"const": false},
+        "truth_is_release_authorization": {"const": false}
+      }
+    }
+  }
+}

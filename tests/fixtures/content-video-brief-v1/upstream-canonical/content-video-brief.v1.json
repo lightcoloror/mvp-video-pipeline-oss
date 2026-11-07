@@ -1,0 +1,163 @@
+{
+  "audience": "content-creation-system",
+  "brief_id": "vbrief-43e0d3aeb6a2bc02c7db",
+  "chapters": [
+    {
+      "chapter_id": "chapter-01",
+      "evidence_refs": [
+        {
+          "ref_id": "claim_fixture_contract",
+          "ref_type": "claim"
+        },
+        {
+          "ref_id": "evidence_fixture_support",
+          "ref_type": "evidence"
+        },
+        {
+          "ref_id": "source_fixture_primary",
+          "ref_type": "source"
+        }
+      ],
+      "narration_draft": "统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。",
+      "purpose": "呈现一条经过审核且有来源支持的核心判断",
+      "target_duration_seconds": 45,
+      "title": "证据结论 1"
+    }
+  ],
+  "content_id": "research-9a79a19ecd86452f4ad7cd9c",
+  "forbidden_expressions": [
+    "Only verified non-synthesis support evidence is included; citations remain bound to QRP claim, evidence, and source IDs.",
+    "不得把 candidate、reviewed 或 AI synthesis 表述为 verified fact。",
+    "不得把视觉候选写成已经拍到、已经取得或真实发生的镜头。"
+  ],
+  "mode": "draft_only",
+  "provenance": {
+    "adapter": "research-output-to-content",
+    "adapter_version": "0.1.0",
+    "external_api_called": false,
+    "generated_at": "2026-08-05T09:00:00+08:00",
+    "input_schema_id": "https://local.invalid/schemas/research-output.v1.schema.json",
+    "input_sha256": "89eb27ba1cafb9b39f974209bc0756934d620ee3bf7028476ad776306bb66a2f",
+    "manifest_ref": "research-9a79a19ecd86452f4ad7cd9c.manifest.json",
+    "model_memory_used_as_evidence": false,
+    "offline_only": true,
+    "research_id": "research_output_fixture_001",
+    "upstream_input_files": [
+      {
+        "path": "research.json",
+        "sha256": "e1884000b32b1415054d3eb76c9f70e1a33069c6071b8a5d26ea52738fce882b",
+        "status": "present"
+      },
+      {
+        "path": "sources.jsonl",
+        "sha256": "fdc8430e8e53f425d1230ce1ae601165a41bcea8eff3ecf0fdbdf726be91211b",
+        "status": "present"
+      },
+      {
+        "path": "source-reviews.jsonl",
+        "sha256": "898f033dde450d4376e79453cb38b1c1e9bba8fbfa2e054e69fac8f0773003f3",
+        "status": "present"
+      },
+      {
+        "path": "claims.jsonl",
+        "sha256": "863b61d86328f6b4d099b6d416952842e49918707273f0cb2004e150a9130016",
+        "status": "present"
+      },
+      {
+        "path": "evidence.jsonl",
+        "sha256": "1390163f2134458717d9dac54137e81938bbbccab4f66a1a504da7463237cf36",
+        "status": "present"
+      },
+      {
+        "path": "reviews.jsonl",
+        "sha256": "5e7a6a622b67e9e824063019b8062ce6afa1be47ee8e126c083146ba742ba13d",
+        "status": "present"
+      }
+    ]
+  },
+  "review_gate": {
+    "publication_boundary": "manual-only",
+    "reasons": [
+      "旁白、字幕、视觉和平台合规均需人工复核。",
+      "所有 visual_leads 只是候选，不代表素材已存在或权利已核验。"
+    ],
+    "required_reviews": [
+      "fact",
+      "privacy",
+      "compliance",
+      "rights",
+      "voice",
+      "video-production"
+    ],
+    "status": "required"
+  },
+  "scenes": [
+    {
+      "chapter_ref": "chapter-01",
+      "evidence_refs": [
+        {
+          "ref_id": "claim_fixture_contract",
+          "ref_type": "claim"
+        },
+        {
+          "ref_id": "evidence_fixture_support",
+          "ref_type": "evidence"
+        },
+        {
+          "ref_id": "source_fixture_primary",
+          "ref_type": "source"
+        }
+      ],
+      "narration_draft": "统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。",
+      "purpose": "用口语化旁白说明一条证据结论",
+      "scene_id": "scene-01",
+      "subtitle_candidates": [
+        "统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。"
+      ],
+      "visual_leads": [
+        {
+          "boundary_note": "这不是已存在镜头，也不是事实性画面承诺。",
+          "description": "候选：用证据卡、关键词或关系图解释本段；具体镜头和素材待人工确认",
+          "evidence_refs": [
+            {
+              "ref_id": "claim_fixture_contract",
+              "ref_type": "claim"
+            },
+            {
+              "ref_id": "evidence_fixture_support",
+              "ref_type": "evidence"
+            },
+            {
+              "ref_id": "source_fixture_primary",
+              "ref_type": "source"
+            }
+          ],
+          "evidence_role": "explanatory",
+          "lead_id": "visual-lead-01",
+          "rights_note": "未指定实际素材；后续需单独完成版权审核。",
+          "status": "candidate"
+        },
+        {
+          "boundary_note": "候选上下文视觉，不作为本段事实证据，也不代表镜头已经存在。",
+          "description": "media/review.html",
+          "evidence_refs": [
+            {
+              "ref_id": "source_fixture_video",
+              "ref_type": "source"
+            }
+          ],
+          "evidence_role": "contextual",
+          "lead_id": "visual-lead-02",
+          "rights_note": "上游只提供引用和审核状态；实际素材使用前必须重新核验版权。",
+          "status": "candidate",
+          "upstream_status": "reviewed"
+        }
+      ]
+    }
+  ],
+  "schema_version": "content-video-brief.v1",
+  "target_duration_seconds": 45,
+  "thesis": "统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。",
+  "title": "统一研究输出能否在离线状态下保持证据门控和可追溯性？",
+  "unknowns": []
+}

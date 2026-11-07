@@ -1,0 +1,232 @@
+{
+  "schema_version": "video_creation_pipeline.media_artifact_adapter_config.v1",
+  "lifecycle_profile": "media",
+  "cleanup_mode": "plan_only",
+  "automatic_purge": false,
+  "closure_run_id": "synthetic-closed-run",
+  "producer_tool_id": "mvp-video-media-artifact-lifecycle-adapter",
+  "owner_lane": "video-creation-pipeline",
+  "artifact_roots": [
+    "render-work",
+    "proxies"
+  ],
+  "authoritative_paths": [
+    "originals/source.mp4",
+    "locked/script.md",
+    "locked/storyboard.json",
+    "locked/timeline.json",
+    "final/final.mp4",
+    "final/subtitles.srt",
+    "qa/rebuild.json",
+    "qa/technical.json",
+    "receipts/approval.json",
+    "receipts/publish.json",
+    "sensitive/customer.mp4",
+    "active/checkpoint.json",
+    "recipe/render.json"
+  ],
+  "active_run_ids": [
+    "synthetic-active-run"
+  ],
+  "producer_process_names": [
+    "hyperframes-render.exe",
+    "remotion-render.exe"
+  ],
+  "producer_command_markers": [
+    "video-final-render-worker"
+  ],
+  "max_depth": 4,
+  "max_items": 100,
+  "rules": [
+    {
+      "path_prefix": "render-work/failed",
+      "artifact_role": "reproducible_derived",
+      "candidate_kind": "failed_encode",
+      "lifecycle_state": "failed",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo render --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "render-work/preview",
+      "artifact_role": "reproducible_derived",
+      "candidate_kind": "preview",
+      "lifecycle_state": "expired",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo render --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "render-work/duplicates",
+      "artifact_role": "duplicate_or_obsolete",
+      "candidate_kind": "duplicate_transcode",
+      "lifecycle_state": "superseded",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo render --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "render-work/superseded",
+      "artifact_role": "reproducible_derived",
+      "candidate_kind": "superseded_intermediate",
+      "lifecycle_state": "superseded",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo render --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "render-work/workspace",
+      "artifact_role": "reproducible_derived",
+      "candidate_kind": "rebuildable_render_workspace",
+      "lifecycle_state": "superseded",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo render --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "proxies",
+      "artifact_role": "cache_build_test_temp",
+      "candidate_kind": "proxy",
+      "lifecycle_state": "expired",
+      "sensitivity": "synthetic",
+      "pin": false,
+      "depends_on": [
+        "originals/source.mp4",
+        "recipe/render.json"
+      ],
+      "rebuild": {
+        "command": "video-canonical-demo proxy --manifest recipe/render.json",
+        "input_paths": [
+          "originals/source.mp4",
+          "recipe/render.json"
+        ],
+        "dependency_lock": "synthetic-ffmpeg-lock",
+        "verification_path": "qa/rebuild.json"
+      }
+    },
+    {
+      "path_prefix": "originals",
+      "artifact_role": "authoritative_input",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "locked",
+      "artifact_role": "authoritative_input",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "final/final.mp4",
+      "artifact_role": "final_deliverable",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "final/subtitles.srt",
+      "artifact_role": "evidence_receipt_manifest",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "qa",
+      "artifact_role": "evidence_receipt_manifest",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "receipts",
+      "artifact_role": "evidence_receipt_manifest",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "sensitive",
+      "artifact_role": "authoritative_input",
+      "lifecycle_state": "locked",
+      "sensitivity": "customer",
+      "pin": true
+    },
+    {
+      "path_prefix": "active",
+      "artifact_role": "runtime_state",
+      "lifecycle_state": "created",
+      "closure_run_id": "synthetic-active-run",
+      "sensitivity": "synthetic",
+      "pin": true
+    },
+    {
+      "path_prefix": "recipe",
+      "artifact_role": "evidence_receipt_manifest",
+      "lifecycle_state": "locked",
+      "sensitivity": "synthetic",
+      "pin": true
+    }
+  ]
+}

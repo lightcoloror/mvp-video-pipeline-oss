@@ -1,0 +1,26 @@
+{
+  "provider": {
+    "name": "synthetic wide-region conflict fixture",
+    "version": "1.0.0"
+  },
+  "observations": [
+    {
+      "evidence_id": "person-left",
+      "kind": "person",
+      "time_s": 1.0,
+      "required": true,
+      "score": 0.95,
+      "rect": {"x": 0.05, "y": 0.1, "width": 0.22, "height": 0.8},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "person-right",
+      "kind": "person",
+      "time_s": 1.0,
+      "required": true,
+      "score": 0.95,
+      "rect": {"x": 0.73, "y": 0.1, "width": 0.22, "height": 0.8},
+      "source_modality": "synthetic_fixture"
+    }
+  ]
+}

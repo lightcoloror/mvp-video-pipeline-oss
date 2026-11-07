@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.creative_alignment_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_project_plan",
+    "source_spec",
+    "project_plan_sha256",
+    "premise",
+    "production_mode",
+    "reference_video",
+    "shooting_handoff",
+    "release_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.creative_alignment_plan.v1"},
+    "source_project_plan": {"$ref": "#/$defs/artifact"},
+    "source_spec": {"$ref": "#/$defs/artifact"},
+    "source_title_cover_plan": {"$ref": "#/$defs/artifact"},
+    "project_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "premise": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "selected_title",
+        "audience",
+        "thesis",
+        "cover_candidate",
+        "cover_hypothesis",
+        "expensive_production_may_start"
+      ],
+      "properties": {
+        "selected_title": {"type": "string", "minLength": 1},
+        "audience": {"type": "string", "minLength": 1},
+        "thesis": {"type": "string", "minLength": 1},
+        "cover_candidate": {"$ref": "#/$defs/artifact"},
+        "cover_hypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "visual_focus",
+            "audience_promise",
+            "click_reason",
+            "overlay_text"
+          ],
+          "properties": {
+            "visual_focus": {"type": "string", "minLength": 1, "maxLength": 240},
+            "audience_promise": {"type": "string", "minLength": 1, "maxLength": 240},
+            "click_reason": {"type": "string", "minLength": 1, "maxLength": 240},
+            "overlay_text": {"type": "string", "maxLength": 24}
+          }
+        },
+        "expensive_production_may_start": {"const": true}
+        ,
+        "title_cover_candidate_id": {"type": "string", "minLength": 1},
+        "title_cover_platform_profile_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "production_mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "human_capture_required",
+        "ai_visual_scope",
+        "ai_voice_scope",
+        "identity_clone_allowed"
+      ],
+      "properties": {
+        "mode": {"enum": ["live_action_primary", "ai_assisted", "ai_led_sandbox"]},
+        "human_capture_required": {"type": "boolean"},
+        "ai_visual_scope": {"type": "string", "minLength": 1},
+        "ai_voice_scope": {"type": "string", "minLength": 1},
+        "identity_clone_allowed": {"const": false}
+      }
+    },
+    "reference_video": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "purpose",
+        "render_status",
+        "render_route",
+        "assets",
+        "scene_projection",
+        "may_be_used_as_final_program"
+      ],
+      "properties": {
+        "purpose": {"const": "internal_alignment_only"},
+        "render_status": {"const": "not_rendered"},
+        "render_route": {"const": "existing_renderer_then_single_ffmpeg_outlet"},
+        "assets": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/referenceAsset"}
+        },
+        "scene_projection": {"type": "array", "minItems": 1},
+        "may_be_used_as_final_program": {"const": false}
+      }
+    },
+    "shooting_handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "source_of_truth",
+        "scene_count",
+        "reference_video_is_acceptance_standard",
+        "creative_intent_may_be_reinterpreted"
+      ],
+      "properties": {
+        "required": {"type": "boolean"},
+        "source_of_truth": {"const": "source_project_plan.shot_units"},
+        "scene_count": {"type": "integer", "minimum": 1},
+        "reference_video_is_acceptance_standard": {"const": false},
+        "creative_intent_may_be_reinterpreted": {"const": true}
+      }
+    },
+    "release_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "temporary_voice_assets",
+        "temporary_voice_replacement_required",
+        "approved_final_voice_required",
+        "final_voice_must_differ_from_temporary_voice",
+        "title_cover_alignment_review_required",
+        "reference_video_cannot_grant_release"
+      ],
+      "properties": {
+        "temporary_voice_assets": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/artifact"}
+        },
+        "temporary_voice_replacement_required": {"type": "boolean"},
+        "approved_final_voice_required": {"const": true},
+        "final_voice_must_differ_from_temporary_voice": {"type": "boolean"},
+        "title_cover_alignment_review_required": {"const": true},
+        "reference_video_cannot_grant_release": {"const": true}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "creative_approval_claimed",
+        "render_execution_performed",
+        "external_provider_called",
+        "upload_performed",
+        "publish_performed",
+        "second_pipeline_created",
+        "second_state_machine_created",
+        "second_ffmpeg_outlet_created"
+      ],
+      "properties": {
+        "candidate_only": {"const": true},
+        "creative_approval_claimed": {"const": false},
+        "render_execution_performed": {"const": false},
+        "external_provider_called": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false},
+        "second_pipeline_created": {"const": false},
+        "second_state_machine_created": {"const": false},
+        "second_ffmpeg_outlet_created": {"const": false}
+      }
+    },
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    },
+    "referenceAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "role",
+        "artifact",
+        "scene_ids",
+        "intended_use",
+        "final_material",
+        "evidence_claimed"
+      ],
+      "properties": {
+        "asset_id": {"type": "string", "pattern": "^reference-[0-9]{3}$"},
+        "role": {
+          "enum": [
+            "storyboard_candidate",
+            "previs_scene",
+            "semantic_motion_receipt",
+            "ai_reference_video",
+            "temporary_voice"
+          ]
+        },
+        "artifact": {"$ref": "#/$defs/artifact"},
+        "scene_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1}
+        },
+        "intended_use": {"const": "internal_alignment_only"},
+        "final_material": {"const": false},
+        "evidence_claimed": {"const": false}
+      }
+    }
+  }
+}

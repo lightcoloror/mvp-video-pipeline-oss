@@ -1,0 +1,35 @@
+{
+  "schema": "video_creation_pipeline.content_visual_routing_spec.v1",
+  "scenes": [
+    {
+      "scene_id": "scene-01",
+      "content_kind": "evidence_document",
+      "communication_goal": "Show the verified source and focus only the cited area.",
+      "generation_allowed": false
+    },
+    {
+      "scene_id": "scene-02",
+      "content_kind": "process_sequence",
+      "communication_goal": "Explain a four-step process with deterministic timing.",
+      "generation_allowed": false
+    },
+    {
+      "scene_id": "scene-03",
+      "content_kind": "real_world_action",
+      "communication_goal": "Use the existing hash-bound local B-roll.",
+      "generation_allowed": false
+    },
+    {
+      "scene_id": "scene-04",
+      "content_kind": "emotional_story",
+      "communication_goal": "Prepare a generated visual-story candidate handoff.",
+      "generation_allowed": true
+    },
+    {
+      "scene_id": "scene-05",
+      "content_kind": "music_driven_promo",
+      "communication_goal": "Drive type and cuts from reviewed music cues.",
+      "generation_allowed": false
+    }
+  ]
+}

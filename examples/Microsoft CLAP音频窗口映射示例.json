@@ -1,0 +1,21 @@
+{
+  "schema": "video_creation_pipeline.music_analysis_audio_map.v1",
+  "windows": [
+    {
+      "asset_id": "bgm-calm-001",
+      "window_id": "bgm-calm-001-intro",
+      "clips": [
+        {
+          "source_start_s": 0.0,
+          "source_end_s": 7.0,
+          "path": "<media-root>\\music-analysis\\bgm-calm-001-intro-000.wav"
+        },
+        {
+          "source_start_s": 14.0,
+          "source_end_s": 21.0,
+          "path": "<media-root>\\music-analysis\\bgm-calm-001-intro-014.wav"
+        }
+      ]
+    }
+  ]
+}

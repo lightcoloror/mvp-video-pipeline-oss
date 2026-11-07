@@ -1,0 +1,42 @@
+{
+  "schema_version": "agent-tool-owner-recovery-fixture.v1",
+  "tool_id": "mvp-video-pipeline",
+  "scenarios": [
+    {
+      "code": "missing_file",
+      "action": "restore the named repository file and rerun the no-write doctor"
+    },
+    {
+      "code": "manifest_contract_invalid",
+      "action": "restore agent-tool-manifest.v1.json from the reviewed repository release; do not infer execution authority"
+    },
+    {
+      "code": "runtime_missing",
+      "action": "install only the declared project-local Python dependencies and FFmpeg/FFprobe, then rerun the no-write doctor"
+    },
+    {
+      "code": "receipt_stale",
+      "action": "rerun the explicitly approved synthetic fixture; do not reuse the stale receipt or relax its TTL"
+    },
+    {
+      "code": "receipt_future_timestamp",
+      "action": "correct the run clock and regenerate the synthetic receipt; do not accept future provenance"
+    },
+    {
+      "code": "artifact_hash_drift",
+      "action": "discard the receipt and regenerate it from the exact synthetic artifact"
+    },
+    {
+      "code": "real_media_not_proved",
+      "action": "keep real_usage_proof false until an authorized real-media receipt is reviewed"
+    },
+    {
+      "code": "current_online_not_probed",
+      "action": "keep current_online false; this offline pipeline has no service listener requirement"
+    },
+    {
+      "code": "external_action_requested",
+      "action": "obtain the native approval for Provider, NLE write, upload, or publication; never use metadata as authority and never silently fall back"
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "schema": "video_creation_pipeline.spoken_bgm_policy.v1",
+  "policy_id": "spoken-bgm-minimum-correct-v1",
+  "families": {
+    "restrained_risk": {
+      "priority": 100,
+      "terms": [
+        "条款",
+        "免责",
+        "风险",
+        "费用",
+        "保费",
+        "缴费",
+        "赔付",
+        "理赔",
+        "现金价值",
+        "退保",
+        "限制",
+        "不保证",
+        "不确定性"
+      ]
+    },
+    "warm_story": {
+      "priority": 50,
+      "terms": [
+        "客户故事",
+        "客户",
+        "真实经历",
+        "真实",
+        "经历",
+        "亲身经历",
+        "患者故事",
+        "人物",
+        "人情",
+        "稳暖",
+        "家人",
+        "生活",
+        "陪伴",
+        "感受",
+        "心态",
+        "采访"
+      ]
+    },
+    "clear_explainer": {
+      "priority": 0,
+      "default": true,
+      "terms": []
+    }
+  },
+  "mix_profiles": {
+    "ordinary": {
+      "profile_id": "balanced_presence_v2",
+      "music_gain_db": -3.0,
+      "target_delta_lu": {
+        "minimum": 6.0,
+        "maximum": 12.0
+      }
+    },
+    "speech_priority": {
+      "profile_id": "speech_priority_v2",
+      "music_gain_db": -6.0,
+      "target_delta_lu": {
+        "minimum": 9.0,
+        "maximum": 15.0
+      }
+    }
+  },
+  "speech_priority_terms": [
+    "金额",
+    "数字",
+    "数据",
+    "条款",
+    "免责",
+    "风险",
+    "保费",
+    "缴费",
+    "赔付",
+    "理赔",
+    "治疗方向",
+    "费用",
+    "现金价值",
+    "退保",
+    "癌症",
+    "肿瘤",
+    "疾病",
+    "病名",
+    "治疗",
+    "质子"
+  ],
+  "speech_priority_window": {
+    "pre_roll_s": 0.15,
+    "post_roll_s": 0.35,
+    "merge_gap_s": 0.5,
+    "full_segment_coverage_ratio": 0.6,
+    "ramp_s": 0.1
+  },
+  "ducking": {
+    "enabled": true,
+    "threshold": 0.08,
+    "ratio": 3.0,
+    "attack_ms": 30,
+    "release_ms": 400,
+    "dense_short_pause_release_ms": 600,
+    "dense_short_pause_rate_per_minute": 8.0
+  },
+  "output": {
+    "true_peak_ceiling_dbtp": -1.0,
+    "limiter_sample_peak_dbfs": -1.5,
+    "limiter_may_boost": false
+  },
+  "arrangement_variety": {
+    "max_source_passes": 2,
+    "repeat_tolerance_s": 0.25,
+    "short_program_exemption_s": 30.0,
+    "dominant_source_fraction": 0.8,
+    "minimum_unique_fraction": 0.75,
+    "long_source_target_s": 60.0
+  },
+  "transition": {
+    "crossfade_s": 1.25,
+    "phrase_alignment_priority": "background_quality_only",
+    "may_move_semantic_timeline": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "video_creation_pipeline.human_selection.v1",
+  "edit_job_sha256": "replace-with-edit-job-sha256",
+  "selections": [
+    {
+      "candidate_id": "timeline-0001",
+      "confirmed_interval": {
+        "start": 0.0,
+        "end": 12.5
+      },
+      "boundary_refinement": {
+        "status": "completed",
+        "provider": "videocut-kit",
+        "algorithms": [
+          "snap_boundaries",
+          "reclaim_silence"
+        ],
+        "boundary_artifact_validation": "passed"
+      }
+    }
+  ],
+  "operator_confirmation": {
+    "confirmed": true,
+    "confirmed_at": "2026-07-15T12:05:00+08:00",
+    "method": "visible_operator_selection"
+  }
+}

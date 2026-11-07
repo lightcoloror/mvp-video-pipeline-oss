@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lightcoloror.local/video_creation_pipeline/speech_cleanup_receipt.v1.schema.json",
+  "title": "Speech Cleanup Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "source_plan",
+    "source_plan_sha256",
+    "ffmpeg_receipt",
+    "staged_audio",
+    "cleaned_audio",
+    "filter_chain",
+    "technical_qa",
+    "audition",
+    "authority_boundary",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.speech_cleanup_receipt.v1"},
+    "status": {"const": "completed_technical_candidate_needs_audition"},
+    "source_plan": {"$ref": "#/$defs/artifact"},
+    "source_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "ffmpeg_receipt": {"$ref": "#/$defs/artifact"},
+    "staged_audio": {"$ref": "#/$defs/artifact"},
+    "cleaned_audio": {"$ref": "#/$defs/artifact"},
+    "filter_chain": {"type": "string", "minLength": 1},
+    "technical_qa": {"type": "object"},
+    "audition": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"type": ["string", "null"]}
+      }
+    }
+  }
+}

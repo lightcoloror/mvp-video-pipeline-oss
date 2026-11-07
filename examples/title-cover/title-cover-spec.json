@@ -1,0 +1,88 @@
+{
+  "schema": "video_creation_pipeline.title_cover_candidate_spec.v1",
+  "profile_ids": [
+    "youtube_16_9",
+    "bilibili_16_9",
+    "bilibili_4_3",
+    "vertical_profile_3_4",
+    "vertical_first_frame_9_16"
+  ],
+  "working_candidate_id": "candidate-curiosity",
+  "candidates": [
+    {
+      "candidate_id": "candidate-searchable",
+      "strategy": "searchable",
+      "title": "买医疗险前要核对哪些续保条件",
+      "cover_hypothesis": {
+        "visual_focus": "真人与一张续保条件核对表",
+        "audience_promise": "把续保条件拆成可核对的问题",
+        "click_reason": "观众能直接得到投保前检查清单",
+        "overlay_text": "先问清这4件事"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头直接给出核对续保条件的理由和第一项问题",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "dedicated_photo",
+        "availability": "planned",
+        "source_note": "拍摄时单独拍摄横版和竖版封面照片"
+      }
+    },
+    {
+      "candidate_id": "candidate-curiosity",
+      "strategy": "curiosity",
+      "title": "为什么续保承诺不能只看一句话",
+      "cover_hypothesis": {
+        "visual_focus": "真人与被标记上下文的条款页",
+        "audience_promise": "说明一句结论遗漏了哪些适用条件",
+        "click_reason": "观众会看到结论和条款上下文的差异",
+        "overlay_text": "别只看这一句"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头展示一句宣传结论并立即补出条款上下文",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "typography_only",
+        "availability": "available",
+        "source_note": "无真人素材的合成验收使用确定性文字版式"
+      }
+    },
+    {
+      "candidate_id": "candidate-evidence",
+      "strategy": "evidence_led",
+      "title": "4个续保问题逐项对照条款",
+      "cover_hypothesis": {
+        "visual_focus": "四项编号和一处条款证据特写",
+        "audience_promise": "每个问题都能回到具体证据",
+        "click_reason": "数字化结构便于快速判断内容范围",
+        "overlay_text": "4问逐项核对"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头先展示四项问题，再说明逐项核对方法",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "evidence_visual",
+        "availability": "planned",
+        "source_note": "待取得已授权且经过隐私处理的条款截图"
+      }
+    }
+  ]
+}

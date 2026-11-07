@@ -1,0 +1,19 @@
+{
+  "schema": "video_creation_pipeline.progress-font-presets.v1",
+  "updated_at": "2026-10-28T09:09:12+08:00",
+  "updated_by": "Codex (GPT-6)",
+  "reference_short_edge_px": 1080,
+  "default_preset": "compact",
+  "presets": {
+    "small": {"font_size_px": 32},
+    "compact": {"font_size_px": 40},
+    "comfortable": {"font_size_px": 48}
+  },
+  "governance": {
+    "intent": "Give auxiliary video navigation its own type sizes.",
+    "decision": "Scale named navigation presets from the canvas short edge; allow an explicit positive pixel override.",
+    "reason": "The author requires progress labels to be independent of body, subtitle and motion-label minima.",
+    "evidence": "User instruction on 2026-10-28; RWE v0.7 uses20px on540x960 with original script headings.",
+    "effective_scope": "Progress overlays only; body/subtitle/cover typography policies and human readability review remain separate."
+  }
+}

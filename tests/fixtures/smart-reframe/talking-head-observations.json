@@ -1,0 +1,62 @@
+{
+  "provider": {
+    "name": "synthetic talking-head gold fixture",
+    "version": "1.0.0"
+  },
+  "observations": [
+    {
+      "evidence_id": "face-0001",
+      "kind": "face",
+      "time_s": 0.0,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.31, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "face-0002",
+      "kind": "face",
+      "time_s": 0.6,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.34, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "face-0003",
+      "kind": "face",
+      "time_s": 1.2,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.37, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "face-0004",
+      "kind": "face",
+      "time_s": 1.8,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.41, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "face-0005",
+      "kind": "face",
+      "time_s": 2.4,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.44, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    },
+    {
+      "evidence_id": "face-0006",
+      "kind": "face",
+      "time_s": 3.0,
+      "required": true,
+      "score": 0.98,
+      "rect": {"x": 0.47, "y": 0.17, "width": 0.09, "height": 0.22},
+      "source_modality": "synthetic_fixture"
+    }
+  ]
+}

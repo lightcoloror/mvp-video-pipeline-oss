@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.smart_reframe_evidence.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_media",
+    "provider",
+    "observations",
+    "authority_boundary",
+    "evidence_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.smart_reframe_evidence.v1"},
+    "source_media": {"type": "object"},
+    "provider": {"type": "object", "required": ["name"]},
+    "observations": {"type": "array", "items": {"type": "object"}},
+    "authority_boundary": {"type": "object"},
+    "evidence_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

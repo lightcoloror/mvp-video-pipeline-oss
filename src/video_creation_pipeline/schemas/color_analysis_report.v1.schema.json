@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.color_analysis_report.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_video",
+    "source_video_summary",
+    "analysis_policy",
+    "engine",
+    "ffmpeg_receipt",
+    "signalstats_log",
+    "metrics",
+    "interpretation_boundary",
+    "report_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.color_analysis_report.v1"},
+    "source_video": {"$ref": "#/$defs/artifact"},
+    "source_video_summary": {"type": "object"},
+    "analysis_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sample_fps",
+        "sampled_full_frame",
+        "signalstats_stat",
+        "automatic_face_or_skin_detection",
+        "automatic_white_balance"
+      ],
+      "properties": {
+        "sample_fps": {"type": "number", "minimum": 0.25, "maximum": 8},
+        "sampled_full_frame": {"const": true},
+        "signalstats_stat": {"const": "brng"},
+        "automatic_face_or_skin_detection": {"const": false},
+        "automatic_white_balance": {"const": false}
+      }
+    },
+    "engine": {"type": "object"},
+    "ffmpeg_receipt": {"$ref": "#/$defs/artifact"},
+    "signalstats_log": {"$ref": "#/$defs/artifact"},
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sampled_frame_count",
+        "series_summary",
+        "near_black_mean_frame_count",
+        "near_white_mean_frame_count",
+        "measurement_scale"
+      ],
+      "properties": {
+        "sampled_frame_count": {"type": "integer", "minimum": 1},
+        "series_summary": {
+          "type": "object",
+          "required": ["YLOW", "YAVG", "YHIGH", "SATAVG", "BRNG", "YRANGE"]
+        },
+        "near_black_mean_frame_count": {"type": "integer", "minimum": 0},
+        "near_white_mean_frame_count": {"type": "integer", "minimum": 0},
+        "measurement_scale": {"type": "object"}
+      }
+    },
+    "interpretation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "technical_measurement_only",
+        "scene_intent_inferred",
+        "skin_tone_quality_claimed",
+        "creative_grade_claimed"
+      ],
+      "properties": {
+        "technical_measurement_only": {"const": true},
+        "scene_intent_inferred": {"const": false},
+        "skin_tone_quality_claimed": {"const": false},
+        "creative_grade_claimed": {"const": false}
+      }
+    },
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

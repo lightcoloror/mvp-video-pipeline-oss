@@ -1,0 +1,52 @@
+{
+  "schema": "video_knowledge_pipeline.smart_summary_chapters.v1",
+  "chapter_count": 1,
+  "chapters": [
+    {
+      "index": 1,
+      "title": "演示并核验浏览器任务",
+      "start": 0,
+      "end": 11.0,
+      "summary_sentences": [
+        "演示 Playwright MCP 并检查任务结果。"
+      ],
+      "visual_notes": [
+        {
+          "time": "00:00:00.000",
+          "timeline_index": 1,
+          "route": "semantic_frame",
+          "text": "Playwright MCP 控制台"
+        }
+      ],
+      "evidence_trace": {
+        "timeline_indexes": [
+          1,
+          2
+        ]
+      },
+      "citation_digest": [
+        {
+          "source_type": "transcript",
+          "time": "00:00:00.000",
+          "timeline_indexes": [
+            1
+          ],
+          "text": "今天演示 Playwright MCP。",
+          "evidence_paths": []
+        },
+        {
+          "source_type": "temporal_understanding",
+          "time": "00:00:00.000 - 00:00:11.000",
+          "timeline_indexes": [
+            1,
+            2
+          ],
+          "text": "打开、运行并确认结果。",
+          "evidence_paths": [
+            "frames/timeline-0001-00.jpg"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "timeline_duration_s": 15.0,
+  "cues": [
+    {
+      "cue_id": "transition-001",
+      "timeline_start_s": 2.4,
+      "duration_s": 0.6,
+      "query": "快速转场 whoosh",
+      "required_tags": ["transition", "whoosh"],
+      "optional_tags": ["fast"],
+      "prohibited_tags": ["voice"],
+      "gain_db": -12.0,
+      "fade_in_s": 0.01,
+      "fade_out_s": 0.05,
+      "evidence_ids": ["shot-transition-001"]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "mode": "chapters",
+  "position": "top",
+  "margin_x_px": 64,
+  "edge_offset_px": 160,
+  "bar_height_px": 12,
+  "track_color": "46505C",
+  "fill_color": "44DDBB",
+  "text_color": "FFFFFF",
+  "color_reason": "深色底上的中性轨道与高对比播放进度；具体项目按画面和已有语义配色调整。",
+  "font_file": "C:/Windows/Fonts/msyh.ttc",
+  "font_preset": "compact",
+  "chapters": [
+    {"scene_id": "scene-0", "script_heading": "01"},
+    {"scene_id": "scene-1", "script_heading": "02"},
+    {"scene_id": "scene-2", "script_heading": "03"}
+  ]
+}

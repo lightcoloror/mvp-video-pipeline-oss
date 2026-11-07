@@ -1,0 +1,443 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.semantic_motion_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_packaging_plan",
+    "source_script_anchor",
+    "source_asset",
+    "source_visual_production_plan",
+    "asset",
+    "output",
+    "cues",
+    "render_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.semantic_motion_plan.v1"},
+    "source_packaging_plan": {"$ref": "#/$defs/artifact"},
+    "source_script_anchor": {"$ref": "#/$defs/artifact"},
+    "source_asset": {"$ref": "#/$defs/artifact"},
+    "source_visual_production_plan": {"$ref": "#/$defs/artifact"},
+    "source_content_visual_routing_plan": {"$ref": "#/$defs/artifact"},
+    "source_visual_style_profile": {"$ref": "#/$defs/artifact"},
+    "source_privacy_exclusion_zones": {"$ref": "#/$defs/artifact"},
+    "source_smart_reframe_plan": {"$ref": "#/$defs/artifact"},
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "media_type",
+        "evidence_status",
+        "authorization_status",
+        "deidentified"
+      ],
+      "properties": {
+        "asset_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "media_type": {
+          "enum": ["image/png", "image/jpeg", "image/svg+xml", "image/webp"]
+        },
+        "evidence_status": {"const": "verified"},
+        "authorization_status": {"const": "authorized_local_candidate"},
+        "deidentified": {"const": true}
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "fps", "duration_s"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 320, "maximum": 7680},
+        "height": {"type": "integer", "minimum": 320, "maximum": 7680},
+        "fps": {"type": "integer", "enum": [24, 25, 30, 50, 60]},
+        "duration_s": {"type": "number", "exclusiveMinimum": 0, "maximum": 600}
+      }
+    },
+    "cues": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/cue"}
+    },
+    "render_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "renderer",
+        "renderer_version",
+        "renderer_source_commit",
+        "animation_runtime",
+        "reduced_motion_fallback",
+        "static_fallback"
+      ],
+      "properties": {
+        "renderer": {"const": "hyperframes"},
+        "renderer_version": {"const": "0.7.109"},
+        "renderer_source_commit": {
+          "const": "67edb01bf4aa2f5931e838e46e14e0f51a5809ee"
+        },
+        "animation_runtime": {"const": "native_waapi_svg"},
+        "reduced_motion_fallback": {"const": "static_focus_with_label"},
+        "static_fallback": {"const": "full_frame_with_box_and_label"}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "candidate_only",
+        "source_media_modified",
+        "external_provider_called",
+        "upload_performed",
+        "publish_performed",
+        "second_pipeline_created",
+        "second_state_machine_created",
+        "second_ffmpeg_outlet_created",
+        "creative_approval_claimed"
+      ],
+      "properties": {
+        "status": {"const": "ready_for_renderer_slot"},
+        "candidate_only": {"const": true},
+        "source_media_modified": {"const": false},
+        "external_provider_called": {"const": false},
+        "upload_performed": {"const": false},
+        "publish_performed": {"const": false},
+        "second_pipeline_created": {"const": false},
+        "second_state_machine_created": {"const": false},
+        "second_ffmpeg_outlet_created": {"const": false},
+        "creative_approval_claimed": {"const": false}
+      }
+    },
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {"type": "number", "minimum": 0, "maximum": 1},
+        "y": {"type": "number", "minimum": 0, "maximum": 1},
+        "width": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "height": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}
+      }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "rect"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1, "maxLength": 80},
+        "rect": {"$ref": "#/$defs/rect"}
+      }
+    },
+    "text_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "rect"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1, "maxLength": 160},
+        "rect": {"$ref": "#/$defs/rect"}
+      }
+    },
+    "cue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cue_id",
+        "story_segment_ref",
+        "script_anchor",
+        "source_asset_id",
+        "source_asset_sha256",
+        "full_frame_first",
+        "target_rect",
+        "focus_destination",
+        "focus_recipe",
+        "label",
+        "timing",
+        "protected_regions",
+        "layout_decision",
+        "watermark",
+        "disclaimer",
+        "reduced_motion_fallback",
+        "static_fallback"
+      ],
+      "properties": {
+        "cue_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "story_segment_ref": {"type": "string", "minLength": 1, "maxLength": 120},
+        "script_anchor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "quote",
+            "timeline_start_s",
+            "timeline_end_s",
+            "evidence_refs"
+          ],
+          "properties": {
+            "status": {"const": "confirmed"},
+            "quote": {"type": "string", "minLength": 1, "maxLength": 500},
+            "timeline_start_s": {"type": "number", "minimum": 0},
+            "timeline_end_s": {"type": "number", "exclusiveMinimum": 0},
+            "evidence_refs": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 32,
+              "items": {"type": "string", "minLength": 1, "maxLength": 160}
+            }
+          }
+        },
+        "source_asset_id": {"type": "string", "minLength": 1, "maxLength": 120},
+        "source_asset_sha256": {"$ref": "#/$defs/sha256"},
+        "full_frame_first": {"const": true},
+        "information_role": {
+          "enum": [
+            "structure",
+            "relationship",
+            "sequence",
+            "comparison",
+            "number",
+            "evidence"
+          ]
+        },
+        "presentation_mode": {
+          "enum": ["fullscreen_evidence", "person_with_overlay"]
+        },
+        "target_rect": {"$ref": "#/$defs/rect"},
+        "next_target_rect": {"$ref": "#/$defs/rect"},
+        "focus_destination": {"$ref": "#/$defs/rect"},
+        "focus_recipe": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "full_to_focus",
+              "dim_context",
+              "box_highlight",
+              "marker_highlight",
+              "leader_line_label",
+              "focus_to_full",
+              "focus_to_next"
+            ]
+          }
+        },
+        "label": {"$ref": "#/$defs/text_region"},
+        "timing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "timeline_start_s",
+            "full_frame_s",
+            "enter_s",
+            "hold_s",
+            "exit_s"
+          ],
+          "properties": {
+            "timeline_start_s": {"type": "number", "minimum": 0},
+            "full_frame_s": {"type": "number", "minimum": 0.6},
+            "enter_s": {"type": "number", "exclusiveMinimum": 0},
+            "hold_s": {"type": "number", "minimum": 0.5},
+            "exit_s": {"type": "number", "exclusiveMinimum": 0}
+          }
+        },
+        "protected_regions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 12,
+          "items": {"$ref": "#/$defs/region"}
+        },
+        "privacy_avoidance": {"$ref": "#/$defs/privacy_avoidance"},
+        "layout_decision": {"$ref": "#/$defs/layout_decision"},
+        "watermark": {"$ref": "#/$defs/text_region"},
+        "disclaimer": {"$ref": "#/$defs/text_region"},
+        "reduced_motion_fallback": {"const": "static_focus_with_label"},
+        "static_fallback": {"const": "full_frame_with_box_and_label"}
+      }
+    },
+    "privacy_avoidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source",
+        "region_ids",
+        "label_position_changed",
+        "selected_label_rect",
+        "runtime_reposition_allowed"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "no_active_regions",
+            "original_layout_clear",
+            "label_relocated"
+          ]
+        },
+        "source": {"const": "privacy_exclusion_zones.v1"},
+        "region_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {"type": "string", "minLength": 1, "maxLength": 240}
+        },
+        "label_position_changed": {"type": "boolean"},
+        "selected_label_rect": {"$ref": "#/$defs/rect"},
+        "runtime_reposition_allowed": {"const": false}
+      }
+    },
+    "layout_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["layout", "reason"],
+      "properties": {
+        "layout": {
+          "enum": [
+            "single_focus",
+            "fullscreen_evidence",
+            "vertical_list",
+            "horizontal_row",
+            "grid",
+            "flow",
+            "comparison"
+          ]
+        },
+        "reason": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "corner_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["corner", "available", "reason"],
+      "properties": {
+        "corner": {
+          "enum": ["top_left", "top_right", "bottom_left", "bottom_right"]
+        },
+        "available": {"type": "boolean"},
+        "reason": {"type": "string", "minLength": 1, "maxLength": 240}
+      }
+    },
+    "layout_decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "semantic_purpose",
+        "peer_item_count",
+        "selected_layout",
+        "layout_candidates",
+        "selection_reason",
+        "person_window",
+        "human_composition_review"
+      ],
+      "properties": {
+        "semantic_purpose": {"type": "string", "minLength": 1, "maxLength": 240},
+        "peer_item_count": {"type": "integer", "minimum": 0, "maximum": 20},
+        "selected_layout": {
+          "enum": [
+            "single_focus",
+            "fullscreen_evidence",
+            "vertical_list",
+            "horizontal_row",
+            "grid",
+            "flow",
+            "comparison"
+          ]
+        },
+        "layout_candidates": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 7,
+          "items": {"$ref": "#/$defs/layout_candidate"}
+        },
+        "selection_reason": {"type": "string", "minLength": 1, "maxLength": 400},
+        "person_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "visible",
+            "selected_corner",
+            "corner_candidates",
+            "placement_reason",
+            "information_space_yielded",
+            "exception_reason"
+          ],
+          "properties": {
+            "visible": {"type": "boolean"},
+            "selected_corner": {
+              "oneOf": [
+                {
+                  "enum": [
+                    "top_left",
+                    "top_right",
+                    "bottom_left",
+                    "bottom_right"
+                  ]
+                },
+                {"type": "null"}
+              ]
+            },
+            "corner_candidates": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 4,
+              "items": {"$ref": "#/$defs/corner_candidate"}
+            },
+            "placement_reason": {"type": "string", "minLength": 1, "maxLength": 400},
+            "information_space_yielded": {"const": true},
+            "exception_reason": {
+              "oneOf": [
+                {"type": "string", "minLength": 1, "maxLength": 400},
+                {"type": "null"}
+              ]
+            }
+          }
+        },
+        "human_composition_review": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "reviewed_by", "reviewed_at", "dimensions"],
+          "properties": {
+            "status": {"const": "approved"},
+            "reviewed_by": {"type": "string", "minLength": 1, "maxLength": 120},
+            "reviewed_at": {"type": "string", "minLength": 1, "maxLength": 80},
+            "dimensions": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "primary_information",
+                "space_yield",
+                "visual_balance"
+              ],
+              "properties": {
+                "primary_information": {"const": "pass"},
+                "space_yield": {"const": "pass"},
+                "visual_balance": {"const": "pass"}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

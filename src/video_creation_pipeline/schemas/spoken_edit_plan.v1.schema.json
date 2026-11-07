@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.spoken_edit_plan.v1",
+  "title": "口播净剪候选计划 v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_packet",
+    "source_agent_decisions",
+    "source_video",
+    "source_duration_s",
+    "pacing_policy",
+    "videocut_kit",
+    "artifacts",
+    "summary",
+    "nle_segments",
+    "execution_receipt",
+    "next_action",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.spoken_edit_plan.v1"},
+    "source_packet": {"type": "object"},
+    "source_agent_decisions": {"type": "object"},
+    "source_video": {"type": "object"},
+    "source_duration_s": {"type": "number", "exclusiveMinimum": 0},
+    "pacing_policy": {"type": "object"},
+    "videocut_kit": {"type": "object"},
+    "artifacts": {"type": "object"},
+    "summary": {"type": "object"},
+    "nle_segments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "segment_id",
+          "candidate_id",
+          "timeline_index",
+          "source_path",
+          "source_bytes",
+          "source_sha256",
+          "in_s",
+          "out_s",
+          "duration_s",
+          "label"
+        ]
+      }
+    },
+    "execution_receipt": {"type": "object"},
+    "next_action": {"const": "materialize_editable_jianying_candidate"},
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

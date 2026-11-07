@@ -1,0 +1,560 @@
+{
+  "schema_version": "agent-tool-manifest.v1",
+  "id": "mvp-video-pipeline",
+  "manifest_version": "1.9.0",
+  "description": "Candidate-only video planning, deterministic synthetic rendering, evidence-driven smart reframing, technical QA, and review handoff over content-video-brief.v1.",
+  "capabilities": [
+    "video_brief_validation",
+    "candidate_video_plan",
+    "synthetic_mp4",
+    "technical_qa",
+    "release_gate_v2_export_qa_binding",
+    "gateway_consumer",
+    "privacy_quality_gate",
+    "privacy_redaction_candidate_sidecar",
+    "privacy_dynamic_layout_avoidance",
+    "vertical_composition_layout_gate",
+    "candidate_safe_media_layout",
+    "candidate_external_skill_handoff",
+    "content_visual_routing",
+    "cross_renderer_style_profile",
+    "hyperframes_music_analysis_handoff",
+    "spoken_bgm_minimum_correct_mix",
+    "hyperframes_render_assurance",
+    "title_cover_candidate_packaging",
+    "remotion_still_cover_candidates",
+    "spoken_rough_cut_candidate_decisions",
+    "deliverable_routed_spoken_review_video_and_editor_handoff",
+    "jianying_editable_project_handoff",
+    "smart_reframe_candidate_plan",
+    "smart_reframe_debug_overlay",
+    "owner_no_write_doctor",
+    "portable_recovery_fixture"
+  ],
+  "interfaces": {
+    "canonical": [
+      {
+        "kind": "cli",
+        "command": "python scripts/spoken_rough_cut.py select-delivery --plan <spoken-edit-plan.json> --request <delivery-request.json> --output <new-selection.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/spoken_rough_cut.py prepare-delivery --selection <selection.json> --output-dir <new-delivery-dir>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/spoken_rough_cut.py render-delivery --selection <selection.json> --output-dir <new-render-dir> --project-root <project-root> --lifecycle-manifest <manifest.json> --estimated-output-bytes <positive-bytes>",
+        "mode": "explicit_local_candidate_export_only"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/owner_manifest_doctor.py --tool-id mvp-video-pipeline --format json",
+        "mode": "read_only_metadata"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/content_video.py doctor",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/content_video.py validate --brief <brief.json> --schema <brief-schema.json> --research-output <research.json> --research-schema <research-schema.json>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/content_video.py generate-synthetic --brief <brief.json> --schema <brief-schema.json> --research-output <research.json> --research-schema <research-schema.json> --output-root <output>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/content_video.py read-artifact <artifact.json>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/ffmpeg_outlet.py --operation <operation> --input <role=path> --output <role=path> --receipt <receipt.json> [--capture-log <log>] -- ffmpeg <args>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-visual-routing build-routes --packaging-plan <packaging.json> --routing-spec <routing-spec.json> --style-profile <visual-style.json> --output <visual-routes.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-visual-routing music-doctor --source-root <fixed-hyperframes-source>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-music-pipeline build-edit-plan --candidates <music-candidate-set.json> [--word-timestamps <words.json> | --subtitles <dialogue.srt>] --contract-version v2 --output <music-edit-plan.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-hyperframes-renderkit doctor --renderkit-source <fixed-renderkit-source>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-title-cover build --project-plan <project-plan.json> --spec <title-cover-spec.json> --output <title-cover-plan.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-spoken-rough-cut doctor --videocut-source <fixed-videocut-kit-source>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-jianying-draft doctor --vectcut-source <fixed-vectcut-source>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate doctor",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-plan --spec <redaction-spec.json> --output <redaction-job.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-preview --job <redaction-job.json> --output <preview-or-handoff>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-run --job <redaction-job.json> --receipt <redaction-receipt.json> --capture-zones",
+        "mode": "approval_required_local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-zones --receipt <redaction-receipt.json> --output <privacy-zones.json> [--reframe-plan <smart-reframe-plan.json> | --identity-final-canvas]",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-layout-check --semantic-motion <semantic-motion-plan.json> --zones <privacy-zones.json> --output <collision-report.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-privacy-gate redact-layout-debug --semantic-motion <semantic-motion-plan.json> --project-dir <empty-debug-project>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-smart-reframe doctor",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-smart-reframe build --source <source-media> --request <request.json> --evidence <evidence.json> --output <plan.json>",
+        "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-smart-reframe render-debug-overlay --plan <plan.json> --output <crop-overlay.mp4> --work-dir <empty-run-dir>",
+        "mode": "local_candidate_write"
+      }
+    ],
+    "windows_wrappers": [],
+    "http": [],
+    "mcp": []
+  },
+  "inputs": [
+    {
+      "name": "content_video_brief",
+      "contract": "content-video-brief.v1/content-brief.v1",
+      "required": true
+    },
+    {
+      "name": "research_output",
+      "contract": "research-output.v1/evidence-bundle.v1",
+      "required": true
+    },
+    {
+      "name": "content_visual_routing_spec",
+      "contract": "video_creation_pipeline.content_visual_routing_spec.v1",
+      "required": false
+    },
+    {
+      "name": "visual_style_profile",
+      "contract": "video_creation_pipeline.visual_style_profile.v1",
+      "required": false
+    },
+    {
+      "name": "title_cover_candidate_spec",
+      "contract": "video_creation_pipeline.title_cover_candidate_spec.v1",
+      "required": false
+    },
+    {
+      "name": "spoken_word_tokens",
+      "contract": "timestamped word tokens plus source media SHA-256",
+      "required": false
+    },
+    {
+      "name": "speech_timing_evidence",
+      "contract": "word timestamp receipt or SRT subtitle; explicit semantic-segment fallback when neither is available",
+      "required": false
+    },
+    {
+      "name": "smart_reframe_evidence",
+      "contract": "video_creation_pipeline.smart_reframe_evidence.v1 plus source media SHA-256",
+      "required": false
+    },
+    {
+      "name": "privacy_redaction_job",
+      "contract": "video_creation_pipeline.privacy_redaction_job.v1 plus explicit third-party runtime/model SHA-256",
+      "required": false
+    },
+    {
+      "name": "privacy_exclusion_zones",
+      "contract": "video_creation_pipeline.privacy_exclusion_zones.v1 plus source/redaction and explicit reframe-or-identity SHA-256 projection bindings",
+      "required": false
+    }
+  ],
+  "outputs": [
+    {
+      "name": "candidate_video_bundle",
+      "contract": "candidate-only MP4/subtitles/cover/technical QA/manifest",
+      "required": true
+    },
+    {
+      "name": "review_packet",
+      "contract": "review-packet.v1",
+      "required": true
+    },
+    {
+      "name": "content_visual_routing_plan",
+      "contract": "video_creation_pipeline.content_visual_routing_plan.v1",
+      "required": false
+    },
+    {
+      "name": "title_cover_candidate_plan",
+      "contract": "video_creation_pipeline.title_cover_candidate_plan.v1",
+      "required": false
+    },
+    {
+      "name": "spoken_edit_plan",
+      "contract": "video_creation_pipeline.spoken_edit_plan.v2; v1 read compatibility, delivery selected separately",
+      "required": false
+    },
+    {
+      "name": "music_edit_plan_v2",
+      "contract": "video_creation_pipeline.music_edit_plan.v2 with fixed spoken-BGM policy, evidence provenance, and unchanged semantic timeline",
+      "required": false
+    },
+    {
+      "name": "spoken_bgm_candidate",
+      "contract": "candidate-only mixed audio/video plus FFmpeg receipt, decode QA, duration/peak checks, and source/music SHA-256",
+      "required": false
+    },
+    {
+      "name": "hyperframes_render_assurance",
+      "contract": "video_creation_pipeline.hyperframes_render_assurance_plan.v1 plus preflight receipt",
+      "required": false
+    },
+    {
+      "name": "jianying_project_handoff",
+      "contract": "candidate draft receipt, project-folder receipt, and separate desktop-validation receipt",
+      "required": false
+    },
+    {
+      "name": "smart_reframe_candidate",
+      "contract": "video_creation_pipeline.smart_reframe_plan.v1, optional candidate MP4/debug overlay, QA, and FFmpeg receipts",
+      "required": false
+    },
+    {
+      "name": "privacy_redaction_candidate",
+      "contract": "video_creation_pipeline.privacy_redaction_receipt.v1, candidate_only, privacy rescan required",
+      "required": false
+    },
+    {
+      "name": "privacy_layout_collision_report",
+      "contract": "video_creation_pipeline.privacy_layout_collision_report.v1, candidate_only, final privacy rescan required",
+      "required": false
+    }
+  ],
+  "health": {
+    "doctor": {
+      "kind": "cli",
+      "command": "python scripts/owner_manifest_doctor.py --tool-id mvp-video-pipeline --format json",
+      "profile": "no_write_quick",
+      "timeout_seconds": 10
+    },
+    "status_semantics": "Five readiness dimensions are independent. Static contract/runtime readiness does not prove a fresh synthetic E2E, real-media use, an online service, upload authority, or publication approval.",
+    "proves_current_online": false
+  },
+  "platforms": [
+    "windows",
+    "linux",
+    "macos"
+  ],
+  "requirements": {
+    "network": {
+      "mode": "none",
+      "reason": "The owner doctor and declared synthetic candidate path are offline."
+    },
+    "secrets": {
+      "mode": "none",
+      "reason": "The owner doctor and declared synthetic candidate path read no Provider credentials."
+    },
+    "approval": {
+      "mode": "conditional",
+      "reason": "Real or personal media, external Providers, NLE writes, upload, and publication retain their native explicit approvals."
+    }
+  },
+  "contract_refs": [
+    {
+      "contract_id": "evidence-bundle.v1",
+      "bundle_id": "local-tools-portable-contracts",
+      "bundle_version": "1.0.0",
+      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
+    },
+    {
+      "contract_id": "content-brief.v1",
+      "bundle_id": "local-tools-portable-contracts",
+      "bundle_version": "1.0.0",
+      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
+    },
+    {
+      "contract_id": "review-packet.v1",
+      "bundle_id": "local-tools-portable-contracts",
+      "bundle_version": "1.0.0",
+      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
+    }
+  ],
+  "provenance": {
+    "generation_policy": "repository_owned_deterministic_metadata",
+    "registry_ref": "tool-registry.json#/tools/mvp-video-pipeline",
+    "registry_role": "discovery_reference_not_hash_or_runtime_gate",
+    "source_repository": "https://github.com/lightcoloror/mvp-video-pipeline",
+    "source_commit_resolution": "caller runs git rev-parse HEAD; the no-write doctor does not spawn Git",
+    "source_commit_role": "git_provenance_only",
+    "doctor_pattern_source": "local ai-research-workflow owner manifest doctor, adapted with static FFmpeg and Python dependency checks",
+    "no_write_checks": [
+      {
+        "id": "discovery",
+        "kind": "file",
+        "path": "AGENT_DISCOVERY.md",
+        "contains": "五维 readiness"
+      },
+      {
+        "id": "manifest_doctor",
+        "kind": "file",
+        "path": "scripts/owner_manifest_doctor.py",
+        "contains": "agent-tool-owner-doctor.v1"
+      },
+      {
+        "id": "synthetic_example",
+        "kind": "file",
+        "path": "examples/agent-owner-discovery/synthetic-request.json"
+      },
+      {
+        "id": "recovery_fixture",
+        "kind": "file",
+        "path": "examples/agent-owner-discovery/recovery-scenarios.json"
+      },
+      {
+        "id": "license",
+        "kind": "file",
+        "path": "LICENSE"
+      }
+    ],
+    "runtime_checks": [
+      {
+        "id": "pyproject",
+        "kind": "file",
+        "path": "pyproject.toml",
+        "contains": "video-creation-pipeline"
+      },
+      {
+        "id": "package",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/__init__.py"
+      },
+      {
+        "id": "canonical_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/content_video_cli.py",
+        "contains": "generate-synthetic"
+      },
+      {
+        "id": "ffmpeg_outlet_cli",
+        "kind": "file",
+        "path": "scripts/ffmpeg_outlet.py",
+        "contains": "video_creation_pipeline.single_ffmpeg_outlet"
+      },
+      {
+        "id": "visual_routing_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/visual_routing_cli.py",
+        "contains": "build-routes"
+      },
+      {
+        "id": "spoken_bgm_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/music_cli.py",
+        "contains": "contract-version"
+      },
+      {
+        "id": "spoken_bgm_policy",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/policies/spoken-bgm-policy.v1.json",
+        "contains": "spoken-bgm-minimum-correct-v1"
+      },
+      {
+        "id": "music_edit_plan_v2_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/music_edit_plan.v2.schema.json",
+        "contains": "video_creation_pipeline.music_edit_plan.v2"
+      },
+      {
+        "id": "visual_routing_fixture",
+        "kind": "file",
+        "path": "examples/visual-routing/routing-spec.json"
+      },
+      {
+        "id": "hyperframes_renderkit_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/hyperframes_renderkit_cli.py",
+        "contains": "render_assurance_plan_ready"
+      },
+      {
+        "id": "hyperframes_renderkit_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/hyperframes_render_assurance_plan.v1.schema.json"
+      },
+      {
+        "id": "title_cover_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/title_cover_cli.py",
+        "contains": "project-alignment-spec"
+      },
+      {
+        "id": "title_cover_fixture",
+        "kind": "file",
+        "path": "examples/title-cover/title-cover-spec.json"
+      },
+      {
+        "id": "spoken_rough_cut_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/spoken_rough_cut_cli.py",
+        "contains": "decision-template"
+      },
+      {
+        "id": "spoken_edit_plan_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/spoken_edit_plan.v2.schema.json"
+      },
+      {
+        "id": "jianying_draft_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/jianying_draft_cli.py",
+        "contains": "materialize-project"
+      },
+      {
+        "id": "jianying_project_receipt_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/jianying_project_folder_receipt.v1.schema.json"
+      },
+      {
+        "id": "jianying_desktop_receipt_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/jianying_desktop_validation_receipt.v1.schema.json"
+      },
+      {
+        "id": "smart_reframe_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/smart_reframe_cli.py",
+        "contains": "render-debug-overlay"
+      },
+      {
+        "id": "smart_reframe_plan_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/smart_reframe_plan.v1.schema.json",
+        "contains": "video_creation_pipeline.smart_reframe_plan.v1"
+      },
+      {
+        "id": "smart_reframe_profiles",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/policies/reframe_profiles.v1.json",
+        "contains": "preview_vertical_9_16"
+      },
+      {
+        "id": "brief_fixture",
+        "kind": "file",
+        "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.json"
+      },
+      {
+        "id": "brief_schema_fixture",
+        "kind": "file",
+        "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.schema.json"
+      },
+      {
+        "id": "research_fixture",
+        "kind": "file",
+        "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.json"
+      },
+      {
+        "id": "research_schema_fixture",
+        "kind": "file",
+        "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.schema.json"
+      },
+      {
+        "id": "python",
+        "kind": "python_version",
+        "minimum": "3.11"
+      },
+      {
+        "id": "jsonschema",
+        "kind": "python_module",
+        "name": "jsonschema"
+      },
+      {
+        "id": "ffmpeg",
+        "kind": "executable",
+        "name": "ffmpeg"
+      },
+      {
+        "id": "ffprobe",
+        "kind": "executable",
+        "name": "ffprobe"
+      }
+    ],
+    "restore_sequence": [
+      "clone_the_repository",
+      "create_a_project_local_environment_and_install_declared_dependencies",
+      "install_ffmpeg_and_ffprobe_on_path",
+      "run_the_owner_no_write_doctor",
+      "validate_the_hash_bound_synthetic_request_fixture",
+      "run_generate_synthetic_only_when_local_candidate_writes_are_intended",
+      "retain_candidate_only_and_request_separate_approval_for_real_media_provider_nle_upload_or_publish_actions"
+    ]
+  },
+  "license": {
+    "spdx": "Apache-2.0",
+    "status": "repository_declared"
+  },
+  "portability": {
+    "status": "repository_owned_manifest_candidate",
+    "in_repo_discovery": true,
+    "canonical_cross_platform_entry": true,
+    "gaps": [
+      "central_registry_and_source_inventory_sync_not_authorized_in_this_change",
+      "real_media_provider_and_nle_execution_require_separate_authorization_and_runtime_evidence"
+    ]
+  },
+  "notTrustedAsInstruction": true,
+  "executionAuthority": "none_metadata_only"
+}

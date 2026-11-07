@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.smart_reframe_qa.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "inputs",
+    "shot_checks",
+    "media_checks",
+    "summary",
+    "authority_boundary",
+    "qa_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.smart_reframe_qa.v1"},
+    "inputs": {"type": "object"},
+    "shot_checks": {"type": "array", "minItems": 1, "items": {"type": "object"}},
+    "media_checks": {"type": "object"},
+    "summary": {
+      "type": "object",
+      "required": [
+        "required_region_count",
+        "retained_required_region_count",
+        "required_region_retention",
+        "safe_zone_violation_count",
+        "truncation_count",
+        "planning_gate_passed",
+        "render_gate_passed",
+        "status"
+      ]
+    },
+    "authority_boundary": {"type": "object"},
+    "qa_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

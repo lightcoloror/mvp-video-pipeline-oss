@@ -1,0 +1,6 @@
+{
+  "schema_version": "video_creation_pipeline.media_artifact_synthetic_restore_fixture.v1",
+  "synthetic_fixture": true,
+  "relative_path": "render-work/preview/synthetic-preview.bin",
+  "content": "synthetic restore payload; no real media"
+}

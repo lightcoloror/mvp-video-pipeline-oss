@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.audio_mastering_execution_receipt.v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "status",
+    "source_plan",
+    "source_plan_sha256",
+    "measurements",
+    "measurement_pass_receipt",
+    "apply_pass_receipt",
+    "output_verification",
+    "output_verification_pass_receipt",
+    "output_quality",
+    "mastered_audio",
+    "policy",
+    "authority_boundary",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.audio_mastering_execution_receipt.v2"},
+    "status": {"const": "completed_technical_candidate"},
+    "source_plan": {"$ref": "#/$defs/artifact"},
+    "source_plan_sha256": {"$ref": "#/$defs/sha256"},
+    "measurements": {"$ref": "#/$defs/artifact"},
+    "measurement_pass_receipt": {"$ref": "#/$defs/artifact"},
+    "apply_pass_receipt": {"$ref": "#/$defs/artifact"},
+    "output_verification": {"$ref": "#/$defs/artifact"},
+    "output_verification_pass_receipt": {"$ref": "#/$defs/artifact"},
+    "output_quality": {"$ref": "#/$defs/readiness"},
+    "mastered_audio": {"$ref": "#/$defs/artifact"},
+    "policy": {"type": "object"},
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_only",
+        "technical_processing_completed",
+        "output_loudness_verified",
+        "creative_approval_claimed",
+        "release_eligible",
+        "automatic_upload",
+        "automatic_publish",
+        "single_ffmpeg_outlet"
+      ],
+      "properties": {
+        "candidate_only": {"const": true},
+        "technical_processing_completed": {"const": true},
+        "output_loudness_verified": {"const": true},
+        "creative_approval_claimed": {"const": false},
+        "release_eligible": {"const": false},
+        "automatic_upload": {"const": false},
+        "automatic_publish": {"const": false},
+        "single_ffmpeg_outlet": {
+          "const": "video_creation_pipeline.single_ffmpeg_outlet"
+        }
+      }
+    },
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sha256", "bytes", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "bytes": {"type": "integer", "minimum": 0},
+        "content_kind": {"enum": ["json", "text", "binary"]},
+        "canonical_sha256": {
+          "oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "technical_ready",
+        "release_eligible",
+        "blocking_failure_count",
+        "blocking_failures",
+        "next_action"
+      ],
+      "properties": {
+        "status": {"const": "passed"},
+        "technical_ready": {"const": true},
+        "release_eligible": {"const": false},
+        "blocking_failure_count": {"const": 0},
+        "blocking_failures": {"type": "array", "maxItems": 0},
+        "next_action": {"const": "human_audio_review"}
+      }
+    }
+  }
+}

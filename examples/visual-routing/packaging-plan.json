@@ -1,0 +1,42 @@
+{
+  "schema": "video_creation_pipeline.video_packaging_plan.v1",
+  "output": {"width": 1080, "height": 1920, "fps": 30},
+  "scenes": [
+    {
+      "scene_id": "scene-01",
+      "start_s": 0.0,
+      "end_s": 4.0,
+      "material_status": "missing_material",
+      "evidence_refs": ["evidence:synthetic-policy-page"]
+    },
+    {
+      "scene_id": "scene-02",
+      "start_s": 4.0,
+      "end_s": 8.0,
+      "material_status": "missing_material",
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "scene-03",
+      "start_s": 8.0,
+      "end_s": 12.0,
+      "material_status": "authorized_local_candidate",
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "scene-04",
+      "start_s": 12.0,
+      "end_s": 16.0,
+      "material_status": "missing_material",
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "scene-05",
+      "start_s": 16.0,
+      "end_s": 20.0,
+      "material_status": "missing_material",
+      "evidence_refs": []
+    }
+  ],
+  "status": "candidate_only"
+}

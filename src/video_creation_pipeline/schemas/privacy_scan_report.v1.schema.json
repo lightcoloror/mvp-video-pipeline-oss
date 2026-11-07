@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.privacy_scan_report.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema", "created_at", "source_plan", "scanned_final_artifact",
+    "lanes", "providers", "findings", "limitations", "readiness",
+    "authority_boundary", "report_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.privacy_scan_report.v1"},
+    "created_at": {"type": "string", "minLength": 1},
+    "source_plan": {"$ref": "#/$defs/artifact"},
+    "scanned_final_artifact": {"$ref": "#/$defs/artifact"},
+    "lanes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "audio", "visual", "metadata"],
+      "properties": {
+        "text": {"$ref": "#/$defs/lane"},
+        "audio": {"$ref": "#/$defs/lane"},
+        "visual": {"$ref": "#/$defs/lane"},
+        "metadata": {"$ref": "#/$defs/lane"}
+      }
+    },
+    "providers": {"type": "object"},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "lane", "entity_type", "label", "detector", "matched_length",
+          "source_roles", "source_sha256", "locations", "occurrence_count",
+          "raw_match_stored", "human_disposition_required", "finding_id"
+        ],
+        "properties": {
+          "lane": {"enum": ["text", "audio", "visual", "metadata"]},
+          "entity_type": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "detector": {"type": "string", "minLength": 1},
+          "matched_length": {"type": "integer", "minimum": 1},
+          "source_roles": {"type": "array", "items": {"type": "string"}},
+          "source_sha256": {"type": "array", "items": {"$ref": "#/$defs/sha256"}},
+          "locations": {"type": "array", "items": {"type": "object"}},
+          "occurrence_count": {"type": "integer", "minimum": 1},
+          "raw_match_stored": {"const": false},
+          "human_disposition_required": {"const": true},
+          "finding_id": {"type": "string", "pattern": "^privacy-[0-9a-f]{20}$"}
+        }
+      }
+    },
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machine_scan_complete", "incomplete_required_lanes", "candidate_count",
+        "human_review_required", "privacy_gate_passed", "release_blocked"
+      ],
+      "properties": {
+        "machine_scan_complete": {"type": "boolean"},
+        "incomplete_required_lanes": {"type": "array", "items": {"type": "string"}},
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "human_review_required": {"const": true},
+        "privacy_gate_passed": {"const": false},
+        "release_blocked": {"const": true}
+      }
+    },
+    "authority_boundary": {"type": "object"},
+    "report_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    },
+    "lane": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "scanned", "note"],
+      "properties": {
+        "status": {"enum": ["complete", "incomplete", "not_applicable"]},
+        "scanned": {"type": "array", "items": {"type": "object"}},
+        "note": {"type": "string"}
+      }
+    }
+  }
+}

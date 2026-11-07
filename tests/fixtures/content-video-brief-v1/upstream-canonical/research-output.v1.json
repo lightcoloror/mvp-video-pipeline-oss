@@ -1,0 +1,323 @@
+{
+  "schema": "research-output.v1",
+  "schema_version": "1.0.0",
+  "research_id": "research_output_fixture_001",
+  "question": "统一研究输出能否在离线状态下保持证据门控和可追溯性？",
+  "scope": {
+    "statement": "Offline canonical contract verification.",
+    "constraints": [
+      "synthetic-only",
+      "no-external-api"
+    ]
+  },
+  "audience": "content-creation-system",
+  "requested_outputs": [
+    "article",
+    "content-video-brief.v1"
+  ],
+  "sources": [
+    {
+      "source_id": "source_fixture_primary",
+      "title": "Synthetic primary source",
+      "url": "https://example.invalid/research-output-primary",
+      "archive_path": "archive/primary-source.md",
+      "source_type": "local_fixture",
+      "publisher": "Synthetic Standards Lab",
+      "fetched_at": "2026-08-04T10:00:00+08:00",
+      "freshness": "current",
+      "hash": {
+        "algorithm": "sha256",
+        "value": "a32b6c8ea49a8bb6f966d76b5bc8dea27c2064b7324801d8a94cf631a111f1b3",
+        "status": "verified"
+      },
+      "quality": "good",
+      "review_status": "reviewed",
+      "ref_status": "resolved",
+      "provenance": {
+        "created_at": "2026-08-05T09:01:00+08:00",
+        "review_refs": [
+          "source_review_fixture_primary"
+        ],
+        "note_fields": {
+          "artifact_sha256": "a32b6c8ea49a8bb6f966d76b5bc8dea27c2064b7324801d8a94cf631a111f1b3",
+          "fetched_at": "2026-08-04T10:00:00+08:00",
+          "freshness": "current",
+          "publisher": "Synthetic Standards Lab"
+        }
+      }
+    },
+    {
+      "source_id": "source_fixture_video",
+      "title": "Synthetic reviewed video bundle",
+      "url": null,
+      "archive_path": "media/review.html",
+      "source_type": "video_knowledge",
+      "publisher": "Synthetic Video Lab",
+      "fetched_at": "2026-08-04T11:00:00+08:00",
+      "freshness": "not_applicable",
+      "hash": {
+        "algorithm": "sha256",
+        "value": "a881526c3883bfd31b89c7a36d90a0bcce81ff177d379a12f52288be5c4f0699",
+        "status": "verified"
+      },
+      "quality": "good",
+      "review_status": "reviewed",
+      "ref_status": "resolved",
+      "provenance": {
+        "created_at": "2026-08-05T09:02:00+08:00",
+        "review_refs": [
+          "source_review_fixture_video"
+        ],
+        "note_fields": {
+          "artifact_sha256": "a881526c3883bfd31b89c7a36d90a0bcce81ff177d379a12f52288be5c4f0699",
+          "fetched_at": "2026-08-04T11:00:00+08:00",
+          "freshness": "not_applicable",
+          "knowledge_note": "archive/video-note.md",
+          "publisher": "Synthetic Video Lab",
+          "review_html": "media/review.html"
+        }
+      }
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim_fixture_contract",
+      "text": "统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。",
+      "claim_status": "open",
+      "review_status": "verified",
+      "evidence_status": "verified",
+      "evidence_ids": [
+        "evidence_fixture_rejected_contradiction",
+        "evidence_fixture_support"
+      ],
+      "supporting_evidence_ids": [
+        "evidence_fixture_support"
+      ],
+      "contradicting_evidence_ids": [
+        "evidence_fixture_rejected_contradiction"
+      ],
+      "context_evidence_ids": [],
+      "source_ids": [
+        "source_fixture_primary"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "evidence_fixture_rejected_contradiction",
+      "claim_id": "claim_fixture_contract",
+      "source_id": "source_fixture_primary",
+      "relation": "contradicts",
+      "evidence_status": "rejected",
+      "review_status": "reviewed",
+      "confidence": "low",
+      "excerpt": "A rejected synthetic candidate claimed that review status could be ignored.",
+      "observed_at": "2026-08-05T09:13:00+08:00",
+      "source_path": null,
+      "artifact_sha256": null,
+      "ai_synthesis": false
+    },
+    {
+      "evidence_id": "evidence_fixture_support",
+      "claim_id": "claim_fixture_contract",
+      "source_id": "source_fixture_primary",
+      "relation": "supports",
+      "evidence_status": "verified",
+      "review_status": "reviewed",
+      "confidence": "high",
+      "excerpt": "The canonical export includes only reviewed support with stable claim, evidence, and source links.",
+      "observed_at": "2026-08-04T10:05:00+08:00",
+      "source_path": "archive/primary-source.md",
+      "artifact_sha256": null,
+      "ai_synthesis": false
+    }
+  ],
+  "evidence_links": [
+    {
+      "evidence_id": "evidence_fixture_rejected_contradiction",
+      "claim_id": "claim_fixture_contract",
+      "source_id": "source_fixture_primary",
+      "relation": "contradicts",
+      "evidence_status": "rejected"
+    },
+    {
+      "evidence_id": "evidence_fixture_support",
+      "claim_id": "claim_fixture_contract",
+      "source_id": "source_fixture_primary",
+      "relation": "supports",
+      "evidence_status": "verified"
+    }
+  ],
+  "contradictions": [
+    {
+      "claim_id": "claim_fixture_contract",
+      "evidence_id": "evidence_fixture_rejected_contradiction",
+      "source_id": "source_fixture_primary",
+      "evidence_status": "rejected",
+      "resolution_status": "rejected"
+    }
+  ],
+  "unknowns": [],
+  "review_status": {
+    "overall": "verified",
+    "human_review_required": false,
+    "events": [
+      {
+        "kind": "source",
+        "target_id": "source_fixture_primary",
+        "decision": "good",
+        "reviewer": "fixture-reviewer",
+        "reviewed_at": "2026-08-05T09:10:00+08:00"
+      },
+      {
+        "kind": "source",
+        "target_id": "source_fixture_video",
+        "decision": "good",
+        "reviewer": "fixture-reviewer",
+        "reviewed_at": "2026-08-05T09:11:00+08:00"
+      },
+      {
+        "kind": "evidence",
+        "target_id": "evidence_fixture_support",
+        "decision": "verified",
+        "reviewer": "fixture-reviewer",
+        "reviewed_at": "2026-08-05T09:12:00+08:00"
+      },
+      {
+        "kind": "evidence",
+        "target_id": "evidence_fixture_rejected_contradiction",
+        "decision": "rejected",
+        "reviewer": "fixture-reviewer",
+        "reviewed_at": "2026-08-05T09:13:00+08:00"
+      }
+    ]
+  },
+  "evidence_status": {
+    "overall": "verified",
+    "counts": {
+      "candidate": 0,
+      "verified": 1,
+      "rejected": 1,
+      "contradictions": 0
+    }
+  },
+  "completeness": {
+    "ready_for_answer": true,
+    "blocking_gates": [],
+    "warnings": [],
+    "coverage": {
+      "source_count": 2,
+      "source_types": [
+        "local_fixture",
+        "video_knowledge"
+      ],
+      "unknown_source_quality": 0,
+      "claim_count": 1,
+      "claims_with_evidence": 1,
+      "claims_with_verified_evidence": 1,
+      "claims_with_verified_support_evidence": 1,
+      "claims_with_counter_or_context": 1,
+      "candidate_evidence": 0,
+      "poor_source_evidence": 0,
+      "review_queue_count": 0,
+      "required_review_queue_count": 0,
+      "human_review_count": 4,
+      "draft_exists": false,
+      "gate_audit_passed": false
+    }
+  },
+  "guarded_final_answer": {
+    "status": "verified",
+    "ready": true,
+    "answer": "- 统一输出只能把已审核、非 AI synthesis 的支持证据纳入 guarded final answer。 [claim:claim_fixture_contract; evidence:evidence_fixture_support; sources:source_fixture_primary]",
+    "claim_ids": [
+      "claim_fixture_contract"
+    ],
+    "evidence_ids": [
+      "evidence_fixture_support"
+    ],
+    "source_ids": [
+      "source_fixture_primary"
+    ],
+    "blocking_gates": [],
+    "warnings": [],
+    "guardrail": "Only verified non-synthesis support evidence is included; citations remain bound to QRP claim, evidence, and source IDs."
+  },
+  "media_refs": [
+    {
+      "source_id": "source_fixture_video",
+      "media_type": "video_knowledge",
+      "path": "media/review.html",
+      "url": null,
+      "review_status": "reviewed",
+      "ref_status": "resolved"
+    }
+  ],
+  "visual_leads": [
+    {
+      "source_id": "source_fixture_video",
+      "kind": "review_html",
+      "ref": "media/review.html",
+      "status": "reviewed"
+    }
+  ],
+  "quotable_facts": [
+    {
+      "claim_id": "claim_fixture_contract",
+      "evidence_id": "evidence_fixture_support",
+      "source_id": "source_fixture_primary",
+      "text": "The canonical export includes only reviewed support with stable claim, evidence, and source links.",
+      "word_count": 14,
+      "truncated": false,
+      "review_status": "verified"
+    }
+  ],
+  "provenance": {
+    "input_files": [
+      {
+        "path": "research.json",
+        "sha256": "e1884000b32b1415054d3eb76c9f70e1a33069c6071b8a5d26ea52738fce882b",
+        "status": "present"
+      },
+      {
+        "path": "sources.jsonl",
+        "sha256": "fdc8430e8e53f425d1230ce1ae601165a41bcea8eff3ecf0fdbdf726be91211b",
+        "status": "present"
+      },
+      {
+        "path": "source-reviews.jsonl",
+        "sha256": "898f033dde450d4376e79453cb38b1c1e9bba8fbfa2e054e69fac8f0773003f3",
+        "status": "present"
+      },
+      {
+        "path": "claims.jsonl",
+        "sha256": "863b61d86328f6b4d099b6d416952842e49918707273f0cb2004e150a9130016",
+        "status": "present"
+      },
+      {
+        "path": "evidence.jsonl",
+        "sha256": "1390163f2134458717d9dac54137e81938bbbccab4f66a1a504da7463237cf36",
+        "status": "present"
+      },
+      {
+        "path": "reviews.jsonl",
+        "sha256": "5e7a6a622b67e9e824063019b8062ce6afa1be47ee8e126c083146ba742ba13d",
+        "status": "present"
+      }
+    ],
+    "source_systems": [
+      "question-research-poc",
+      "web-content-fetcher",
+      "video-knowledge-pipeline"
+    ],
+    "offline_only": true,
+    "external_api_called": false,
+    "model_memory_used_as_evidence": false
+  },
+  "generator": {
+    "name": "question-research-poc",
+    "component": "research_output",
+    "version": "research-output.v1"
+  },
+  "created_at": "2026-08-05T09:00:00+08:00"
+}

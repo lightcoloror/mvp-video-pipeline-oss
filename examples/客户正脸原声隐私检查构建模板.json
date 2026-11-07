@@ -1,0 +1,34 @@
+{
+  "evidence": [
+    {
+      "role": "transcript",
+      "path": "替换为VKP人工确认逐字稿的绝对路径"
+    },
+    {
+      "role": "subtitle",
+      "path": "替换为最终字幕文件的绝对路径"
+    },
+    {
+      "role": "script",
+      "path": "替换为人工确认口播稿的绝对路径"
+    },
+    {
+      "role": "document_text",
+      "path": "替换为贴图或证据文件的OCR文字导出绝对路径"
+    }
+  ],
+  "subject_policy": {
+    "mode": "authorized_identifiable",
+    "face": "allowed",
+    "voice": "allowed"
+  },
+  "required_lanes": [
+    "text",
+    "audio",
+    "visual",
+    "metadata"
+  ],
+  "visual_sample_interval_s": 1.0,
+  "max_visual_frames": 1800,
+  "ocr_language": "chi_sim"
+}

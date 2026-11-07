@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.color_processing_plan.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_video",
+    "source_video_summary",
+    "source_role",
+    "analysis_report",
+    "analysis_report_sha256",
+    "output",
+    "mode",
+    "adjustments",
+    "filter_graph",
+    "engine",
+    "execution_policy",
+    "review",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.color_processing_plan.v1"},
+    "source_video": {"$ref": "#/$defs/artifact"},
+    "source_video_summary": {"type": "object"},
+    "source_role": {
+      "enum": [
+        "camera_plate",
+        "talking_head_plate",
+        "interview_plate",
+        "synthetic_camera_plate"
+      ]
+    },
+    "analysis_report": {"$ref": "#/$defs/artifact"},
+    "analysis_report_sha256": {"$ref": "#/$defs/sha256"},
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "container", "video_codec", "pixel_format", "audio_policy"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "container": {"const": "mp4"},
+        "video_codec": {"const": "h264"},
+        "pixel_format": {"const": "yuv420p"},
+        "audio_policy": {"const": "stream_copy"}
+      }
+    },
+    "mode": {"enum": ["cautious_auto", "explicit_basic"]},
+    "adjustments": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy", "eq", "temperature", "decision_basis"],
+      "properties": {
+        "policy": {"enum": ["cautious_signalstats_v1", "explicit_basic_v1"]},
+        "eq": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["brightness", "contrast", "gamma", "saturation"],
+          "properties": {
+            "brightness": {"type": "number", "minimum": -0.15, "maximum": 0.15},
+            "contrast": {"type": "number", "minimum": 0.8, "maximum": 1.25},
+            "gamma": {"type": "number", "minimum": 0.8, "maximum": 1.25},
+            "saturation": {"type": "number", "minimum": 0.7, "maximum": 1.4}
+          }
+        },
+        "temperature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["enabled", "kelvin", "mix", "preserve_lightness"],
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "kelvin": {"type": "integer", "minimum": 1000, "maximum": 40000},
+            "mix": {"type": "number", "minimum": 0, "maximum": 0.5},
+            "preserve_lightness": {"type": "number", "minimum": 0, "maximum": 1}
+          }
+        },
+        "decision_basis": {"type": "object"}
+      }
+    },
+    "filter_graph": {"type": "string", "minLength": 1},
+    "engine": {"type": "object"},
+    "execution_policy": {"type": "object"},
+    "review": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {
+          "oneOf": [
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+            {"type": "null"}
+          ]
+        }
+      }
+    }
+  }
+}

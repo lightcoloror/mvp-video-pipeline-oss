@@ -1,0 +1,21 @@
+{
+  "schema": "video_creation_pipeline.video_packaging_plan.v1",
+  "aspect_ratio": "9:16",
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "scenes": [
+    {
+      "scene_id": "segment-04",
+      "story_segment_ref": "segment-04",
+      "start_s": 0.0,
+      "end_s": 6.0,
+      "evidence_refs": [
+        "evidence:synthetic-invoice"
+      ]
+    }
+  ],
+  "status": "candidate_only"
+}

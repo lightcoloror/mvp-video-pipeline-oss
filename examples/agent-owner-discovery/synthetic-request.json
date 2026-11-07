@@ -1,0 +1,38 @@
+{
+  "schema_version": "mvp-video-pipeline.synthetic-request.v1",
+  "tool_id": "mvp-video-pipeline",
+  "mode": "candidate_only_offline",
+  "execute": false,
+  "command_template": "python scripts/content_video.py generate-synthetic --brief tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.json --schema tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.schema.json --research-output tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.json --research-schema tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.schema.json --output-root <managed-output>",
+  "input_bindings": [
+    {
+      "role": "brief",
+      "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.json",
+      "sha256": "70c65d7b8f47647e99f1698a178ecf57b624b9b09375df57fe8182fe66df8a8c"
+    },
+    {
+      "role": "brief_schema",
+      "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/content-video-brief.v1.schema.json",
+      "sha256": "d5a8e7b15528b8160f67b90ca870120dd80724553dbaa0770f346446e2395ecb"
+    },
+    {
+      "role": "research_output",
+      "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.json",
+      "sha256": "27ae62971f6754009859be87f07a47d9673484c5dea32db0f48e13ce0779a97c"
+    },
+    {
+      "role": "research_schema",
+      "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.schema.json",
+      "sha256": "3c2e0e9a05034b1ffa3693735da128c7d3e114ddb155f11668120b974fee1009"
+    }
+  ],
+  "expected_boundary": {
+    "candidate_only": true,
+    "synthetic_material_only": true,
+    "network": false,
+    "provider": false,
+    "upload": false,
+    "publish": false,
+    "real_media": false
+  }
+}
