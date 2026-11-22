@@ -51,6 +51,60 @@ _MEASUREMENT_FIELDS = (
 )
 
 
+def measure_final_audio(
+    media_path: str | Path,
+    plan_path: str | Path,
+    output_dir: str | Path,
+    *,
+    timeout_s: float = 180.0,
+) -> Path:
+    """Measure final media stream 0:a:0; return its verification report path.
+
+    The caller owns a unique, existing output directory and determines whether
+    this stream is the intended delivery track. A valid report may describe a
+    failed policy check; consumers must inspect its readiness independently.
+    """
+    if isinstance(timeout_s, bool) or not isinstance(timeout_s, (int, float)):
+        raise ContractError("final audio measurement timeout must be a positive finite number")
+    if not math.isfinite(timeout_s) or timeout_s <= 0:
+        raise ContractError("final audio measurement timeout must be a positive finite number")
+    media = Path(media_path).expanduser().resolve()
+    plan_file = Path(plan_path).expanduser().resolve()
+    root = Path(output_dir).expanduser().resolve()
+    if not root.is_dir():
+        raise ContractError("final audio measurement output directory must already exist")
+    log = root / "loudnorm-output-verification.log"
+    receipt = root / "loudnorm-output-verification-receipt.json"
+    report = root / "loudnorm-output-verification.json"
+    _validate_output_paths(media, plan_file, log, receipt, report)
+    if any(path.exists() for path in (log, receipt, report)):
+        raise ContractError("final audio measurement output paths already exist")
+    plan = read_json_object(plan_file, "audio mastering plan")
+    validate_audio_mastering_plan(plan)
+    media_before = artifact_reference(media, "final media")
+    command = build_output_verification_command(media, plan["policy"])
+    execute_ffmpeg_with_receipt(
+        "audio_mastering",
+        command,
+        [
+            {"role": "mastered_audio_staging", "path": media},
+            {"role": "audio_mastering_plan", "path": plan_file},
+        ],
+        [{"role": "loudnorm_output_verification_log", "path": log}],
+        receipt,
+        capture_log_path=log,
+        timeout_s=float(timeout_s),
+        guard_resource=True,
+    )
+    verification = build_audio_mastering_output_verification(
+        plan_file, media, log, receipt
+    )
+    if verification["mastered_audio"] != media_before:
+        raise ContractError("final media changed during audio measurement")
+    atomic_write_json(verification, report)
+    return report
+
+
 def execute_audio_mastering(
     plan_path: str | Path,
     work_dir: str | Path,
