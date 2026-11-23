@@ -45,8 +45,8 @@ or asset grants. Replace every placeholder and supply real scoped evidence.
 
 See THIRD_PARTY_NOTICES.md and MODEL_ASSET_LICENSES.md. First-party Apache-2.0
 does not relicense optional external AGPL/GPL components, unlicensed source,
-model weights or media. The separately reviewed local-rough-cut P1 code is not
-included here and has not gained publication approval through this candidate.
+model weights or media. The separately approved [local-rough-cut P1 source](https://github.com/lightcoloror/local-rough-cut/tree/fd91474e3e5368fd71aaf2bbba80785efc425adc)
+is available from its own repository. MVP does not bundle the P1 implementation.
 
 766 synthetic source tests passed with 11 optional integration skips. The installed
 package passed 34 CLI help checks and generated a 45.034667-second H.264 1280×720
