@@ -50,24 +50,27 @@ class RoughCutWorkspaceTests(unittest.TestCase):
         if self.root.exists():
             shutil.rmtree(self.root)
 
-    def test_review_delivery_defaults_to_script_aligned_independent_clips(
+    def test_review_delivery_defaults_to_script_aligned_source_time_ranges(
         self,
     ) -> None:
         policy = self.workspace["review_delivery_policy"]
 
         self.assertEqual(
             policy["default_delivery_mode"],
-            "script_aligned_independent_clips",
+            "script_aligned_source_time_ranges",
         )
         self.assertFalse(policy["cross_segment_batch_browse_allowed"])
         self.assertFalse(policy["continuous_review_reel_generated_by_default"])
+        self.assertFalse(policy["independent_clip_per_script_segment_required"])
+        self.assertFalse(policy["media_export_allowed"])
+        self.assertEqual(policy["review_surface"], "targeted-review.html")
         self.assertEqual(
             [row["script_segment_id"] for row in self.workspace["review_units"]],
             ["shot-001", "shot-002"],
         )
         self.assertTrue(
             all(
-                row["review_mode"] == "single_mapped_clip"
+                row["review_mode"] == "single_mapped_source_time_range"
                 for row in self.workspace["review_units"]
             )
         )
@@ -79,7 +82,7 @@ class RoughCutWorkspaceTests(unittest.TestCase):
         ] = True
         workspace["workspace_sha256"] = payload_sha256(workspace, "workspace_sha256")
 
-        with self.assertRaisesRegex(ContractError, "script-aligned independent clips"):
+        with self.assertRaisesRegex(ContractError, "script-aligned source time ranges"):
             validate_rough_cut_workspace(workspace)
 
     def test_legacy_workspace_remains_readable_without_new_review_fields(self) -> None:
@@ -90,6 +93,14 @@ class RoughCutWorkspaceTests(unittest.TestCase):
         workspace["workspace_sha256"] = payload_sha256(workspace, "workspace_sha256")
 
         validate_rough_cut_workspace(workspace)
+
+    def test_legacy_clip_policy_cannot_be_resealed_as_current_workspace(self) -> None:
+        workspace = json.loads(json.dumps(self.workspace))
+        workspace["review_delivery_policy"]["default_delivery_mode"] = "script_aligned_independent_clips"
+        workspace["review_delivery_policy"]["independent_clip_per_script_segment_required"] = True
+        workspace["workspace_sha256"] = payload_sha256(workspace, "workspace_sha256")
+        with self.assertRaisesRegex(ContractError, "source time ranges"):
+            validate_rough_cut_workspace(workspace)
 
     def test_multiple_candidates_are_compared_only_within_the_script_segment(
         self,

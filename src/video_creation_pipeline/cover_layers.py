@@ -77,6 +77,22 @@ def validate_cover_layers(plan):
                 dy = box['y'] + (bh - ih * scale) / 2 / profile['height']
                 if layer.get('subject_reviewed') is not True:
                     raise ContractError('image subject regions must be explicitly reviewed')
+                df = layer.get('depth_fusion')
+                if df is not None:
+                    if not isinstance(df, dict) or df.get('mode') != 'text_behind_subject':
+                        raise ContractError('invalid depth_fusion mode')
+                    if df.get('alpha_matte_verified') is not True:
+                        raise ContractError('depth_fusion requires verified transparent alpha matte')
+                    backend = df.get('matting_backend')
+                    if not isinstance(backend, str) or not backend.strip():
+                        raise ContractError('depth_fusion requires matting_backend declaration')
+                    max_occ = number(df.get('max_glyph_occlusion_ratio', 0.22), 0.01, 0.25)
+                    meas_char = number(df.get('measured_max_char_occlusion'), 0.0, 1.0)
+                    meas_title = number(df.get('measured_title_occlusion'), 0.0, 1.0)
+                    if meas_char > max_occ + 1e-6:
+                        raise ContractError(f'depth_fusion glyph occlusion {meas_char:.3f} exceeds limit {max_occ:.3f}')
+                    if meas_title > 0.18 + 1e-6:
+                        raise ContractError(f'depth_fusion total title occlusion {meas_title:.3f} exceeds limit 0.180')
                 for region in layer.get('protected_regions', []):
                     r = rect(region)
                     protected.append((lid, dict(x=dx+r['x']*iw*scale/profile['width'], y=dy+r['y']*ih*scale/profile['height'], width=r['width']*iw*scale/profile['width'], height=r['height']*ih*scale/profile['height'])))
@@ -114,10 +130,22 @@ def validate_cover_layers(plan):
             raise ContractError('cover layers need a headline')
         # Protect only against subsequently painted layers. Background underlays
         # are permitted; a later image must not cover an earlier protected face.
+        # Explicit opt-in depth_fusion foreground cutouts may cross behind-subject
+        # overlay masthead text when measured glyph occlusion passed the soft budget.
         order = {x['id']: i for i, x in enumerate(layers)}
         for text_layer in (x for x in layers if x['type']=='text'):
-            if any(overlaps(text_layer['box'],x['box']) for x in layers[order[text_layer['id']]+1:]):
-                raise ContractError('later cover layer hides text')
+            for later in layers[order[text_layer['id']]+1:]:
+                if not overlaps(text_layer['box'], later['box']):
+                    continue
+                is_allowed_depth_cutout = (
+                    text_layer.get('role') == 'overlay'
+                    and later.get('type') == 'image'
+                    and isinstance(later.get('depth_fusion'), dict)
+                    and later['depth_fusion'].get('mode') == 'text_behind_subject'
+                    and later['depth_fusion'].get('alpha_matte_verified') is True
+                )
+                if not is_allowed_depth_cutout:
+                    raise ContractError('later cover layer hides text')
         for owner, region in protected:
             for layer in layers[order[owner] + 1:]:
                 if overlaps(region, layer['box']):

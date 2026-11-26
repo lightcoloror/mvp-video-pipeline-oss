@@ -278,6 +278,10 @@ def _resolve_visual_binding(
         raise ContractError(
             "shot generation unit is not routed to provider-generated B-roll"
         )
+    if style.get("preset_id") == "pixel_narrative":
+        raise ContractError(
+            "pixel_narrative requires an authored local scene, not provider B-roll"
+        )
     provider = _object(_object(style["renderer_bindings"])["provider_prompt"])
     constraints = provider.get("negative_constraints")
     if not isinstance(constraints, list):

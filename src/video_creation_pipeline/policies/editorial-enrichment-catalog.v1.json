@@ -1,0 +1,259 @@
+{
+  "schema": "video_creation_pipeline.editorial_enrichment_catalog.v1",
+  "version": "1.0.4",
+  "purpose": "Agent-readable selection and reuse map; not a renderer or automatic component insertion.",
+  "selection_stage": "storyboard_before_render",
+  "time_authority": "existing packaging scenes, author word anchors and edit mapping",
+  "workflow_document": "docs/editorial-enrichment-and-captions.md",
+  "selection_template": "examples/editorial-enrichment/scene-selection.template.md",
+  "automatic_selection": false,
+  "shared_checks": [
+    "source_and_time_binding",
+    "final_layout_safety",
+    "typography_gates",
+    "mobile_pixel_review",
+    "semantic_and_audio_review"
+  ],
+  "components": [
+    {
+      "id": "keyword_caption",
+      "name": "关键词字幕",
+      "priority": 1,
+      "use_when": "关键数字、动作、转折或否定词需要强调",
+      "existing_base": [
+        "src/video_creation_pipeline/audio_timeline.py",
+        "src/video_creation_pipeline/author_bindings.py"
+      ],
+      "adoption_status": "workflow_recipe_with_partial_primitives",
+      "gap": "现有基础字幕与词锚点可复用；通用逐词强调字幕渲染器尚未在本次实现或验收。",
+      "inputs": [
+        "corrected_caption",
+        "verified_word_anchor_or_sentence_interval",
+        "emphasis_reason"
+      ],
+      "checks": [
+        "完整可读短句保留",
+        "未测词时钟时降级整句",
+        "不遗漏否定词和有意重复",
+        "普通字与强调字都满足最小字号"
+      ]
+    },
+    {
+      "id": "focus_annotation",
+      "name": "局部放大与标注",
+      "priority": 1,
+      "use_when": "录屏、文件或图表中需要观众看清具体区域",
+      "existing_base": [
+        "src/video_creation_pipeline/semantic_motion.py"
+      ],
+      "existing_recipes": [
+        "full_to_focus",
+        "dim_context",
+        "box_highlight",
+        "marker_highlight",
+        "leader_line_label",
+        "focus_to_full",
+        "focus_to_next"
+      ],
+      "adoption_status": "existing_primitives_reuse",
+      "inputs": [
+        "source_asset",
+        "evidence_target",
+        "cue",
+        "safe_region"
+      ],
+      "checks": [
+        "焦点来自实际证据",
+        "放大不伪造细节",
+        "必要时回到全貌",
+        "保留来源上下文"
+      ]
+    },
+    {
+      "id": "information_relationship_card",
+      "name": "信息卡与关系图",
+      "priority": 1,
+      "use_when": "解释关系、因果、顺序或方案区别",
+      "existing_base": [
+        "src/video_creation_pipeline/explainer_recipes.py",
+        "src/video_creation_pipeline/object_scenes.py"
+      ],
+      "existing_recipes": [
+        "causal",
+        "comparison",
+        "sequence"
+      ],
+      "adoption_status": "existing_primitives_reuse",
+      "inputs": [
+        "frozen_narration",
+        "source_quote",
+        "nodes",
+        "relationship",
+        "scene_id"
+      ],
+      "checks": [
+        "图像新增关系信息",
+        "数字与限定可追溯",
+        "因果关系需人工核对",
+        "留够读图时间"
+      ]
+    },
+    {
+      "id": "step_checklist",
+      "name": "步骤清单",
+      "priority": 2,
+      "use_when": "教程或操作具有明确完成节点",
+      "existing_base": [
+        "src/video_creation_pipeline/explainer_recipes.py",
+        "src/video_creation_pipeline/object_scenes.py"
+      ],
+      "existing_recipes": [
+        "sequence"
+      ],
+      "adoption_status": "workflow_recipe_with_partial_primitives",
+      "gap": "可复用顺序图和事件锚点；通用逐步勾选模板尚未在本次实现或验收。",
+      "inputs": [
+        "step_id",
+        "short_label",
+        "completion_event",
+        "evidence_ref"
+      ],
+      "checks": [
+        "真正完成时才勾选",
+        "失败或跳过与成功区分",
+        "不与进度条重复占屏"
+      ]
+    },
+    {
+      "id": "context_lower_third",
+      "name": "人物／时间／地点条",
+      "priority": 2,
+      "use_when": "人物首次出现、跨天、换地点或画外说话人需要说明",
+      "existing_base": [
+        "src/video_creation_pipeline/semantic_motion.py",
+        "src/video_creation_pipeline/final_layout_safety.py"
+      ],
+      "adoption_status": "workflow_recipe_with_partial_primitives",
+      "gap": "复用文本标注和身份角色布局；独立人物条模板尚未在本次实现或验收。",
+      "inputs": [
+        "verified_label",
+        "first_appearance_or_change_event",
+        "duration",
+        "safe_region"
+      ],
+      "checks": [
+        "身份与地点有依据",
+        "不把时间推测写成事实",
+        "角色标签不只靠颜色",
+        "展示后退出避免常驻遮挡"
+      ]
+    },
+    {
+      "id": "matched_comparison",
+      "name": "前后对比／分屏",
+      "priority": 2,
+      "use_when": "需要比较画质、操作结果或两种方案",
+      "existing_base": [
+        "src/video_creation_pipeline/semantic_motion.py",
+        "src/video_creation_pipeline/explainer_recipes.py",
+        "src/video_creation_pipeline/execution_receipts.py"
+      ],
+      "adoption_status": "workflow_recipe_with_partial_primitives",
+      "gap": "已有 comparison 布局；两路视频精确同帧比较需项目绑定，未新增通用双视频渲染器。",
+      "inputs": [
+        "left_asset",
+        "right_asset",
+        "matched_time_or_event",
+        "crop_and_scale",
+        "labels"
+      ],
+      "checks": [
+        "同比例同事件比较",
+        "原始与处理后清楚标记",
+        "不单独锐化参照一侧",
+        "分屏过小时改为同框交替"
+      ]
+    },
+    {
+      "id": "freeze_replay",
+      "name": "停帧与短回放",
+      "priority": 2,
+      "use_when": "关键动作或反应在正常播放时容易错过",
+      "existing_base": [
+        "src/video_creation_pipeline/spoken_rough_cut.py",
+        "src/video_creation_pipeline/execution_receipts.py"
+      ],
+      "adoption_status": "workflow_recipe_only",
+      "gap": "沿用编辑决定和 FFmpeg 出口；没有把冻结检测器冒充停帧/回放制作组件，本次未新增该渲染器。",
+      "inputs": [
+        "source_interval",
+        "reason",
+        "new_edl_mapping",
+        "audio_policy",
+        "replay_label"
+      ],
+      "checks": [
+        "回放标记不制造事件再次发生的误解",
+        "不冻结或截断半句声音",
+        "新增时长后重投影字幕/章节/进度条"
+      ]
+    },
+    {
+      "id": "recap_card",
+      "name": "结尾回顾卡",
+      "priority": 2,
+      "use_when": "信息较多，需要保留可回看要点或下一步",
+      "existing_base": [
+        "src/video_creation_pipeline/explainer_recipes.py",
+        "src/video_creation_pipeline/semantic_editorial.py"
+      ],
+      "adoption_status": "workflow_recipe_with_partial_primitives",
+      "gap": "复用 recap 语义角色和文字图卡；通用回顾卡样式尚未在本次单独实渲染。",
+      "inputs": [
+        "two_or_three_supported_points",
+        "source_quotes",
+        "reading_hold",
+        "outro_audio_end"
+      ],
+      "checks": [
+        "不增加正文未解释的新结论",
+        "保留必要限定",
+        "片尾笑声和音频尾巴完整",
+        "关联内容使用真实既有封面与题目"
+      ]
+    }
+  ],
+  "caption_modes": {
+    "standard": "默认稳定字幕，校对后的短句及必要声音说明",
+    "speaker_aware": "多人/画外对话按已核实身份增加文字标签，颜色仅作辅助",
+    "expressive_trial": "经项目选择的小样路线；稳定台词底层，有限强调及角色拟声动效；缺少词时钟/身份/声音证据时降级",
+    "renderer_status": "ass_and_variety_recipe_implemented_real_timing_candidate_rendered_human_review_pending"
+  },
+  "expressive_caption_guidance": {
+    "updated_at": "2026-10-11T17:44:30+08:00",
+    "actor": "Codex (GPT-6)",
+    "purpose": "静音观看仍保留角色、重音、停顿和非语言回应等可确认的声音信息",
+    "father_laughter_example": "按用户反馈优先试综艺花字：大号错落三字、双描边短投影、逐声弹出及漫画放射线。角色色沿项目；真实每声锚点必须回听确认。",
+    "identity": "以人物画面、位置对应或首现名字建立身份；必要时补充画外/重叠说话人线索",
+    "readability": "拟声表现层独立于稳定台词层，起始字号可读，最大尺寸与运动路径不遮挡主体和其他必读字幕",
+    "fallback": "普通版或文本导出可保留父亲笑等文字说明，保留同等必要信息",
+    "review": "静音辨认角色、声音事件起止与节奏力度；有声核对同步和表达忠实；手机复核可读性",
+    "implementation_status": "real_tail_main_and_reduced_preview_rendered_timing_and_human_acceptance_pending",
+    "entrypoint": "python scripts/expressive_captions.py build / validate / render",
+    "modes": [
+      "stable",
+      "grow",
+      "float_fade",
+      "variety",
+      "variety_reduced"
+    ],
+    "time_binding": "current program + packaging + reviewed sound event hashes; visual tail distinct from measured sound end",
+    "workflow": "docs/expressive-captions-workflow.md",
+    "boundary": "Three-character laughter recipe. Synthetic and authorized local real-source previews rendered. Waveform candidate timing is explicitly unverified; no emotion inference or upstream JS runtime installed.",
+    "variety_workflow": "docs/variety-laughter-stickers.md",
+    "variety_recipe": "src/video_creation_pipeline/policies/variety-laughter-recipe.v1.json",
+    "user_feedback": "User said first variety version was better and asked to continue. This is directional feedback, not final acceptance.",
+    "rhythm_parameters": "Explicit syllable_frames; optional syllable_strengths in 0.7..1. Small coupled rebound, staggered exit; reduced mode removes positional motion.",
+    "timing_candidate_contract": "review_status=timing_candidate requires event_confirmation, timing_method and requires_human_audio_review=true in timing_candidate_ack. Never promote energy peaks to human_audio_verified."
+  }
+}

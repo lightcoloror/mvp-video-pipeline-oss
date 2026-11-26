@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from .editing_presets import POLICY, interval, overlaps
 from .errors import ContractError
+from .scale_motion import build_scale_motion
 
 
-def visual_defaults(row, start, end):
+def visual_defaults(row, start, end, *, width=540, height=960, fps=30):
     if row.get("cut_basis", "semantic") not in (
         "semantic",
         "action",
@@ -56,4 +57,5 @@ def visual_defaults(row, start, end):
         "emphasis_events": events,
         "whole_sentence_continuous_motion": False,
         "policy_version": POLICY["version"],
+        "scale_motion": build_scale_motion(row.get('scale_motion'), width, height, end-start, fps),
     }

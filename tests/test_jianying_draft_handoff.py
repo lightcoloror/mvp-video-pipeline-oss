@@ -2,6 +2,7 @@ from __future__ import annotations
 
 # ruff: noqa: E402
 
+import builtins
 import json
 import os
 import shutil
@@ -19,6 +20,9 @@ if str(SRC) not in sys.path:
 
 from video_creation_pipeline.contract_io import file_sha256
 from video_creation_pipeline.errors import ContractError
+from video_creation_pipeline._vectcut_worker import (
+    _allow_video_only_imageio_import,
+)
 from video_creation_pipeline.jianying_draft_handoff import (
     JIANYING_SPOKEN_DRAFT_JOB_SCHEMA,
     VECTCUT_COMMIT,
@@ -41,6 +45,21 @@ FIXTURE = ROOT / "tests" / "fixtures" / "vkp_bundle"
 
 
 class JianyingDraftHandoffTests(unittest.TestCase):
+    def test_video_worker_imageio_fallback_fails_closed_for_image_reads(self) -> None:
+        real_import = builtins.__import__
+
+        def without_imageio(name, globals=None, locals=None, fromlist=(), level=0):
+            if name == "imageio.v2":
+                raise ModuleNotFoundError("No module named 'imageio'", name="imageio")
+            return real_import(name, globals, locals, fromlist, level)
+
+        with patch.dict(sys.modules):
+            with patch("builtins.__import__", side_effect=without_imageio):
+                _allow_video_only_imageio_import()
+            import imageio.v2 as imageio_v2  # type: ignore[import-not-found]
+
+            with self.assertRaisesRegex(RuntimeError, "imageio is unavailable"):
+                imageio_v2.imread("unused.png")
 
     def setUp(self) -> None:
         managed_root = Path(os.environ.get("TEST_TMP_ROOT", tempfile.gettempdir()))

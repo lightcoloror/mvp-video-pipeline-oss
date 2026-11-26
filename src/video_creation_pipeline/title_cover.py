@@ -139,6 +139,48 @@ PLATFORM_PROFILES: dict[str, dict[str, Any]] = {
     },
 }
 
+REQUIRED_FINAL_ASPECT_RATIOS = {"9:16", "3:4", "16:9", "4:3"}
+VALID_COVER_STAGES = {"preview", "matrix_pk", "final", "publication"}
+
+
+def validate_aspect_ratio_coverage(
+    profile_ids: list[str], stage: str = "preview"
+) -> dict[str, Any]:
+    """
+    Quality Gate for Cover Aspect Ratio Coverage:
+    - In 'preview' mode: Minimum 1 landscape (16:9) + 1 vertical (9:16 or 3:4) profile required.
+    - In 'matrix_pk' / 'final' / 'publication' mode: Must strictly provide all 4 platform
+      aspect ratios (9:16, 3:4, 16:9, 4:3) across 5 core platforms.
+    """
+    ratios = {
+        PLATFORM_PROFILES[p]["aspect_ratio"]
+        for p in profile_ids
+        if p in PLATFORM_PROFILES
+    }
+    has_landscape = "16:9" in ratios
+    has_vertical = any(r in ratios for r in ("9:16", "3:4"))
+
+    if not (has_landscape and has_vertical):
+        raise ContractError(
+            "cover generation requires at least 1 landscape (16:9) and 1 vertical (9:16 or 3:4) profile even in preview mode"
+        )
+
+    norm_stage = stage.lower().strip()
+    if norm_stage in {"matrix_pk", "final", "publication"}:
+        missing = REQUIRED_FINAL_ASPECT_RATIOS - ratios
+        if missing:
+            raise ContractError(
+                f"formal final and title-cover PK stage requires all 4 platform aspect ratios "
+                f"(9:16, 3:4, 16:9, 4:3), missing: {sorted(missing)}"
+            )
+
+    return {
+        "stage": norm_stage,
+        "aspect_ratios": sorted(ratios),
+        "covered_all_four": ratios >= REQUIRED_FINAL_ASPECT_RATIOS,
+        "gate_passed": True,
+    }
+
 
 def build_title_cover_candidate_plan(
     project_plan_path: str | Path,
@@ -421,6 +463,10 @@ def _normalize_spec(spec: dict[str, Any], project: dict[str, Any]) -> dict[str, 
             "unsupported title cover platform profile: "
             + ", ".join(sorted(unknown_profiles))
         )
+    stage = str(spec.get("stage") or spec.get("mode") or "").strip().lower()
+    if not stage:
+        stage = "final" if (spec.get("is_final") or spec.get("is_pk")) else "preview"
+    validate_aspect_ratio_coverage(profile_ids, stage=stage)
     publication_platforms = [
         str(value or "").strip() for value in spec.get("publication_platforms") or []
     ]

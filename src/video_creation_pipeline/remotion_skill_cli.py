@@ -10,8 +10,8 @@ from .errors import ContractError
 from .remotion_project import (
     materialize_remotion_project,
     remotion_project_doctor,
-    run_remotion_cover_candidates,
     run_remotion_candidate,
+    run_remotion_cover_candidates,
     validate_remotion_cover_run_receipt,
     validate_remotion_project_manifest,
     validate_remotion_run_receipt,
@@ -117,6 +117,10 @@ def main(argv: list[str] | None = None) -> int:
                 safe_media_layout_path=spec.get("safe_media_layout_path"),
                 safe_media_scene_plan_path=spec.get("safe_media_scene_plan_path"),
                 semantic_motion_path=spec.get("semantic_motion_path"),
+                external_motion_selection_plan_path=spec.get(
+                    "external_motion_selection_plan_path"
+                ),
+                object_scene_plan_path=spec.get("object_scene_plan_path"),
                 subtitle_path=spec.get("subtitle_path"),
                 video_shotcraft_root=(
                     shotcraft.get("source_root") if shotcraft is not None else None
@@ -129,6 +133,13 @@ def main(argv: list[str] | None = None) -> int:
                 ),
                 visual_style_profile_path=spec.get("visual_style_profile_path"),
                 title_cover_plan_path=spec.get("title_cover_plan_path"),
+                case_cover_visual_plan_path=spec.get("case_cover_visual_plan_path"),
+                case_cover_visual_plan_collection_path=spec.get(
+                    "case_cover_visual_plan_collection_path"
+                ),
+                subtitle_style_preset=spec.get("subtitle_style_preset"),
+                subtitle_font_id=spec.get("subtitle_font_id"),
+                subtitle_background_opacity=spec.get("subtitle_background_opacity"),
             )
             output = write_remotion_skill_handoff(handoff, args.output)
             payload = {

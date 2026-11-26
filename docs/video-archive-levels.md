@@ -14,6 +14,6 @@ python scripts/artifact_lifecycle.py archive-policy
 python scripts/artifact_lifecycle.py archive-plan --assessment <项目评估.json> --output <新的归档计划.json>
 ```
 
-完整规则与验收边界见[已公开主流程归档规则](https://github.com/lightcoloror/self-media-creation-system-oss/blob/34f6c1322391bc92253d763b9e03677402a2b869/self-media-creation-system/docs/video-archive-levels.md)。使用者显式配置该公开 Owner；本仓不复制其归档执行器。
+完整规则、模板、材料清单和验收边界以 [self-media-creation-system 归档规则](https://github.com/lightcoloror/self-media-creation-system-oss/blob/main/docs/video-archive-levels.md) 为准，需要该私有仓库访问权限。本机入口为 `<workspace>/self-media-creation-system/docs/video-archive-levels.md`。尚未部署时先取得该仓库，不把本说明视作已安装命令。
 
 `archive-plan` 只生成分级和待验收清单；`08_publish.py` 只收集发布文件。材料已收集、文件完整性、限定范围重建、上传和网盘下载回验分开记录。归档选级和缓存排除不授权删除原片，也不自动调用渲染、模型或上传。

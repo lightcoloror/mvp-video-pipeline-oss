@@ -458,7 +458,9 @@ def build_editorial_visual_beats(
     beats = []
     for scene_id, scene in scenes.items():
         row = deepcopy(rows[scene_id])
-        defaults=visual_defaults(row,scene['start_s'],scene['end_s'])
+        geometry = packaging['output']
+        defaults=visual_defaults(row,scene['start_s'],scene['end_s'],
+            width=geometry['width'],height=geometry['height'],fps=geometry['fps'])
         if any(ref not in evidence[scene_id] for ref in row["source_or_evidence_refs"]):
             raise ContractError("visual beat evidence does not belong to its scene")
         reasons = []

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.video_talkcraft_execution_receipt.v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_recipe_plan",
+    "source_render_receipt",
+    "source_observations",
+    "status",
+    "checks",
+    "release_gate",
+    "receipt_sha256"
+  ],
+  "properties": {
+    "schema": {"const": "video_creation_pipeline.video_talkcraft_execution_receipt.v1"},
+    "source_recipe_plan": {"$ref": "#/$defs/artifact"},
+    "source_render_receipt": {"$ref": "#/$defs/artifact"},
+    "source_observations": {"$ref": "#/$defs/artifact"},
+    "status": {"enum": ["passed", "failed"]},
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cue_id", "status"],
+        "properties": {
+          "cue_id": {"type": "string", "minLength": 1},
+          "recipe_id": {"type": "string", "minLength": 1},
+          "observation_source": {"enum": ["remotion_frame_marker", "roi_frame_diff", "playwright_dom_probe"]},
+          "declared_first_meaningful_frame": {"type": "integer", "minimum": 0},
+          "observed_first_meaningful_frame": {"type": "integer", "minimum": -1},
+          "deadline_frame": {"type": "integer", "minimum": 0},
+          "target_rect_matches": {"type": "boolean"},
+          "entry_passed": {"type": "boolean"},
+          "mobile_readability_passed": {"type": "boolean"},
+          "status": {"enum": ["passed", "failed", "failed_missing_observation"]}
+        }
+      }
+    },
+    "release_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_only", "render_eligible", "publish_authorized"],
+      "properties": {
+        "candidate_only": {"const": true},
+        "render_eligible": {"type": "boolean"},
+        "publish_authorized": {"const": false}
+      }
+    },
+    "receipt_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "content_kind", "canonical_sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "bytes": {"type": "integer", "minimum": 0},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "content_kind": {"enum": ["binary", "json"]},
+        "canonical_sha256": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]}
+      }
+    }
+  }
+}

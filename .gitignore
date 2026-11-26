@@ -30,6 +30,7 @@ dist/
 .test-tmp/
 .test-runtime/
 .test-write-check/
+.external-motion-runtime/
 artifacts/
 cache/
 checkpoints/

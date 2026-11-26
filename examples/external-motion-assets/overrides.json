@@ -1,0 +1,10 @@
+{
+  "schema": "video_creation_pipeline.external_motion_overrides.v1",
+  "cues": {
+    "cue-001": {
+      "source_id": "onda",
+      "item_id": "highlight",
+      "sfx_asset_id": "clipkit-soft-pop"
+    }
+  }
+}

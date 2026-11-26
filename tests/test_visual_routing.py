@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-# ruff: noqa: E402
-
+import io
 import json
 import shutil
 import sys
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -44,11 +44,12 @@ from video_creation_pipeline.visual_routing import (
     build_visual_style_profile,
     run_hyperframes_music_analysis,
     validate_content_visual_routing_plan,
-    validate_hyperframes_music_handoff,
     validate_hyperframes_music_analysis_receipt,
+    validate_hyperframes_music_handoff,
     validate_visual_style_profile,
     write_visual_routing_contract,
 )
+from video_creation_pipeline.visual_routing_cli import main as visual_routing_main
 
 
 class VisualRoutingTests(unittest.TestCase):
@@ -205,6 +206,151 @@ class VisualRoutingTests(unittest.TestCase):
             paper["renderer_bindings"]["provider_prompt"]["style_prefix"],
         )
         validate_visual_style_profile(paper)
+
+    def test_pixel_recipe_is_explicit_stable_and_not_a_render_claim(self) -> None:
+        profile = build_visual_style_profile("pixel_narrative")
+        self.assertEqual(profile, build_visual_style_profile("pixel_narrative"))
+        recipe = profile["tokens"]["shot_recipe"]
+        self.assertEqual(
+            recipe["source"]["commit"], "42790f11f24559b2971ccbc3c43a7737f45d5488"
+        )
+        self.assertEqual(recipe["selection"], "explicit_preset_only")
+        self.assertEqual(recipe["timing_authority"], "video_packaging_plan")
+        self.assertFalse(recipe["estimate_speech_duration_from_character_count"])
+        self.assertFalse(recipe["source"]["upstream_code_execution"])
+        self.assertFalse(recipe["real_clip_rendered"])
+        self.assertFalse(recipe["human_visual_approval"])
+        self.assertTrue(
+            profile["evidence_policy"]["source_pixels_must_remain_unstyled"]
+        )
+        with self.assertRaises(ContractError):
+            build_visual_style_profile("")
+        recipe["event_vocabulary"].append("unreviewed")
+        self.assertNotIn(
+            "unreviewed",
+            build_visual_style_profile("pixel_narrative")["tokens"]["shot_recipe"][
+                "event_vocabulary"
+            ],
+        )
+        profile["profile_sha256"] = payload_sha256(profile, "profile_sha256")
+        with self.assertRaisesRegex(ContractError, "reviewed preset"):
+            validate_visual_style_profile(profile)
+
+    def test_existing_style_profile_hashes_are_unchanged(self) -> None:
+        before = {
+            "paper_cutout": "edd8b93d3757bb9f59a5170d9fcaac3a601da2775ee8338f2cd4827464e0c540",
+            "editorial_clean": "6bca7e5b8e5bf16194fa8d3cdf09bc1f8336f2b578d73ada9c11f7ca1a4a1c03",
+            "documentary_warm": "7f6dd5744ef5b333f61b40ad4d70f03fbecdb42abce80e0761dd959aa28228d7",
+            "technical_diagram": "09bf513fd1cb5178d4b44e94797643d8ca0d186506b515905d07c81e7b3d9824",
+            "evidence_neutral": "4471c4727e664e0e26edc2b6cad8f4d01df6ec736f4cdb5b72ced1773246a237",
+        }
+        for preset, digest in before.items():
+            with self.subTest(preset=preset):
+                self.assertEqual(
+                    build_visual_style_profile(preset)["profile_sha256"], digest
+                )
+                self.assertNotIn(
+                    "shot_recipe", build_visual_style_profile(preset)["tokens"]
+                )
+
+    @patch(
+        "video_creation_pipeline.visual_routing.subprocess.run",
+        side_effect=AssertionError("planning must not execute a process"),
+    )
+    def test_pixel_route_requires_authored_scene_and_preserves_other_routes(
+        self, run
+    ) -> None:
+        pixel_path = self.root / "pixel.json"
+        write_visual_routing_contract(
+            build_visual_style_profile("pixel_narrative"), pixel_path
+        )
+        plan = build_content_visual_routing_plan(self.packaging, self.spec, pixel_path)
+        self.assertEqual(
+            plan,
+            build_content_visual_routing_plan(self.packaging, self.spec, pixel_path),
+        )
+        baseline = build_content_visual_routing_plan(
+            self.packaging, self.spec, self.paper_style
+        )
+        for row, original in zip(plan["scene_routes"], baseline["scene_routes"]):
+            self.assertEqual(row["visual_route"], original["visual_route"])
+            self.assertEqual(
+                (row["start_s"], row["end_s"]), (original["start_s"], original["end_s"])
+            )
+            recipe = row["style_recipe_handoff"]
+            self.assertFalse(recipe["renderer_execution_authorized"])
+            if row["scene_id"] in {"scene-02", "scene-03"}:
+                self.assertEqual(row["execution_status"], "handoff_required")
+                self.assertEqual(recipe["status"], "authoring_required")
+                self.assertEqual(
+                    [stage["stage"] for stage in row["review_stages"]],
+                    ["storyboard", "keyframe_or_material", "motion"],
+                )
+            else:
+                self.assertEqual(recipe["status"], "excluded")
+                self.assertIsNone(recipe["recipe_id"])
+                self.assertEqual(row["execution_status"], original["execution_status"])
+        validate_content_visual_routing_plan(plan)
+        run.assert_not_called()
+
+    def test_pixel_recipe_excludes_existing_media_and_evidence_even_in_concept_scene(
+        self,
+    ) -> None:
+        pixel_path = self.root / "pixel.json"
+        write_visual_routing_contract(
+            build_visual_style_profile("pixel_narrative"), pixel_path
+        )
+        for mode in ("source_media", "evidence"):
+            packaging = json.loads(self.packaging.read_text(encoding="utf-8"))
+            scene = packaging["scenes"][1]
+            scene["material_status"] = "missing_material"
+            scene["evidence_refs"] = []
+            if mode == "source_media":
+                scene["material_status"] = "authorized_local_candidate"
+            else:
+                scene["evidence_refs"] = ["evidence:synthetic-policy"]
+            atomic_write_json(packaging, self.packaging)
+            plan = build_content_visual_routing_plan(
+                self.packaging, self.spec, pixel_path
+            )
+            self.assertEqual(
+                plan["scene_routes"][1]["style_recipe_handoff"]["status"], "excluded"
+            )
+
+    def test_pixel_route_cannot_be_rehashed_into_render_ready(self) -> None:
+        pixel_path = self.root / "pixel.json"
+        write_visual_routing_contract(
+            build_visual_style_profile("pixel_narrative"), pixel_path
+        )
+        plan = build_content_visual_routing_plan(self.packaging, self.spec, pixel_path)
+        plan["scene_routes"][1]["execution_status"] = "candidate_ready"
+        plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
+        with self.assertRaisesRegex(ContractError, "scene routes drifted"):
+            validate_content_visual_routing_plan(plan)
+
+    def test_pixel_style_cli_roundtrip_and_double_run_are_idempotent(self) -> None:
+        path = self.root / "pixel-cli.json"
+        output = io.StringIO()
+        with redirect_stdout(output):
+            for _ in range(2):
+                self.assertEqual(
+                    visual_routing_main(
+                        [
+                            "build-style",
+                            "--preset",
+                            "pixel_narrative",
+                            "--output",
+                            str(path),
+                        ]
+                    ),
+                    0,
+                )
+            self.assertEqual(
+                visual_routing_main(["validate", "--artifact", str(path)]), 0
+            )
+        results = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual(results[0], results[1])
+        self.assertEqual(results[2]["status"], "valid_candidate_only")
 
     def test_music_analysis_delegates_to_fixed_upstream_and_writes_receipt(
         self,
@@ -529,6 +675,22 @@ class VisualRoutingTests(unittest.TestCase):
         self.assertEqual(handoff["visual_route"], "provider_generated_broll")
         self.assertFalse(handoff["execution_route"]["provider_execution_authorized"])
         self.assertFalse(handoff["authority_boundary"]["provider_execution_performed"])
+
+        pixel_path = self.root / "pixel-provider-blocked.json"
+        write_visual_routing_contract(
+            build_visual_style_profile("pixel_narrative"), pixel_path
+        )
+        write_visual_routing_contract(
+            build_content_visual_routing_plan(self.packaging, self.spec, pixel_path),
+            routes,
+        )
+        with self.assertRaisesRegex(ContractError, "authored local scene"):
+            build_seedance_prompt_handoff(
+                skill_root,
+                unit_path,
+                content_visual_routing_plan_path=routes,
+                visual_style_profile_path=pixel_path,
+            )
 
 
 if __name__ == "__main__":

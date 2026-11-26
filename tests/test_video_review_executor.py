@@ -189,32 +189,21 @@ class VideoReviewExecutorTests(unittest.TestCase):
             )
         self.assertEqual(media_hasher.call_count, 1)
 
-    def test_canonical_outlet_content_verifies_supplied_media_when_building_receipt(self) -> None:
-        # The caller hashes the source once to bind the plan/cache contract. The
-        # canonical FFmpeg outlet then re-reads the supplied artifact bytes while
-        # ``build_ffmpeg_execution_receipt`` runs after the runner returns, so a
-        # supplied reference is content-verified instead of trusted by metadata
-        # alone. The reviewed contract is caller hash + receipt revalidation = two
-        # full content reads; the obsolete "no second hash" performance
-        # expectation is intentionally not asserted.
+    def test_canonical_outlet_does_not_rehash_precomputed_media(self) -> None:
         media_reads = 0
-        executor_reads = 0
-        receipt_reads = 0
         executor_hasher = executor_module.file_sha256
         contract_hasher = contract_io_module.file_sha256
 
         def count_executor_hash(path):
-            nonlocal media_reads, executor_reads
+            nonlocal media_reads
             if Path(path).resolve() == self.media.resolve():
                 media_reads += 1
-                executor_reads += 1
             return executor_hasher(path)
 
         def count_contract_hash(path):
-            nonlocal media_reads, receipt_reads
+            nonlocal media_reads
             if Path(path).resolve() == self.media.resolve():
                 media_reads += 1
-                receipt_reads += 1
             return contract_hasher(path)
 
         def fake_runner(command, **_kwargs):
@@ -239,9 +228,7 @@ class VideoReviewExecutorTests(unittest.TestCase):
                 ffmpeg_runner=fake_runner,
                 resource_snapshot_provider=lambda: healthy,
             )
-        self.assertEqual(media_reads, 2)
-        self.assertEqual(executor_reads, 1)
-        self.assertEqual(receipt_reads, 1)
+        self.assertEqual(media_reads, 1)
 
     def test_preexisting_retained_lockfile_does_not_block_execution(self) -> None:
         plan = json.loads(self.plan_path.read_text(encoding="utf-8"))

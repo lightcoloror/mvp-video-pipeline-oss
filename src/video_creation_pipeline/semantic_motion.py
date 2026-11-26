@@ -27,12 +27,16 @@ from .execution_receipts import (
     execute_ffmpeg_with_receipt,
     validate_ffmpeg_execution_receipt,
 )
-from .production_strategy import validate_visual_production_plan
+from .production_strategy import (
+    CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA, content_visual_source,
+    validate_visual_production_plan,
+)
 from .technical_qa import (
     build_technical_qa_report,
     validate_technical_qa_report,
     write_technical_qa_report,
 )
+from .typography_gates import build_typography_gate, validate_typography_gate
 from .visual_routing import (
     validate_content_visual_routing_plan,
     validate_visual_style_profile,
@@ -105,6 +109,7 @@ def build_semantic_motion_plan(
     visual_style_profile_path: str | Path | None = None,
     privacy_exclusion_zones_path: str | Path | None = None,
     smart_reframe_plan_path: str | Path | None = None,
+    author_binding_projection_path: str | Path | None = None,
 ) -> dict[str, Any]:
     packaging_path = Path(packaging_plan_path).expanduser().resolve()
     script_path = Path(script_anchor_path).expanduser().resolve()
@@ -132,6 +137,11 @@ def build_semantic_motion_plan(
             + _cue_duration(row)
             for row in cues
         )
+    # Intent/decision: semantic motion binds the 1080x1920 type policy at plan time.
+    # Reason/evidence/scope: see policies/typography-gates.v1.json governance.
+    typography_gate = build_typography_gate(
+        "semantic_motion_1080x1920", width=int(width), height=int(height)
+    )
 
     normalized_cues = []
     for raw in cues:
@@ -140,6 +150,11 @@ def build_semantic_motion_plan(
         anchor = anchors.get(story_ref)
         if anchor is None:
             raise ContractError(f"script anchor is missing for {story_ref or 'cue'}")
+        if anchor["source_media_role"] == "customer_interview":
+            raise ContractError(
+                f"semantic motion cannot cover customer interview segment {story_ref}; "
+                "render an isolated creator/evidence segment and assemble it before the interview"
+            )
         cue["script_anchor"] = dict(anchor)
         cue["source_asset_id"] = str(asset_id)
         cue["source_asset_sha256"] = file_sha256(asset_path)
@@ -177,7 +192,14 @@ def build_semantic_motion_plan(
             "fps": int(fps),
             "duration_s": round(float(duration_s), 3),
         },
+        "typography_gate": typography_gate,
         "cues": normalized_cues,
+        "assembly_contract": {
+            "render_scope": "isolated_story_segment",
+            "assembly_order": "render_motion_segment_then_concat_master",
+            "final_master_overlay_allowed": False,
+            "customer_interview_overlay_allowed": False,
+        },
         "render_policy": {
             "renderer": "hyperframes",
             "renderer_version": HYPERFRAMES_VERSION,
@@ -203,6 +225,10 @@ def build_semantic_motion_plan(
         plan.update(routing_binding)
     if privacy_binding is not None:
         plan.update(privacy_binding["references"])
+    if author_binding_projection_path is not None:
+        plan["source_author_binding_projection"] = artifact_reference(
+            author_binding_projection_path, "author binding projection"
+        )
     plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
     validate_semantic_motion_plan(plan)
     return plan
@@ -235,15 +261,39 @@ def validate_semantic_motion_plan(plan: dict[str, Any]) -> None:
     )
     packaging = read_json_object(packaging_path, "video packaging plan")
     _validate_packaging_plan(packaging)
-    validate_visual_production_plan(
-        read_json_object(visual_plan_path, "visual production plan")
-    )
+    visual_plan = read_json_object(visual_plan_path, "visual production plan")
+    validate_visual_production_plan(visual_plan)
+    vertical_layout_contract = _object(visual_plan.get("vertical_layout_contract"))
     routing = _validated_optional_visual_routing(plan, packaging_path)
     privacy_zones = _validated_optional_privacy_binding(plan)
     anchors = _script_anchors(read_json_object(script_path, "script anchor artifact"))
+    if plan.get("source_author_binding_projection") is not None:
+        from .author_bindings import validate_motion_author_binding
+        validate_motion_author_binding(plan)
+    if visual_plan["schema"] == CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA:
+        content, unit = content_visual_source(
+            visual_plan["source_content_plan"]["path"], visual_plan["scene_id"]
+        )
+        scene_id = unit["scene_id"]
+        if any(row.get("story_segment_ref") != scene_id for row in plan["cues"]):
+            raise ContractError("content visual scene and motion cue identity must match")
+        if anchors.get(scene_id, {}).get("quote") != unit["narration"]:
+            raise ContractError("content motion anchor must bind the frozen narration")
+        if plan.get("source_author_binding_projection") is None:
+            expected_packaging = dict(content["packaging_plan"])
+            if "source_project_plan_sha256" in packaging:
+                expected_packaging["source_project_plan_sha256"] = content["plan_sha256"]
+            if packaging != expected_packaging:
+                raise ContractError("content motion packaging requires its source plan or an author binding")
     output = _object(plan.get("output"))
     width = int(output["width"])
     height = int(output["height"])
+    typography_gate = validate_typography_gate(
+        plan.get("typography_gate"),
+        profile_id="semantic_motion_1080x1920",
+        width=width,
+        height=height,
+    )
     duration_s = _number(output.get("duration_s"), "motion duration")
     source_sha = file_sha256(asset_path)
     asset_id = str(_object(plan.get("asset")).get("asset_id") or "")
@@ -301,7 +351,9 @@ def validate_semantic_motion_plan(plan: dict[str, Any]) -> None:
         _validate_information_complementarity(cue)
         if privacy_zones is not None:
             _validate_cue_privacy_regions(cue, privacy_zones)
-        _validate_output_collisions(cue, width, height)
+        _validate_output_collisions(
+            cue, width, height, typography_gate, vertical_layout_contract
+        )
 
 
 def write_semantic_motion_plan(plan: dict[str, Any], output_path: str | Path) -> Path:
@@ -391,6 +443,8 @@ def build_hyperframes_html(
     style = _semantic_style(plan)
     width = int(output["width"])
     height = int(output["height"])
+    typography = _object(plan["typography_gate"])
+    typography_roles = _object(typography["roles"])
     cue_markup = []
     animation_rows = []
     for index, cue_value in enumerate(plan["cues"]):
@@ -404,6 +458,7 @@ def build_hyperframes_html(
         focus = _object(cue["focus_destination"])
         target = _object(cue["target_rect"])
         label = _object(cue["label"])
+        label_font_px = _motion_label_font_px(cue, width, height, typography)
         watermark = _object(cue["watermark"])
         disclaimer = _object(cue["disclaimer"])
         privacy_debug_markup = ""
@@ -428,7 +483,7 @@ def build_hyperframes_html(
     </svg>
   </div>
   <div class="leader" style="{_leader_css(focus, _object(label["rect"]))}"></div>
-  <div class="label" style="{_rect_css(_object(label["rect"]))}">{html.escape(str(label["text"]))}</div>
+  <div class="label" data-font-role="motion_label" style="{_rect_css(_object(label["rect"]))}font-size:{label_font_px}px;">{html.escape(str(label["text"]))}</div>
   <div class="watermark" style="{_rect_css(_object(watermark["rect"]))}">{html.escape(str(watermark["text"]))}</div>
   <div class="disclaimer" style="{_rect_css(_object(disclaimer["rect"]))}">{html.escape(str(disclaimer["text"]))}</div>
   {privacy_debug_markup}
@@ -452,6 +507,7 @@ def build_hyperframes_html(
   <meta charset="UTF-8" />
   <meta name="viewport" content="width={width}, height={height}" />
   <style>
+    @font-face {{ font-family:"Microsoft YaHei"; src:local("Microsoft YaHei"); }}
     * {{ box-sizing:border-box; }}
     html,body {{ margin:0; width:{width}px; height:{height}px; overflow:hidden; background:{style["background"]}; font-family:{style["font_family"]}; }}
     #root {{ position:relative; width:{width}px; height:{height}px; overflow:hidden; background:{style["background"]}; }}
@@ -461,10 +517,10 @@ def build_hyperframes_html(
     .context-dim {{ position:absolute; inset:0; background:{style["dim"]}; opacity:0; }}
     .focus-layer {{ position:absolute; overflow:hidden; background-color:{style["panel"]}; background-repeat:no-repeat; background-size:cover; border:2px solid {style["primary"]}; opacity:0; transform:scale(.97); transform-origin:center; }}
     .focus-overlay {{ position:absolute; inset:0; width:100%; height:100%; }}
-    .label {{ position:absolute; display:flex; align-items:center; color:{style["foreground"]}; font-size:32px; line-height:1.35; font-weight:700; padding:14px 18px; background:{style["panel"]}; border-left:8px solid {style["accent"]}; opacity:0; overflow:hidden; }}
+    .label {{ position:absolute; display:flex; align-items:center; color:{style["foreground"]}; line-height:1.35; font-weight:700; padding:14px 18px; background:{style["panel"]}; border-left:8px solid {style["accent"]}; opacity:0; overflow:hidden; }}
     .leader {{ position:absolute; height:4px; background:{style["accent"]}; transform-origin:left center; opacity:0; }}
-    .watermark {{ position:absolute; display:flex; justify-content:flex-end; align-items:center; color:{style["primary"]}; font-size:20px; line-height:1.2; font-weight:700; opacity:.78; overflow:hidden; }}
-    .disclaimer {{ position:absolute; display:flex; align-items:center; color:{style["muted"]}; font-size:20px; line-height:1.35; padding:8px 0; border-top:1px solid {style["muted"]}; overflow:hidden; }}
+    .watermark {{ position:absolute; display:flex; justify-content:flex-end; align-items:center; color:{style["primary"]}; font-size:{int(typography_roles["watermark"])}px; line-height:1.2; font-weight:700; opacity:.78; overflow:hidden; }}
+    .disclaimer {{ position:absolute; display:flex; align-items:center; color:{style["muted"]}; font-size:{int(typography_roles["disclosure"])}px; line-height:1.35; padding:8px 0; border-top:1px solid {style["muted"]}; overflow:hidden; }}
     .privacy-debug-region {{ position:absolute; z-index:9999; border:5px dashed #ff2d55; background:rgba(255,45,85,.22); pointer-events:none; }}
   </style>
 </head>
@@ -1136,14 +1192,17 @@ def _privacy_safe_label_candidate(
 def _semantic_style(plan: dict[str, Any]) -> dict[str, str]:
     reference = plan.get("source_visual_style_profile")
     if reference is None:
+        # Absence of an authored style is not a request for Lucas branding.
+        # The fallback colors frame evidence without implying a state or brand;
+        # subject/data colors remain in their source or explicit scene profile.
         return {
-            "background": "#F7F8F5",
-            "foreground": "#173D3C",
-            "primary": "#245B5A",
-            "accent": "#D55F45",
-            "muted": "#4B5B5A",
+            "background": "#F5F6F8",
+            "foreground": "#202D3A",
+            "primary": "#425466",
+            "accent": "#425466",
+            "muted": "#586877",
             "panel": "#ffffff",
-            "dim": "rgba(36,91,90,.16)",
+            "dim": "rgba(66,84,102,.16)",
             "font_family": '"Microsoft YaHei",sans-serif',
         }
     style_path = validate_artifact_reference(_object(reference), "visual style profile")
@@ -1182,6 +1241,7 @@ def _script_anchors(script: dict[str, Any]) -> dict[str, dict[str, Any]]:
     required = {
         "status",
         "quote",
+        "source_media_role",
         "timeline_start_s",
         "timeline_end_s",
         "evidence_refs",
@@ -1196,6 +1256,12 @@ def _script_anchors(script: dict[str, Any]) -> dict[str, dict[str, Any]]:
             raise ContractError(f"script anchor {story_ref} is not confirmed")
         if not str(anchor["quote"] or "").strip():
             raise ContractError(f"script anchor {story_ref} quote is missing")
+        if anchor["source_media_role"] not in {
+            "creator_narration",
+            "customer_interview",
+            "evidence_only",
+        }:
+            raise ContractError(f"script anchor {story_ref} source media role is invalid")
         start = _number(anchor["timeline_start_s"], "script anchor start")
         end = _number(anchor["timeline_end_s"], "script anchor end")
         if end <= start:
@@ -1228,7 +1294,13 @@ def _cue_inside_packaging_scene(cue: dict[str, Any], packaging: dict[str, Any]) 
     return False
 
 
-def _validate_output_collisions(cue: dict[str, Any], width: int, height: int) -> None:
+def _validate_output_collisions(
+    cue: dict[str, Any],
+    width: int,
+    height: int,
+    typography_gate: dict[str, Any],
+    vertical_layout_contract: dict[str, Any],
+) -> None:
     protected = []
     protected_by_id: dict[str, dict[str, Any]] = {}
     ids: set[str] = set()
@@ -1263,6 +1335,31 @@ def _validate_output_collisions(cue: dict[str, Any], width: int, height: int) ->
         raise ContractError("watermark protection rectangle drifted")
     if protected_by_id["disclaimer"] != disclaimer:
         raise ContractError("disclaimer protection rectangle drifted")
+    corner_protection = _object(
+        vertical_layout_contract.get("rounded_screen_corner_protection")
+    )
+    if (
+        corner_protection.get("status") != "hard_gate"
+        or corner_protection.get("critical_content_forbidden") is not True
+    ):
+        raise ContractError("rounded-screen corner protection is missing")
+    corner_regions = _object(corner_protection.get("regions"))
+    critical_rects = {
+        "motion label": label,
+        "evidence focus": focus,
+        "watermark": watermark,
+        "disclaimer": disclaimer,
+    }
+    if cue.get("presentation_mode") == "person_with_overlay":
+        critical_rects["presenter window"] = protected_by_id["person"]
+    for critical_name, critical_rect in critical_rects.items():
+        for corner_name, corner_value in corner_regions.items():
+            corner_rect = _object(corner_value)
+            _validate_rect(corner_rect, f"rounded-screen corner {corner_name}")
+            if _overlaps(critical_rect, corner_rect):
+                raise ContractError(
+                    f"{critical_name} enters rounded-screen corner protection {corner_name}"
+                )
     for region_id, rect in protected:
         if region_id not in {"watermark", "disclaimer"} and _overlaps(label, rect):
             raise ContractError(
@@ -1274,11 +1371,29 @@ def _validate_output_collisions(cue: dict[str, Any], width: int, height: int) ->
             )
     if _overlaps(label, watermark) or _overlaps(label, disclaimer):
         raise ContractError("motion label collides with watermark or disclaimer")
-    max_chars = max(4, int((float(label["width"]) * width - 36) / 32))
+    label_font_px = _motion_label_font_px(cue, width, height, typography_gate)
+    max_chars = max(0, int((float(label["width"]) * width - 44) / label_font_px))
     if len(str(_object(cue.get("label")).get("text") or "")) > max_chars:
         raise ContractError("motion label text overflows its declared region")
-    if float(label["height"]) * height < 48:
+    min_label_height = round(label_font_px * 1.35 + 28)
+    if float(label["height"]) * height < min_label_height:
         raise ContractError("motion label region is too short for readable text")
+
+
+def _motion_label_font_px(cue: dict[str, Any], width: int, height: int,
+                          typography_gate: dict[str, Any]) -> int:
+    """Use available space for readable labels, instead of always using the floor.
+
+    The only hard minimum remains the bound canonical policy. A short label
+    grows towards 5.2% of canvas width; a crowded one still cannot shrink below
+    the policy and must pass the same geometry check used for the final HTML.
+    """
+    label = _object(cue["label"])
+    rect = _object(label["rect"])
+    minimum = int(_object(typography_gate["roles"])["motion_label"])
+    capacity_width = int((float(rect["width"]) * width - 44) / max(1, len(str(label["text"]))))
+    capacity_height = int((float(rect["height"]) * height - 28) / 1.35)
+    return max(minimum, min(round(width * .052), capacity_width, capacity_height))
 
 
 def _validate_layout_decision(cue: dict[str, Any], presentation_mode: str) -> None:

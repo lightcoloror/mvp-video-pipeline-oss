@@ -6,7 +6,6 @@ import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest import mock
 
 from video_creation_pipeline.errors import ContractError
 from video_creation_pipeline.contract_io import canonical_json_sha256, payload_sha256
@@ -31,14 +30,6 @@ from video_creation_pipeline.insurance_content_gate_cli import (
 
 
 FIXED_AT = "2026-08-20T12:00:00+08:00"
-
-
-class _FrozenClock(datetime):
-    """Test-only clock pinning release-gate creation to the historical fixture window."""
-
-    @classmethod
-    def now(cls, tz=None):
-        return datetime.fromisoformat(FIXED_AT).astimezone(tz or timezone.utc)
 
 
 class InsuranceContentGateTests(unittest.TestCase):
@@ -271,9 +262,8 @@ class InsuranceContentGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "creation time drifted"):
             validate_insurance_content_scan_report(tampered)
 
-    @mock.patch("video_creation_pipeline.creative_gates.datetime", new=_FrozenClock)
     def test_release_gate_requires_and_binds_review_ready_insurance_scan(self) -> None:
-        fresh_at = FIXED_AT
+        fresh_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         request_path, _, content_path = self._request(
             role="script",
             text="保险科普应以合同条款和实际审核为准。",
@@ -307,9 +297,8 @@ class InsuranceContentGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ContractError, "changed after"):
             validate_release_gate(gate)
 
-    @mock.patch("video_creation_pipeline.creative_gates.datetime", new=_FrozenClock)
     def test_release_gate_rejects_missing_or_blocked_insurance_scan(self) -> None:
-        fresh_at = FIXED_AT
+        fresh_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
         safe_path = self._text("approved-script.txt", "普通保险知识。")
         approvals, manifest, visual = self._release_inputs(safe_path)
         with self.assertRaisesRegex(ContractError, "supplied together"):

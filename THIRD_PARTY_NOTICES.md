@@ -203,6 +203,30 @@
 - 集成方式：本仓只保存 adapter、版本/提交和哈希合同，不 vendor Runtime、Skills 或 `node_modules`。物化工程复制固定提交的 `LICENSE.md`，并要求操作者显式声明 `license_basis`。
 - 发行边界：Remotion 输出保持 `candidate_only` 并进入本仓既有 FFmpeg/QA；本项目许可证不覆盖 Remotion、外部浏览器、npm 依赖、用户素材或生成媒体权利。
 
+### remotion-dev/onda
+
+- 仓库：https://github.com/remotion-dev/onda
+- 固定审阅提交：`3c814051269597b31fee1603bef7ccfb93d091b6`
+- 许可证：MIT。
+- 使用方式：原外部注册表仍只生成来源绑定的候选目录与选择计划。2026-10-01 的对象场景复用固定提交 `lib/easing.ts`，完整副本位于 `scene_components/onda-easing.ts`，未修改其代码。
+- 发行边界：仅此 easing 源码副本进入包，并保留 Copyright (c) 2026 Rodrigo Botelho 及完整 `scene_components/ONDA_LICENSE.txt`。其他组件、依赖或示例媒体未复制。合成测试渲染与真人素材验收分别记录。
+
+### remotion-dev/remotion-bits
+
+- 仓库：https://github.com/remotion-dev/remotion-bits
+- 固定审阅提交：`6c71169aa061f15313fadbdc6e29a3a3a87f2c03`
+- 许可证观察：固定提交的 `package.json` 声明 MIT；审阅时未观察到仓库根许可证文件，因此本项目不复制或重新许可其文件。
+- 使用方式：只把结构化注册表作为 Onda 缺项时的候选目录；每个候选保留真实源文件 SHA-256。
+- 发行边界：不 vendor 组件或依赖，不自动安装，不把目录成功写成真实渲染成功。
+
+### clipkit-video/clipkit @clipkit/sfx
+
+- 仓库：https://github.com/clipkit-video/clipkit
+- 固定审阅提交：`dcc26e5bfb170beee8681ecafdeb786da455606e`
+- 包与许可证：`@clipkit/sfx` 1.0.0，Apache-2.0。
+- 使用方式：薄适配器在临时目录执行固定上游纯 DSP 源码，确定性生成 6 个克制型提示音，并把 seed、tune、源码提交、许可证快照及输出 SHA-256 写入既有媒体合同。
+- 发行边界：本仓不复制 ClipKit 源码、依赖、许可证快照或生成 WAV；游戏币、升级、错误蜂鸣、通知和 meme 音色不进入默认候选。生成音频仍须试听，且只能通过中央 `motion_sfx` 时间线和单一 FFmpeg outlet 混入候选视频。
+
 ## 智能重取景开源依赖
 
 ### 可选依赖
@@ -243,8 +267,25 @@ ChatCut、HyperFrames、HeyGen、Remotion、MediaKit、Premiere、ComfyUI 及其
 
 ## 完整许可证文本
 
-本项目未 vendor 上述第三方源码，因此不在 wheel/sdist 中复制每一份上游许可证全文。安装的 Python 包、用户提供的源码树和外部二进制必须保留其原始许可证。若未来 vendor 任一第三方文件，发布者必须同时加入对应完整许可证、版权声明、修改说明和必要 NOTICE，之后才能发行。
+### 2026-09-05 16:01:00 | VKP 时间基准合同数据副本
+
+执行者：Codex（任务路由 GPT-6 Astra；精确运行时型号未暴露）。本轮新增的 `schemas/vkp_narration_timebase.v1.schema.json` 是 VKP `a31c5de0e4d506de055d8f20a6ca423383fe8ee0` 的合同 schema 副本，仅规范化换行，未改变 JSON 语义。上游根许可证为 AGPL-3.0，全文保存在 `licenses/VKP-NARRATION-AGPL-3.0.txt`。该副本不由本项目 Apache-2.0 重新授权；本轮不发布或推送。`semantic_editorial.py` 仅按其公开 JSON 合同适配哈希身份，未复制上游状态机、ASR 或 Bundle 服务。后续对外发行需要单独确认混合许可证适用范围，不能沿用“本仓库完全没有 vendor 文件”的历史表述。
+
+意图：避免自创竞争时间合同；决策：保留固定 schema 和原许可证；理由：消费者测试必须使用真实接口，不能隐瞒来源；证据：上游 schema、LICENSE 与实际 producer-consumer 合成测试；生效范围：本地合同校验；回滚：移除该消费者及合同副本，原上游不变。
+
+除明确列出的合同数据和 Onda easing 副本外，本项目不 vendor 上述第三方源码；各副本保留对应完整许可证。安装的 Python 包、用户提供的源码树和外部二进制必须保留其原始许可证。若未来 vendor 其他第三方文件，发布者必须同时加入对应完整许可证、版权声明、修改说明和必要 NOTICE，之后才能发行。
 
 ## 2026-09-04 10:00:10 | Supervision 可选标注器
 
 执行者：Codex（精确模型版本未公开）。Supervision 0.30.1，MIT，官方源码提交 `5f25aa0ee6dc22891415b6e3d2e1689ce7a32952`。意图：复用成熟可视化标注；决策：仅通过可选 Python 依赖调用 BoxAnnotator、RichLabelAnnotator、TraceAnnotator；理由：不复制检测器、跟踪器或视频写入器；证据：固定源码审阅及合成 FFmpeg 双跑；生效范围：诊断模式；回滚：移除可选依赖并使用默认 crop 预览。发行包不包含 Supervision 源码、模型、测试视频或系统字体。
+
+## Sakura text-motion recipe
+
+2026-10-11 17:21:00 +08:00 | Codex (GPT-6)
+
+`policies/variety-laughter-recipe.v1.json` adapts normalized bounce keyframes from
+`sakuraoxo-clio/sakura-animate-text`, commit `2d561440d6dadc50693a2da467d7d20112c09733`,
+`assets/library/jy-text-animations.js`, preset `7467842885740663306`.
+The upstream MIT notice is retained in `src/video_creation_pipeline/scene_components/SAKURA_TEXT_LICENSE.txt`.
+Entry timing, individual letter poses, squash, outlines and exit are adapted locally.
+The companion radial-line recipe references mo.js Burst concepts; no mo.js implementation is included.

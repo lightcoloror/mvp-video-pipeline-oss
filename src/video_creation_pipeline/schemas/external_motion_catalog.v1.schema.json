@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.external_motion_catalog.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "sources",
+    "motion_items",
+    "sound_items",
+    "counts",
+    "authority_boundary",
+    "catalog_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.external_motion_catalog.v1"
+    },
+    "sources": {"type": "object", "required": ["onda"]},
+    "motion_items": {"type": "array", "minItems": 1},
+    "sound_items": {"type": "array"},
+    "counts": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "catalog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

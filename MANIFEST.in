@@ -5,8 +5,9 @@ include MODEL_ASSET_LICENSES.md
 include SECURITY.md
 
 recursive-include src *.py
-recursive-include tests *.py *.json *.md *.txt
-recursive-include examples *.json
+recursive-include tests *.py *.json *.md *.txt *.mjs
+include src/video_creation_pipeline/scene_components/shader_frame_driver.mjs
+recursive-include examples *.json *.md *.txt
 
 prune .git
 prune .github
@@ -14,6 +15,7 @@ prune .ruff_cache
 prune .test-runtime
 prune .test-tmp
 prune .test-write-check
+prune .external-motion-runtime
 prune .uv-cache
 prune build
 prune dist

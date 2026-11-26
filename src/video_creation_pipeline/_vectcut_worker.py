@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import types
 import uuid
 from pathlib import Path
 from typing import Callable
@@ -18,6 +19,7 @@ def main(argv: list[str] | None = None) -> int:
     source_root = Path(args.source_root).expanduser().resolve()
     if str(source_root) not in sys.path:
         sys.path.insert(0, str(source_root))
+    _allow_video_only_imageio_import()
     _install_deterministic_uuid(job["idempotency_key"])
 
     import pyJianYingDraft as draft  # type: ignore[import-not-found]
@@ -52,6 +54,35 @@ def main(argv: list[str] | None = None) -> int:
         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     return 0
+
+
+def _allow_video_only_imageio_import() -> None:
+    """Guard VectCut's unused eager imageio import for this video-only worker.
+
+    The pinned VectCut source imports imageio.v2 from local_materials.py, but its
+    imageio calls are confined to commented photo code. This worker creates only
+    Video_material instances. If a future source path actually calls imageio,
+    fail loudly instead of pretending image decoding succeeded.
+    """
+    try:
+        import imageio.v2  # noqa: F401
+    except ModuleNotFoundError as exc:
+        if exc.name != "imageio":
+            raise
+        package = types.ModuleType("imageio")
+        package.__path__ = []  # mark it as a package for `import imageio.v2`
+        v2 = types.ModuleType("imageio.v2")
+
+        def unavailable(*_args: object, **_kwargs: object) -> object:
+            raise RuntimeError(
+                "imageio is unavailable in the video-only VectCut worker; "
+                "image reads are not supported by this candidate route"
+            )
+
+        v2.imread = unavailable  # type: ignore[attr-defined]
+        package.v2 = v2  # type: ignore[attr-defined]
+        sys.modules["imageio"] = package
+        sys.modules["imageio.v2"] = v2
 
 
 def _install_deterministic_uuid(seed: str) -> None:

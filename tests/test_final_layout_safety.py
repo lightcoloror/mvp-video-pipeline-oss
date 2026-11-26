@@ -14,7 +14,7 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from video_creation_pipeline.errors import ContractError
-from video_creation_pipeline.final_layout_safety import validate_final_layout
+from video_creation_pipeline.final_layout_safety import validate_final_layout, medical_disclosure_choice
 from video_creation_pipeline.final_layout_safety_cli import main as layout_cli
 
 
@@ -45,6 +45,7 @@ class FinalLayoutSafetyTests(unittest.TestCase):
         return {
             "schema_version": "video-final-layout-safety.v1",
             "layout_id": "layout-001",
+            "medical_disclosure": medical_disclosure_choice('not_applicable', 'Synthetic nonmedical layout test.'),
             "duration_seconds": 10.0,
             "candidate": self.artifact("candidate.mp4"),
             "layout_evidence": self.artifact("layout.json"),
@@ -115,6 +116,66 @@ class FinalLayoutSafetyTests(unittest.TestCase):
         self.assertEqual(receipt["checked_elements"], 6)
         self.assertIn("ai_label", receipt["required_roles"])
         self.assertFalse(receipt["automatic_publish"])
+
+    def medical_document(self):
+        document = self.document()
+        document['medical_disclosure'] = medical_disclosure_choice('required', 'Synthetic medical content assessment.')
+        next(e for e in document['elements'] if e['role']=='disclaimer')['text'] = document['medical_disclosure']['text']
+        return document
+
+    def test_medical_applicability_cannot_be_missing_or_blank(self):
+        for choice in (None, {'decision':'not_applicable','reason':'   ','text':''}):
+            document = self.document()
+            if choice is None:
+                document.pop('medical_disclosure')
+            else:
+                document['medical_disclosure'] = choice
+            with self.subTest(choice=choice), self.assertRaisesRegex(ContractError, 'medical'):
+                validate_final_layout(document, self.root)
+
+    def test_medical_disclaimer_full_coverage_and_text(self):
+        document = self.medical_document()
+        receipt = validate_final_layout(document,self.root)
+        self.assertTrue(receipt['medical_disclosure']['full_duration_covered'])
+        self.assertTrue(receipt['ai_disclosure']['required'])
+        # A generic disclaimer or a short end card is not the medical overlay.
+        for mutation in ('generic','missing','start','end','gap'):
+            document = self.medical_document()
+            label = next(e for e in document['elements'] if e['role']=='disclaimer')
+            if mutation=='generic': label['text']='仅供参考'
+            elif mutation=='missing':
+                document['elements'].remove(label)
+                document['required_roles'].remove('disclaimer')
+            elif mutation=='start': label['start_seconds']=1
+            elif mutation=='end': label['end_seconds']=9
+            else:
+                label['end_seconds']=4
+                document['elements'].append(dict(label,element_id='medical-second',start_seconds=5,end_seconds=10))
+            with self.subTest(mutation=mutation), self.assertRaises(ContractError):
+                validate_final_layout(document,self.root)
+
+    def test_medical_disclaimer_may_span_contiguous_layouts(self):
+        document = self.medical_document()
+        label=next(e for e in document['elements'] if e['role']=='disclaimer')
+        label['end_seconds']=4
+        document['elements'].append(dict(label,element_id='medical-second',start_seconds=4,end_seconds=10))
+        self.assertTrue(validate_final_layout(document,self.root)['medical_disclosure']['required'])
+
+    def test_medical_disclaimer_cannot_be_auxiliary_or_hide_under_other_text(self):
+        for mutation in ('auxiliary','collision','corner'):
+            document=self.medical_document()
+            label=next(e for e in document['elements'] if e['role']=='disclaimer')
+            if mutation=='auxiliary': self.auxiliary(label)
+            elif mutation=='collision': label['rect']=document['elements'][0]['rect']
+            else: label['rect']=dict(x=0,y=0,width=.05,height=.03)
+            with self.subTest(mutation=mutation), self.assertRaises(ContractError):
+                validate_final_layout(document,self.root)
+
+    def test_medical_required_cannot_use_empty_or_unreviewed_text(self):
+        for text in ('', '医学科普，保证有效'):
+            document=self.medical_document();document['medical_disclosure']['text']=text
+            with self.subTest(text=text), self.assertRaises(ContractError):
+                validate_final_layout(document,self.root)
 
     def test_corner_overlap_fails_closed(self) -> None:
         document = self.document()

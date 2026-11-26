@@ -8,7 +8,7 @@ version = "0.8.1"
 description = "Hybrid local/remote video creation pipeline with read-only VKP Bundle integration"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = "Apache-2.0"
-license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "MODEL_ASSET_LICENSES.md"]
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md", "MODEL_ASSET_LICENSES.md", "licenses/*.txt"]
 authors = [{ name = "lightcoloror" }]
 requires-python = ">=3.11"
 dependencies = ["jsonschema>=4.23,<5", "psutil>=5.9,<8", "rfc3339-validator>=0.1.4,<1"]
@@ -31,6 +31,8 @@ Security = "https://github.com/lightcoloror/mvp-video-pipeline-oss/security"
 [project.optional-dependencies]
 test = ["pytest>=8,<10"]
 video-use-review = ["fonttools>=4,<5", "pillow>=10,<13", "numpy>=1.26,<3"]
+expressive-fonts = ["fonttools>=4,<5"]
+expressive-stickers = ["fonttools>=4,<5", "pillow>=10,<13"]
 dev = ["build>=1.2,<2", "ruff>=0.15,<1"]
 music-msclap = ["msclap==1.3.3"]
 smart-reframe-scenes = ["scenedetect==0.7.1", "opencv-python-headless>=4.10,<5"]
@@ -53,10 +55,14 @@ video-music-msclap = "video_creation_pipeline.music_msclap_cli:main"
 video-music-acestep = "video_creation_pipeline.music_acestep_cli:main"
 video-music-timing-qa = "video_creation_pipeline.music_timing_qa_cli:main"
 video-stock-media = "video_creation_pipeline.stock_media_cli:main"
+video-motion-sfx = "video_creation_pipeline.motion_sfx_cli:main"
+video-external-motion-assets = "video_creation_pipeline.external_motion_assets_cli:main"
+video-talkcraft-adapter = "video_creation_pipeline.video_talkcraft_cli:main"
 video-content-brief = "video_creation_pipeline.content_video_cli:main"
 video-canonical-demo = "video_creation_pipeline.demo_cli:main"
 video-gateway-consumer = "video_creation_pipeline.gateway_consumer_cli:main"
 video-semantic-motion = "video_creation_pipeline.semantic_motion_cli:main"
+video-semantic-editorial = "video_creation_pipeline.semantic_editorial_cli:main"
 video-hyperframes-renderkit = "video_creation_pipeline.hyperframes_renderkit_cli:main"
 video-privacy-gate = "video_creation_pipeline.privacy_gate_cli:main"
 video-photo-layout = "video_creation_pipeline.photo_layout_cli:main"
@@ -82,7 +88,7 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-video_creation_pipeline = ["schemas/*.json", "policies/*.json"]
+video_creation_pipeline = ["schemas/*.json", "policies/*.json", "author_editor.html", "scene_components/*.tsx", "scene_components/*.ts", "scene_components/*.txt", "scene_components/*.mjs"]
 
 [tool.setuptools.exclude-package-data]
 "*" = [

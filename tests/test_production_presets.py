@@ -153,7 +153,7 @@ def test_cli_uses_canonical_vkp_page_without_generated_media(source, tmp_path):
                 fps=25,
             ),
         ),
-        patch.object(targeted_review, "_playback_duration_seconds", side_effect=lambda path, duration: duration),
+        patch.object(targeted_review, "_video_codec_name", return_value="h264"),
         patch.object(delivery, "execute_ffmpeg_with_receipt") as execute,
     ):
         assert (

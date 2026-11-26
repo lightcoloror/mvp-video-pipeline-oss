@@ -19,8 +19,11 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from video_creation_pipeline.execution_receipts import (
+    _nonnegative_number,
     execute_ffmpeg_with_receipt,
+    probe_media_metadata,
 )
+from video_creation_pipeline.errors import ContractError
 
 try:  # Keep the thin outlet usable before the optional review guard is installed.
     from video_creation_pipeline.review_resource_guard import (
@@ -42,6 +45,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--operation", required=True)
     parser.add_argument("--input", action="append", default=[], dest="inputs")
     parser.add_argument("--output", action="append", default=[], dest="outputs")
+    parser.add_argument(
+        "--output-media-time-s", action="append", default=[], type=float,
+        help="Frame time in source seconds, once per --output in matching order; frame_extract only.",
+    )
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--capture-log", type=Path)
     parser.add_argument("--timeout", type=float, default=120.0)
@@ -64,6 +71,22 @@ def main() -> int:
     args = parse_args()
     inputs = [_role_path(value, "input") for value in args.inputs]
     outputs = [_role_path(value, "output") for value in args.outputs]
+    # Validate frame metadata before invoking FFmpeg, using the receipt contract's
+    # numeric validator and the existing shared metadata probe.
+    if args.operation == "frame_extract":
+        if len(inputs) != 1 or len(args.output_media_time_s) != len(outputs):
+            raise ContractError("frame_extract requires one input and one --output-media-time-s per output")
+        times = [_nonnegative_number(t, "frame media_time_s") for t in args.output_media_time_s]
+        if any(row["role"] != "frame" for row in outputs):
+            raise ContractError("frame extraction outputs must use role=frame")
+        metadata = probe_media_metadata(inputs[0]["path"], timeout_s=min(args.timeout, 30.0))
+        duration = _nonnegative_number(metadata.get("format", {}).get("duration"), "source duration")
+        for row, time_s in zip(outputs, times):
+            if time_s >= duration:
+                raise ContractError("frame media_time_s must be before source duration")
+            row["media_time_s"] = time_s
+    elif args.output_media_time_s:
+        raise ContractError("--output-media-time-s is only valid for frame_extract")
     execute_kwargs = {
         "capture_log_path": args.capture_log,
         "timeout_s": args.timeout,

@@ -93,6 +93,7 @@ def _policy(
     third_party_rights_review: bool = False,
     policy_verified_at: str = "2026-08-15",
     notes: list[str] | None = None,
+    ingestion_methods: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "source_id": source_id,
@@ -115,7 +116,7 @@ def _policy(
             key: sorted(value) for key, value in sorted((media_platforms or {}).items())
         },
         "third_party_rights_review": third_party_rights_review,
-        "ingestion_methods": ["manual", "official_api"],
+        "ingestion_methods": sorted(ingestion_methods or ["manual", "official_api"]),
         "bulk_scraping_allowed": False,
         "policy_verified_at": policy_verified_at,
         "notes": sorted(notes or []),
@@ -123,6 +124,21 @@ def _policy(
 
 
 _SOURCE_POLICIES = {
+    "clipkit_sfx": _policy(
+        "clipkit_sfx",
+        "ClipKit SFX",
+        "github.com",
+        "https://github.com/clipkit-video/clipkit",
+        "https://github.com/clipkit-video/clipkit/blob/main/LICENSE",
+        ["sound_effect"],
+        {"apache-2.0": True},
+        policy_verified_at="2026-09-01",
+        ingestion_methods=["local_generation"],
+        notes=[
+            "Only deterministic audio generated locally from a reviewed fixed source commit is admitted.",
+            "The source tree, npm dependencies, and generated audio are not distributed with this package.",
+        ],
+    ),
     "freesound": _policy(
         "freesound",
         "Freesound",

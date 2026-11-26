@@ -1,0 +1,37 @@
+{
+  "fps": 30,
+  "scenes": [
+    {
+      "sceneId": "scene-01"
+    },
+    {
+      "sceneId": "scene-02"
+    },
+    {
+      "sceneId": "scene-03"
+    }
+  ],
+  "motionCues": [
+    {
+      "cueId": "question-card-enter",
+      "sceneId": "scene-01",
+      "startFrame": 48,
+      "durationInFrames": 24,
+      "label": "问题卡片进入"
+    },
+    {
+      "cueId": "risk-list-step",
+      "sceneId": "scene-02",
+      "startFrame": 408,
+      "durationInFrames": 30,
+      "label": "风险清单逐项出现"
+    },
+    {
+      "cueId": "checklist-resolve",
+      "sceneId": "scene-03",
+      "startFrame": 768,
+      "durationInFrames": 24,
+      "label": "投保清单完成"
+    }
+  ]
+}

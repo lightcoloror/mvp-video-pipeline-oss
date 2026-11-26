@@ -18,6 +18,7 @@ from .contract_io import (
 )
 from .errors import ContractError
 from .execution_receipts import FFMPEG_OUTLET_ID
+from .music_diversity import build_music_arrangement_report
 from .music_timing_qa import (
     build_speech_priority_windows,
     classify_music_family,
@@ -556,6 +557,17 @@ def build_music_mix_command(
     )
     if abs(float(timeline.get("start_s") or 0)) > 0.001:
         raise ContractError("music mix currently requires a timeline-zero selection")
+    if selection.get("loop"):
+        # Direct command construction must not bypass the new-plan loop guard.
+        source_audio = _object(selection.get("source_audio"))
+        report = build_music_arrangement_report([{
+            "asset_id": "selected", "timeline_start_s": 0, "duration_s": duration,
+            "source_start_s": source.get("start_s", 0),
+            "source_end_s": source.get("end_s"), "loop": True,
+        }], {"selected": {"sha256": source_audio.get("sha256"),
+                         "duration_s": source.get("end_s")}})
+        if not report["readiness"]["candidate_render_allowed"]:
+            raise ContractError("repetitive BGM blocked: use longer or varied source passages")
     fade_out = _nonnegative_number(selection.get("fade_out_s"), "music fade out")
     fade_out_start = max(0.0, duration - fade_out)
 
@@ -1424,6 +1436,7 @@ def _select_music_v2(
     ordinary_gain = float(policy["mix_profiles"]["ordinary"]["music_gain_db"])
     ducking_policy = _object(policy.get("ducking"))
     family_lookup = _candidate_family_lookup(candidate_set)
+    asset_sources = _candidate_asset_sources(candidate_set)
     intent_by_id = {row["segment_id"]: row for row in intent["segments"]}
     selections: list[dict[str, Any]] = []
     unresolved: list[str] = []
@@ -1447,6 +1460,19 @@ def _select_music_v2(
             for row in segment["candidates"]
             if family_lookup.get((row["asset_id"], row["window_id"])) == family_id
         ]
+        family_rows = rows
+        rows = []
+        for row in family_rows:
+            duration = segment["timeline_interval"]["end_s"] - segment["timeline_interval"]["start_s"]
+            width = row["source_interval"]["end_s"] - row["source_interval"]["start_s"]
+            if duration > width + 0.001 and not row["source_interval"]["loopable"]:
+                continue
+            proposal = {**row, "status": "auto_selected", "segment_id": segment["segment_id"],
+                        "timeline_interval": segment["timeline_interval"],
+                        "loop": duration > width + 0.001}
+            report = _audit_selected_arrangement(selections + [proposal], asset_sources)
+            if report["readiness"]["candidate_render_allowed"]:
+                rows.append(row)
         top = rows[0] if rows else None
         second_score = rows[1]["score"] if len(rows) > 1 else 0.0
         margin = round(top["score"] - second_score, 6) if top else 0.0
@@ -1459,8 +1485,10 @@ def _select_music_v2(
                     "status": "needs_creative_selection",
                     "reason": (
                         "no_candidate_matches_music_family"
-                        if not rows
-                        else "no_candidate_meets_score_and_margin"
+                        if not family_rows else (
+                            "no_nonrepetitive_candidate_use_longer_or_varied_material"
+                            if not rows else "no_candidate_meets_score_and_margin"
+                        )
                     ),
                     "music_family": family,
                     "top_score": top["score"] if top else None,
@@ -1541,7 +1569,7 @@ def _select_music_v2(
                 "score_components": dict(top["score_components"]),
                 "selection_reason": (
                     "highest licensed candidate matched the semantic music family "
-                    "and passed automatic score and margin gates"
+                    "and passed full-program arrangement, score and margin gates"
                 ),
                 "automatic_music_boost_allowed": False,
                 "semantic_timeline_moved": False,
@@ -1549,7 +1577,13 @@ def _select_music_v2(
         )
         previous_family = family_id
 
-    render_eligible = not unresolved
+    arrangement = _audit_selected_arrangement(selections, asset_sources)
+    if unresolved:
+        arrangement["status"] = "incomplete_selection"
+        arrangement["readiness"]["candidate_render_allowed"] = False
+        arrangement["unresolved_segment_ids"] = list(unresolved)
+        arrangement["report_sha256"] = payload_sha256(arrangement, "report_sha256")
+    render_eligible = not unresolved and arrangement["readiness"]["candidate_render_allowed"]
     readiness = {
         "status": "ready_for_single_ffmpeg_outlet"
         if render_eligible
@@ -1559,10 +1593,33 @@ def _select_music_v2(
         "automatic_selection_count": sum(
             row["status"] == "auto_selected" for row in selections
         ),
-        "manual_review_required": bool(unresolved),
+        "manual_review_required": not render_eligible,
         "candidate_only": True,
+        "arrangement_audit": arrangement,
     }
     return selections, readiness
+
+
+def _candidate_asset_sources(candidate_set: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    assets = {}
+    for reference in candidate_set["profiles"]:
+        path = validate_artifact_reference(_object(reference.get("artifact")), "music asset profile")
+        profile = read_json_object(path, "music asset profile")
+        assets[profile["asset_id"]] = {
+            "sha256": profile["source_audio"]["sha256"], "duration_s": profile["duration_s"],
+        }
+    return assets
+
+
+def _audit_selected_arrangement(selections, asset_sources):
+    layers = [{
+        "asset_id": row["asset_id"], "segment_id": row["segment_id"],
+        "timeline_start_s": row["timeline_interval"]["start_s"],
+        "duration_s": row["timeline_interval"]["end_s"] - row["timeline_interval"]["start_s"],
+        "source_start_s": row["source_interval"]["start_s"],
+        "source_end_s": row["source_interval"]["end_s"], "loop": row["loop"],
+    } for row in selections if row["status"] == "auto_selected"]
+    return build_music_arrangement_report(layers, asset_sources)
 
 
 def _no_music_filter(windows, timeline_start, duration):

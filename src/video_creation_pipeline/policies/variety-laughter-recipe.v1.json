@@ -1,0 +1,41 @@
+{
+  "schema": "video_creation_pipeline.variety_laughter_recipe.v1",
+  "version": "1.1.0",
+  "source": {
+    "project": "sakuraoxo-clio/sakura-animate-text",
+    "commit": "2d561440d6dadc50693a2da467d7d20112c09733",
+    "file": "assets/library/jy-text-animations.js",
+    "preset_id": "7467842885740663306",
+    "license": "MIT; see SAKURA_TEXT_LICENSE.txt",
+    "adaptation": "Reuse normalized bounce keyframes; shorten to 0.30 seconds per verified syllable, add independently authored squash, letter poses, outlines and exit. No upstream JS runtime executed."
+  },
+  "burst_reference": {
+    "project": "https://github.com/mojs/mojs",
+    "commit": "0a9cf9a87dd5637e6fa770755e79048489bcf817",
+    "docs": "https://mojs.github.io/tutorials/burst/",
+    "adoption": "Independently implemented radial child-line recipe inspired by count/degree/radius/children organization; no mo.js library code copied or runtime installed."
+  },
+  "entry_seconds": 0.30,
+  "response_scale": 0.045,
+  "response_rise_em": 0.05,
+  "exit_stagger_fraction": 0.16,
+  "curve": [0.2, 0.8, 0.2, 1.0],
+  "keyframes": [
+    {"t":0,"opacity":0,"y":46,"scale":0.62},
+    {"t":0.58,"opacity":1,"y":-10,"scale":1.16},
+    {"t":0.82,"opacity":1,"y":3,"scale":0.96},
+    {"t":1,"opacity":1,"y":0,"scale":1}
+  ],
+  "letter_poses": [
+    {"x_em":-1.12,"y_em":0.18,"size":1.0,"angle":-13},
+    {"x_em":0.0,"y_em":-0.20,"size":1.12,"angle":9},
+    {"x_em":1.20,"y_em":0.13,"size":1.25,"angle":-9}
+  ],
+  "stroke_outer_em":0.09,
+  "stroke_inner_em":0.045,
+  "shadow_em":0.06,
+  "outline_color":"172C39",
+  "inner_color":"FFFDF5",
+  "motion_extent_em":{"left":2.65,"right":2.80,"up":1.55,"down":1.60},
+  "automatic_audio_detection":false
+}

@@ -1,0 +1,60 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'">
+<title>口播时间编辑</title>
+<style>*{box-sizing:border-box}body{font:16px system-ui,sans-serif;background:#f5f3ed;color:#203842;max-width:920px;margin:40px auto;padding:0 20px;overflow-wrap:anywhere}section{background:white;padding:24px;margin:20px 0;border-radius:16px}label{display:block;margin:14px 0}select,input,button{font:inherit;padding:9px;border:1px solid #aab8ba;border-radius:6px;max-width:100%;min-width:0}select{display:block;width:100%}input{width:12em}button{background:#203842;color:white;cursor:pointer;white-space:normal}button:disabled{opacity:.5}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #245b96;outline-offset:3px}fieldset{border:0;padding:0;margin:0;min-width:0}legend{font-weight:600}pre{white-space:pre-wrap;overflow-wrap:anywhere}small{color:#59666a}.bar{height:18px;background:#e9eded;position:relative;margin:8px 0;overflow:hidden}.cue{position:absolute;height:100%;background:#418a8a}#error{color:#9f2828}[aria-invalid=true]{border:2px solid #9f2828}@media(max-width:400px){body{padding:0 12px;margin:20px auto}section{padding:16px}}</style>
+<h1>口播时间编辑</h1><p>选择词锚点，调整当前动效的出现时间。文稿、录音和素材保持绑定。</p>
+<section><p id="state" role="status" aria-live="polite"></p><fieldset id="controls"><legend>修改时间</legend><label>动效 <select id="cue"></select></label>
+<label>时间方式 <select id="kind"><option value="at_for">从锚点开始，持续一段时间</option><option value="until_for">到锚点结束，向前持续一段时间</option><option value="span">两个词锚点之间</option></select></label>
+<label>起点／基准词 <select id="word" aria-describedby="wordText"></select></label><p id="wordText"></p><label>起点边界 <select id="boundary"><option value="start">词开始</option><option value="end">词结束</option></select></label>
+<label>偏移 <input id="offset" type="number" value="0" step="any" required aria-describedby="error"></label><label>偏移单位 <select id="offsetUnit"><option value="seconds">秒</option><option value="frames">帧</option></select></label>
+<div id="durationFields"><label>持续 <input id="duration" type="number" value="5" min="0.001" step="any" required aria-describedby="error"></label><label>持续单位 <select id="unit"><option value="seconds">秒</option><option value="frames">帧</option></select></label></div>
+<div id="endFields" hidden><label>终点词 <select id="endWord" aria-describedby="endWordText"></select></label><p id="endWordText"></p><label>终点边界 <select id="endBoundary"><option value="end">词结束</option><option value="start">词开始</option></select></label></div>
+<button id="preview" type="button">预览本次修改</button> <button id="clearDraft" type="button">清除本页草稿</button></fieldset><p id="error" role="alert" tabindex="-1"></p></section>
+<section><h2>修改预览</h2><small>时间条用于交互预览；导出后的本地命令执行精确帧校验。</small><p>原时间</p><div class="bar" aria-hidden="true"><span id="before" class="cue"></span></div><p>修改后</p><div class="bar" aria-hidden="true"><span id="after" class="cue"></span></div><pre id="summary" role="status" aria-live="polite">尚未修改。</pre><button id="download" disabled>确认并导出编辑提案</button><p>提案不会直接修改工程。通过本地入口校验并生成新草稿，再对新草稿确认分镜，沿用原来的生成命令。</p></section>
+<script id="data" type="application/json">__EDITOR_DATA__</script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);let proposal=null,data=null,draftKey=null;
+const fields=['cue','kind','word','boundary','offset','offsetUnit','duration','unit','endWord','endBoundary'];
+function fail(message,id){proposal=null;$('download').disabled=true;$('after').style.width='0%';$('error').textContent=message;const target=id?$(id):$('error');if(id)target.setAttribute('aria-invalid','true');target.focus();}
+function saveDraft(){if(!draftKey)return;try{sessionStorage.setItem(draftKey,JSON.stringify(Object.fromEntries(fields.map(id=>[id,$(id).value]))));$('state').textContent='本页草稿已暂存；同一标签页刷新后可恢复，关闭标签页前请导出提案。'}catch{$('state').textContent='浏览器未允许暂存；当前输入仍保留，关闭页面前请导出提案。'}}
+function options(id,rows){for(const [value,label] of rows){const option=document.createElement('option');option.value=value;option.textContent=label;$(id).append(option)}}
+function bar(id,start,end){$(id).style.left=`${100*start/data.duration}%`;$(id).style.width=`${100*(end-start)/data.duration}%`}
+function reset(){proposal=null;$('download').disabled=true;$('endFields').hidden=$('kind').value!=='span';$('durationFields').hidden=$('kind').value==='span';$('summary').textContent='参数已变化，请重新预览。';$('before').style.width='0%';$('after').style.width='0%';$('error').textContent='';for(const id of fields)$(id).removeAttribute('aria-invalid');for(const [id,target] of [['word','wordText'],['endWord','endWordText']])$(target).textContent=data.words.find(w=>w.word_id===$(id).value)?.text||'';}
+try{
+data=JSON.parse($('data').textContent);
+if(!Array.isArray(data.cues)||!Array.isArray(data.words)||!Number.isFinite(data.duration)||data.duration<=0||!Number.isFinite(data.fps)||data.fps<=0||!Number.isFinite(data.origin)||!data.source_spec?.sha256)throw Error('invalid');
+if(!data.cues.length||!data.words.length){$('controls').disabled=true;$('state').textContent=!data.cues.length?'本片段没有可编辑动效。请返回分镜添加动效，再重新导出此页面。':'本片段没有可用词锚点。请检查对齐结果及片段范围，再重新导出此页面。';}
+else{
+options('cue',data.cues.map(c=>[c.cue_id,c.cue_id]));
+for(const id of ['word','endWord'])options(id,data.words.map(w=>[w.word_id,`${w.text} (${w.word_id})`]));
+draftKey='author-edit:'+data.source_spec.sha256+':'+data.origin+':'+data.duration;
+reset();$('summary').textContent='尚未修改。';
+try{const raw=sessionStorage.getItem(draftKey);if(raw){const saved=JSON.parse(raw);for(const id of fields){if(typeof saved[id]!=='string')continue;const el=$(id);if(el.tagName==='SELECT'&&!Array.from(el.options).some(o=>o.value===saved[id]))continue;el.value=saved[id];}reset();$('state').textContent='已恢复本页草稿；请重新预览后再导出。';}}catch{$('state').textContent='本页暂存不可用或已损坏；可继续编辑，关闭页面前请导出提案。';}
+for(const id of fields)$(id).addEventListener('input',()=>{reset();saveDraft();});
+$('clearDraft').onclick=()=>{try{sessionStorage.removeItem(draftKey)}catch{}for(const id of fields){const el=$(id);if(el.tagName==='SELECT')el.selectedIndex=0;else el.value=id==='offset'?'0':'5';}reset();$('state').textContent='已清除本页草稿。';$('cue').focus();};
+}
+}catch{$('controls').disabled=true;$('state').textContent='页面数据不完整。请从原工程重新导出编辑页面；原工程没有被修改。';}
+$('preview').onclick=()=>{try{
+if($('controls').disabled)return;
+reset();
+const kind=$('kind').value,cue=data.cues.find(c=>c.cue_id===$('cue').value),word=data.words.find(w=>w.word_id===$('word').value);
+if(!$('offset').value.trim()||!Number.isFinite(Number($('offset').value))){fail('请填写偏移数值；无需偏移时填写 0。','offset');return;}
+if(kind!=='span'&&(!$('duration').value.trim()||!Number.isFinite(Number($('duration').value))||Number($('duration').value)<=0)){fail('请填写大于 0 的持续时间。','duration');return;}
+const offset=Number($('offset').value),duration=Number($('duration').value)/($('unit').value==='frames'?data.fps:1);
+const anchor={word_id:word.word_id,boundary:$('boundary').value,offset:{value:$('offset').value,unit:$('offsetUnit').value}};
+let start=word[anchor.boundary+'_ms']/1000-data.origin+offset/($('offsetUnit').value==='frames'?data.fps:1),end;
+let expression;
+if(kind==='span'){const last=data.words.find(w=>w.word_id===$('endWord').value);end=last[$('endBoundary').value+'_ms']/1000-data.origin;expression={kind,start:anchor,end:{word_id:last.word_id,boundary:$('endBoundary').value}}}
+else{end=kind==='at_for'?start+duration:start;if(kind==='until_for')start-=duration;expression={kind,anchor,duration:{value:$('duration').value,unit:$('unit').value}}}
+const transition=cue.timing.full_frame_s+cue.timing.enter_s+cue.timing.exit_s;
+if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||end>data.duration||end<=start){fail(`时间需在本片段 0—${data.duration} 秒内，且终点晚于起点。请调整词锚点、偏移或持续时间。`);return;}
+if(end-start<transition){fail(`持续时间至少需要 ${transition} 秒，才能容纳进出场动画。`,kind==='span'?null:'duration');return;}
+proposal={schema:'video_creation_pipeline.author_edit_proposal.v1',source_spec:data.source_spec,edits:[{cue_id:cue.cue_id,temporal_expression:expression}]};
+bar('before',cue.timing.timeline_start_s,cue.timing.timeline_start_s+transition+cue.timing.hold_s);bar('after',start,end);
+$('summary').textContent=`${cue.cue_id}\n原开始：${cue.timing.timeline_start_s.toFixed(3)} 秒\n修改后：${start.toFixed(3)}—${end.toFixed(3)} 秒\n只导出此动效的修改；需重新确认分镜。`;
+$('error').textContent='';$('download').disabled=false;
+}catch{fail('无法预览这组时间。输入已保留；请检查词锚点，或从原工程重新导出页面。')}};
+$('download').onclick=()=>{if(!proposal||$('download').disabled)return;let url;try{$('download').disabled=true;url=URL.createObjectURL(new Blob([JSON.stringify(proposal,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='author-edit-proposal.json';a.click();$('summary').textContent+='\n已发起下载，请检查浏览器下载记录。再次导出前请重新预览。';}catch{fail('浏览器未能发起下载。输入已保留，请重新预览后重试。');}finally{if(url)setTimeout(()=>URL.revokeObjectURL(url),1000)}};
+</script></html>

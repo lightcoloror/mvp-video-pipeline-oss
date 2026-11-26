@@ -18,7 +18,7 @@
     {
       "role": "research_output",
       "path": "tests/fixtures/content-video-brief-v1/upstream-canonical/research-output.v1.json",
-      "sha256": "27ae62971f6754009859be87f07a47d9673484c5dea32db0f48e13ce0779a97c"
+      "sha256": "7ee1163d4ab417e6192dce4a1c62926e8c0298a2b3056cca0dd1965dfa81cb40"
     },
     {
       "role": "research_schema",

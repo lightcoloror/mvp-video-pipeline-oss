@@ -1,0 +1,11 @@
+{
+  "schema": "video_creation_pipeline.autonomous_candidate_fixture_attestation.v1",
+  "classification": "project_owned_public_synthetic_fixture",
+  "source_fixture": "tests/fixtures/semantic-motion",
+  "contains_customer_media": false,
+  "contains_personal_media": false,
+  "contains_credentials": false,
+  "authorized_for_offline_candidate": true,
+  "production_media_claimed": false,
+  "notes": "The fixture is a fictional document animation. It validates contracts and rendering only."
+}

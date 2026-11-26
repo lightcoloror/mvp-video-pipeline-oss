@@ -1,0 +1,194 @@
+{
+  "schema": "video_creation_pipeline.title_cover_candidate_spec.v2",
+  "profile_ids": [
+    "bilibili_16_9",
+    "bilibili_4_3",
+    "vertical_profile_3_4"
+  ],
+  "publication_platforms": [
+    "douyin",
+    "xiaohongshu",
+    "wechat_channels",
+    "bilibili"
+  ],
+  "candidate_limit": 3,
+  "working_candidate_id": "candidate-evidence",
+  "candidates": [
+    {
+      "candidate_id": "candidate-story",
+      "strategy": "story_scene",
+      "title": "客户为什么三个月后才去复查",
+      "title_route": "browse_conflict",
+      "cover_hypothesis": {
+        "visual_focus": "客户采访中的真实表情与三个月时间提示",
+        "audience_promise": "还原一次容易被忽略的复查提醒",
+        "click_reason": "真实人物和具体时间形成可理解的故事入口",
+        "overlay_text": "他本来没打算去"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头直接出现客户承认自己原本不打算复查的原声",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "video_frame",
+        "availability": "planned",
+        "source_note": "使用已授权且完成隐私处理的采访候选帧"
+      },
+      "routing_assessment": {
+        "hard_gates": {
+          "fact_accurate": true,
+          "authorization_confirmed": true,
+          "privacy_cleared": true,
+          "medical_insurance_boundary_passed": true,
+          "opening_payoff_supported": true
+        },
+        "scores": {
+          "content_fit": 5,
+          "visual_asset_strength": 4,
+          "information_gap": 5,
+          "credibility": 4,
+          "title_complementarity": 4,
+          "small_preview_readability": 4,
+          "target_audience_fit": 5
+        }
+      }
+    },
+    {
+      "candidate_id": "candidate-evidence",
+      "strategy": "evidence_focus",
+      "title": "三个月后的复查，是怎样被记住的",
+      "title_route": "evidence_result",
+      "cover_hypothesis": {
+        "visual_focus": "脱敏后的复查提醒记录",
+        "audience_promise": "展示提醒不是一句口号，而是一次可核对的持续动作",
+        "click_reason": "真实记录直接证明服务动作",
+        "overlay_text": "这条提醒没有丢"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头直接说明三个月到期后曾前后提醒两三次",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "evidence_visual",
+        "availability": "planned",
+        "source_note": "使用不可逆脱敏的复查提醒截图副本"
+      },
+      "routing_assessment": {
+        "hard_gates": {
+          "fact_accurate": true,
+          "authorization_confirmed": true,
+          "privacy_cleared": true,
+          "medical_insurance_boundary_passed": true,
+          "opening_payoff_supported": true
+        },
+        "scores": {
+          "content_fit": 5,
+          "visual_asset_strength": 5,
+          "information_gap": 4,
+          "credibility": 5,
+          "title_complementarity": 5,
+          "small_preview_readability": 4,
+          "target_audience_fit": 5
+        }
+      }
+    },
+    {
+      "candidate_id": "candidate-service",
+      "strategy": "creator_service_action",
+      "title": "保险服务为什么要记住一次复查",
+      "title_route": "service_action",
+      "cover_hypothesis": {
+        "visual_focus": "创作者人物与复查节点简图",
+        "audience_promise": "看清持续跟进具体做了什么",
+        "click_reason": "服务动作与结果被压缩成一个清晰视觉关系",
+        "overlay_text": "到时间，我又问了一次"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头先说到时间后询问客户是否已经复查",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "dedicated_photo",
+        "availability": "planned",
+        "source_note": "拍摄日单独拍摄人物靠边、为复查节点留白的横竖版照片"
+      },
+      "routing_assessment": {
+        "hard_gates": {
+          "fact_accurate": true,
+          "authorization_confirmed": true,
+          "privacy_cleared": true,
+          "medical_insurance_boundary_passed": true,
+          "opening_payoff_supported": true
+        },
+        "scores": {
+          "content_fit": 5,
+          "visual_asset_strength": 4,
+          "information_gap": 4,
+          "credibility": 4,
+          "title_complementarity": 4,
+          "small_preview_readability": 5,
+          "target_audience_fit": 5
+        }
+      }
+    },
+    {
+      "candidate_id": "candidate-process",
+      "strategy": "process_sequence",
+      "title": "从复查提醒到继续检查，顺序是什么",
+      "title_route": "search_answer",
+      "cover_hypothesis": {
+        "visual_focus": "复查、MRI、穿刺三个节点",
+        "audience_promise": "给出简明过程线索",
+        "click_reason": "顺序明确，但当前内容的故事和证据强度略低于前三项",
+        "overlay_text": "复查只是第一步"
+      },
+      "opening_payoff_binding": {
+        "scene_id": "scene-01",
+        "payoff_summary": "开头从复查提醒进入后续检查顺序",
+        "evidence_refs": [
+          {"ref_id": "claim_fixture_contract", "ref_type": "claim"},
+          {"ref_id": "evidence_fixture_support", "ref_type": "evidence"},
+          {"ref_id": "source_fixture_primary", "ref_type": "source"}
+        ]
+      },
+      "cover_source": {
+        "source_kind": "typography_only",
+        "availability": "available",
+        "source_note": "合成示例使用确定性流程排版"
+      },
+      "routing_assessment": {
+        "hard_gates": {
+          "fact_accurate": true,
+          "authorization_confirmed": true,
+          "privacy_cleared": true,
+          "medical_insurance_boundary_passed": true,
+          "opening_payoff_supported": true
+        },
+        "scores": {
+          "content_fit": 4,
+          "visual_asset_strength": 4,
+          "information_gap": 3,
+          "credibility": 4,
+          "title_complementarity": 4,
+          "small_preview_readability": 5,
+          "target_audience_fit": 4
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "font_file": "<path-to-cjk-bold-font.ttc>",
+  "font_size_px": 180,
+  "typography_profile": "semantic_motion_1080x1920",
+  "speakers": {
+    "father": {
+      "label": "父亲",
+      "color": "65D8D0",
+      "identity_note": "占位：说明名字、画面或位置如何建立角色身份",
+      "color_reason": "占位：替换为当前项目的角色色；青色不是全局默认"
+    }
+  },
+  "effects": {
+    "father-laugh": {"mode":"variety", "x_px":540, "y_px":930, "end_scale":1, "rise_px":50, "tail_frames":10}
+  }
+}

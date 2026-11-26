@@ -6,6 +6,7 @@ import os
 import shutil
 import subprocess
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -65,6 +66,72 @@ VISUAL_ROUTES = {
 }
 
 _STYLE_PRESETS: dict[str, dict[str, Any]] = {
+    "pixel_narrative": {
+        "colors": {
+            "background": "#202124",
+            "foreground": "#f5f6f7",
+            "primary": "#e6b84d",
+            "accent": "#51bfa3",
+            "muted": "#adb3ba",
+            "panel": "#32363b",
+        },
+        "typography": {
+            "display": "Microsoft YaHei, Noto Sans SC, sans-serif",
+            "body": "Microsoft YaHei, Noto Sans SC, sans-serif",
+        },
+        "material": "pixel_sprite_illustration",
+        "depth": "flat_layered_stage",
+        "motion": "stepwise_explanatory",
+        "provider_prompt": (
+            "pixel narrative illustration, clear silhouette, restrained sprite poses, "
+            "one focal action per beat, legible non-pixelated Chinese captions"
+        ),
+        "negative_constraints": [
+            "restyled source evidence or real speaker",
+            "unapproved character identity or copied third-party mascot",
+            "invented factual labels",
+            "truncated Chinese dialogue",
+            "synthetic dialogue beeps replacing recorded narration",
+            "palette overriding material or factual color meaning",
+        ],
+        "shot_recipe": {
+            "recipe_id": "pixel_narrative_event_marks.v1",
+            "status": "reference_recipe_requires_authored_scene",
+            "source": {
+                "repo": "https://github.com/Initvalue145/cyber-farmhands",
+                "commit": "42790f11f24559b2971ccbc3c43a7737f45d5488",
+                "reuse_mode": "architecture_pattern",
+                "symbols": ["timeline", "frame_at", "Scene.mark", "draw_dialogue"],
+                "upstream_code_execution": False,
+            },
+            "eligible_content_kinds": [
+                "concept_explanation",
+                "process_sequence",
+                "transition_or_emphasis",
+            ],
+            "selection": "explicit_preset_only",
+            "timing_authority": "video_packaging_plan",
+            "timing_method": "bind_named_events_to_existing_scene_and_audio_anchors",
+            "estimate_speech_duration_from_character_count": False,
+            "event_vocabulary": ["enter", "point", "react", "hold", "exit"],
+            "composition": "approved_static_keyframe_then_few_sprite_layers",
+            "character_policy": "original_or_explicitly_approved_identity",
+            "color_policy": "scene_material_and_semantics_first_palette_is_not_brand",
+            "raster_policy": "nearest_neighbor_for_sprites_only_keep_source_and_text_clear",
+            "text_policy": "wrap_and_measure_no_silent_line_truncation",
+            "review": [
+                "approve_static_keyframe_before_motion",
+                "inspect_event_boundaries_and_transition_midpoints",
+                "check_chinese_text_at_delivery_size",
+                "listen_for_sync_with_unchanged_narration",
+            ],
+            "contact_sheet_max_frames_per_page": 9,
+            "render_outlet": "existing_remotion_or_hyperframes_then_single_ffmpeg_outlet",
+            "renderer_implementation_status": "not_implemented_by_style_tokens",
+            "real_clip_rendered": False,
+            "human_visual_approval": False,
+        },
+    },
     "paper_cutout": {
         "colors": {
             "background": "#f4efe6",
@@ -266,6 +333,8 @@ def _style_profile_payload(preset: str, tokens: dict[str, Any]) -> dict[str, Any
             "publish_performed": False,
         },
     }
+    if "shot_recipe" in tokens:
+        profile["tokens"]["shot_recipe"] = deepcopy(tokens["shot_recipe"])
     profile["profile_sha256"] = payload_sha256(profile, "profile_sha256")
     return profile
 
@@ -352,6 +421,7 @@ def build_content_visual_routing_plan(
         music_ready=music_ready,
         style_sha256=str(style["profile_sha256"]),
         music_sha256=music_sha256,
+        style_preset=str(style["preset_id"]),
     )
     plan: dict[str, Any] = {
         "schema": CONTENT_VISUAL_ROUTING_PLAN_SCHEMA,
@@ -463,6 +533,7 @@ def validate_content_visual_routing_plan(plan: dict[str, Any]) -> None:
         music_ready=music_ready,
         style_sha256=str(style["profile_sha256"]),
         music_sha256=music_sha256,
+        style_preset=str(style["preset_id"]),
     )
     if plan.get("scene_routes") != expected_routes:
         raise ContractError("content visual scene routes drifted from their inputs")
@@ -801,6 +872,7 @@ def _project_scene_routes(
     music_ready: bool,
     style_sha256: str,
     music_sha256: str | None,
+    style_preset: str = "",
 ) -> list[dict[str, Any]]:
     specs = {
         str(_object(row).get("scene_id") or ""): _object(row) for row in spec["scenes"]
@@ -860,6 +932,32 @@ def _project_scene_routes(
                 },
             }
         )
+        if style_preset == "pixel_narrative":
+            recipe = _STYLE_PRESETS[style_preset]["shot_recipe"]
+            eligible = (
+                kind in recipe["eligible_content_kinds"]
+                and evidence_count == 0
+                and not scene_media.get(scene_id, False)
+            )
+            routes[-1]["style_recipe_handoff"] = {
+                "recipe_id": recipe["recipe_id"] if eligible else None,
+                "profile_pointer": "/tokens/shot_recipe" if eligible else None,
+                "status": "authoring_required" if eligible else "excluded",
+                "reason": (
+                    "author a short illustrative scene from the reviewed event recipe"
+                    if eligible
+                    else "preserve evidence, existing media, and other content routes"
+                ),
+                "renderer_execution_authorized": False,
+                "visual_approval_claimed": False,
+            }
+            if eligible:
+                # Color bindings alone cannot implement sprite acting or prove a clip.
+                routes[-1]["execution_status"] = "handoff_required"
+                routes[-1]["review_stages"] = [
+                    {"stage": stage, "approval_target": _approval_target(stage)}
+                    for stage in ("storyboard", "keyframe_or_material", "motion")
+                ]
     return routes
 
 

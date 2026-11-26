@@ -1,5 +1,43 @@
 # 创作者剪辑预设与执行边界
 
+## 2026-10-28 01:04:11 | Codex（GPT-6，精确运行变体未独立核验）：连续缩放
+
+人像、镜头、照片、图形等图层发生大小或位置变化时，默认连续过渡。普通素材之间的语义切镜仍由原 `transition` 合同控制；缩放由同一配置中的 `transitions.scale_motion` 控制。没有缩放目标的镜头保持静止。
+
+共用实现：`scale_motion.build_scale_motion()` 和 `ffmpeg_scale_overlay()`。沿用 `scene_components/object-motion.ts` 的 cubic smoothstep；比例在对数空间插值，位置用同一进度移动，起止速度归零。复用本地 FFmpeg `vf_scale.c` 的 `eval=frame` 与 `vf_overlay.c` 的逐帧尺寸更新，单一真人图层，无新增动画库、编码器或云调用。
+
+时长参考目标附近 ±4 秒的原生语音/动作 onset 间隔，三倍中位间隔作为候选；大倍率变化适当延长。0.4–1.4 秒是可调整的本地起始范围；缺少可靠时间证据时明确记为 0.7 秒策略回退。口播 onset 是节奏代理，不宣称检测了音乐节拍；最终速度仍需观看确认。相同姿态间隔 ≤0.8 秒保持姿态，不反复恢复全屏；邻接的不同姿态直接过渡。实际素材切点不自动变成人像缩放的硬切理由。
+
+`audio_timeline` 的每条 `binding.segments[]` 可传下例。时间是**场景内相对秒**，几何是输出画幅中的像素；图层预先按输出画幅准备，再保持纵横比变换。缩小、放大、移至角落使用同一代码；字幕最后叠加，原声样本及场景时间不动。
+
+```json
+"scale_motion": {
+  "targets": [{"start_s": 2, "end_s": 5, "rect": [90, 0, 360, 640], "anticipate": true}],
+  "onsets_s": [0.1, 0.3, 0.5, 0.7, 0.9, 1.1]
+}
+```
+
+`anticipate` 使局部演示出现前先让人像就位；前一布局持续到此时，面板应等本次 `settled_s` 后出现。瞬时缩放只接受显式 `mode: "cut"` 与非空 `reason`。目标过短、重叠、改变纵横比或没有平滑恢复空间时拒绝，交编辑复核，不暗中改成硬切。计划、政策和实现哈希进入原分段缓存键。
+
+视觉节拍入口同样解析这一字段。当前 `semantic_render_plan` 的直切转换器尚不能执行该图层变换，会保留 `scale_motion_requires_audio_timeline_visual_binding` 阻断项；实际变换交给已有 `audio_timeline.compose` 或复用同一 helper 的项目适配器。不能只写字段便宣称所有渲染器已经接入。
+
+| 意图 | 决策 | 理由 | 证据 | 生效范围 |
+| --- | --- | --- | --- | --- |
+| 让后续项目复用连续缩放 | 在原 editing-presets 增加 scale_motion，新增薄规划/表达式适配模块，接入 visual_defaults 与原音轨合成器 | 统一规则、缓存与执行，沿用成熟原生滤镜 | 本地 FFmpeg 源码 44d082edc87381d978e8588b148116b99fefdb43；FFmpeg 8.1 实跑 | 新建图层缩放目标；普通语义切镜、原声与字幕时钟不变 |
+| 速度响应视频节奏 | 使用原生 onset 的局部中位间隔，并记录倍率、样本量与回退依据 | 全片统一固定时长无法适应不同口播与倍率 | 每事件 rhythm 字段；快慢节奏、端点速度、横竖画幅回归 | 有效时间证据的图层；音乐精确踩点须另提供已核对动作/节拍时钟 |
+| 避免把未支持的参数当成已执行 | 直切转换器保留明确渲染绑定阻断项 | 防止另一入口忽略缩放计划 | semantic_render_plan 中的新阻断；既有相关回归 | 语义渲染计划薄转换器；不改旧工件验收状态 |
+| 核实实际像素而非仅测试公式 | 使用同一 FFmpeg 出口渲染并解码 240 帧合成素材，另查看 RWE 11 处中间帧 | 变尺寸滤镜、帧同步和图层顺序均可能影响实片 | RWE exports/visual-preview-20261028_005654/qa/smooth-motion/verification.json；最大几何误差 2.36px | 几何连续性和本次实际预览；自然节奏仍待作者观看 |
+
+## 2026-10-27 22:27:31：字幕合成预设共用
+
+Codex（GPT-6，运行时具体变体未独立核验）：`subtitle_readability.subtitle_render_preset()` 现提供已有 `audio_timeline` 实际默认字号和边距，供薄适配器复用。540×960默认字号基线30、左右边距38、下边距86、底部居中；换行上限同时受可用宽度约束。实际字体/ASS名义字号与最终中文字形的差异仍需实渲染核对，不能只检查声明值。
+
+| 意图 | 决策 | 理由 | 证据 | 生效范围 |
+| --- | --- | --- | --- | --- |
+| 防止项目适配器脱离既有字幕预设 | 从原合成器提取共享预设访问函数，原合成器与适配器共用 | RWE实际反馈暴露适配器写死27字号/36下边距，最低字号门通过仍不能证明默认位置正确或手机可读 | 14项字幕/音轨时钟回归；RWE名义30实测21px、按本机字体校准后实际30px的PNG与回执 | 预设访问方式；不改变原合成器数值或所有字体的全局字号 |
+
+---
+
 更新：2026-10-26（Asia/Shanghai）；工具：Codex。当前精确运行型号未独立核验。
 
 配置真源是 `src/video_creation_pipeline/policies/editing-presets.v1.json`；气口使用 `spoken-pacing.v3.json`。本项目起始值可以随素材调整，不宣称适用于所有视频的行业标准。以下规则已经进入原有编译、音频、字幕或分镜入口；没有另建编辑器或 FFmpeg 执行器。
@@ -49,6 +87,6 @@ Mastering 创建入口不再默套一个响度值。显式选 `--delivery-profil
 - 强降噪旧计划若没有试听记录，不能继续执行；原文件不覆盖，补证据后创建新计划。其他旧工件的既有哈希也不伪装成通过新增检查。
 - 语义复核字段是审阅记录，不是机器证明“已经听过”。检测、自动技术测试、实际观看/试听分开记录。
 - 定向测试：`test_editing_presets`、`test_editing_preset_integration`、原有 spoken/audio/music/semantic 测试。合成波形用于验证时长、切口、静音区、削波检测和原文件不变，不能验证真实人声自然度。
-公开版验收结果须依据本次独立测试与回执；原本机历史路径和项目结果不随源码分发。
+- 本次实现证据目录：`<workspace>/outputs/editing-presets-20261026/`。未处理真实素材；推送状态独立记录在该目录的 `push-result.json`，实现测试不代表已上传。
 
 参考原则：[Adobe 音频淡化](https://helpx.adobe.com/premiere/desktop/add-audio-effects/apply-audio-transitions/audio-crossfade-transitions.html)、[W3C 字幕](https://www.w3.org/WAI/media/av/captions/)、[EBU R128](https://tech.ebu.ch/publications/r128)。数字预设与这些通用原则应区分；气口依据见 [创作者口播气口预设](spoken-pacing-policy.md)。

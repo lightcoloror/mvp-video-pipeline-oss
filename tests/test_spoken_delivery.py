@@ -183,7 +183,7 @@ class SpokenDeliveryTests(unittest.TestCase):
 
         with (
             patch.object(targeted_review, "probe_video", side_effect=probe),
-            patch.object(targeted_review, "_playback_duration_seconds", side_effect=lambda path, duration: duration),
+            patch.object(targeted_review, "_video_codec_name", return_value="h264"),
             patch.object(delivery, "execute_ffmpeg_with_receipt") as render,
         ):
             result = delivery.prepare_delivery(
@@ -317,8 +317,10 @@ class SpokenDeliveryTests(unittest.TestCase):
             atomic_write_json(value, path)
             return value
 
+        rough_checks = delivery._self_media_module("rough_cut_checks")
         with (
-            patch.object(delivery, "_self_media_module", return_value=disk),
+            patch.object(delivery, "_self_media_module", side_effect={"artifact_lifecycle": disk,
+                "rough_cut_checks": rough_checks}.__getitem__),
             patch.object(
                 delivery, "probe_media_metadata", side_effect=[source_info, output_info]
             ),
@@ -338,6 +340,10 @@ class SpokenDeliveryTests(unittest.TestCase):
         self.assertTrue(result["video_rendered"])
         self.assertFalse(result["human_review_completed"])
         self.assertFalse(result["packaging_complete"])
+        registered = rough_checks.registration(result["rough_cut_delivery"])
+        self.assertEqual(registered["candidate"]["sha256"], result["candidate"]["sha256"])
+        self.assertEqual(registered["timeline_map"]["sha256"], result["timeline_map"]["sha256"])
+        self.assertIsNotNone(registered["render_receipt"])
 
     def test_disk_block_does_not_run_ffmpeg_or_create_output(self):
         disk = SimpleNamespace(preflight=Mock(return_value={"status": "blocked"}))

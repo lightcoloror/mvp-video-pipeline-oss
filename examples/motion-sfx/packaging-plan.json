@@ -1,0 +1,44 @@
+{
+  "schema": "video_creation_pipeline.video_packaging_plan.v1",
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
+  },
+  "scenes": [
+    {
+      "scene_id": "scene-01",
+      "start_s": 0.0,
+      "end_s": 12.0,
+      "purpose": "提出保险续保问题",
+      "visual_intent": "人物口播与问题卡片",
+      "subtitle_candidates": [
+        "买医疗险前，先问清楚续保条件"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "scene-02",
+      "start_s": 12.0,
+      "end_s": 24.0,
+      "purpose": "解释风险和限制",
+      "visual_intent": "条款卡片逐项进入",
+      "subtitle_candidates": [
+        "停售、费率调整和健康变化都要分别确认"
+      ],
+      "evidence_refs": []
+    },
+    {
+      "scene_id": "scene-03",
+      "start_s": 24.0,
+      "end_s": 36.0,
+      "purpose": "给出行动建议",
+      "visual_intent": "清单收束",
+      "subtitle_candidates": [
+        "最后，把四个问题写进投保清单"
+      ],
+      "evidence_refs": []
+    }
+  ],
+  "status": "candidate_only"
+}

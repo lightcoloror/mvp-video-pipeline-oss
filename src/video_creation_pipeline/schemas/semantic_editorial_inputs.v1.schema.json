@@ -169,6 +169,10 @@
         },
         "whole_sentence_continuous_motion": {
           "type": "boolean"
+        },
+        "scale_motion": {
+          "type": "object",
+          "description": "Scene-local aspect-preserving layer targets; resolved by shared scale_motion gate."
         }
       }
     },

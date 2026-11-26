@@ -395,7 +395,10 @@ def _inspect_image(path: Path, relative: str) -> dict[str, Any]:
             }
         )
         return asset
-    image = cv2.imread(str(path))
+    # OpenCV's Windows filename API can reject Unicode paths. Decode bytes from
+    # Python's Unicode-aware filesystem API; the image and source hash stay intact.
+    import numpy as np
+    image = cv2.imdecode(np.frombuffer(path.read_bytes(), dtype=np.uint8), cv2.IMREAD_COLOR)
     if image is None:
         asset.update(
             {

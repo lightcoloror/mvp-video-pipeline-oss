@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "video_creation_pipeline.external_motion_selection_plan.v1",
+  "type": "object",
+  "required": [
+    "schema",
+    "source_catalog",
+    "source_semantic_motion_plan",
+    "overrides",
+    "selections",
+    "selection_policy",
+    "authority_boundary",
+    "plan_sha256"
+  ],
+  "properties": {
+    "schema": {
+      "const": "video_creation_pipeline.external_motion_selection_plan.v1"
+    },
+    "source_catalog": {"type": "object"},
+    "source_semantic_motion_plan": {"type": "object"},
+    "overrides": {"type": ["object", "null"]},
+    "selections": {"type": "array", "minItems": 1},
+    "selection_policy": {"type": "object"},
+    "authority_boundary": {"type": "object"},
+    "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  },
+  "additionalProperties": false
+}

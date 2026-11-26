@@ -22,6 +22,14 @@ def build_parser() -> argparse.ArgumentParser:
         description="Build and run a candidate-only HyperFrames semantic motion slot."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+    editor = subparsers.add_parser("export-author-editor", help="Export an offline word-anchor editor")
+    editor.add_argument("--projection", required=True)
+    editor.add_argument("--output", required=True)
+    edit = subparsers.add_parser("edit-author-timing", help="Preview or confirm a revision-bound timing draft")
+    edit.add_argument("--projection", required=True)
+    edit.add_argument("--proposal", required=True)
+    edit.add_argument("--output")
+    edit.add_argument("--confirm", action="store_true")
 
     build = subparsers.add_parser("build", help="Build a semantic motion plan")
     build.add_argument("--packaging-plan", required=True)
@@ -30,6 +38,13 @@ def build_parser() -> argparse.ArgumentParser:
     build.add_argument("--visual-production-plan", required=True)
     build.add_argument("--spec", required=True)
     build.add_argument("--output", required=True)
+
+    bound = subparsers.add_parser("build-author-bound", help="Bind reviewed recording words to one local segment")
+    bound.add_argument("--spec", required=True)
+    bound.add_argument("--script-approval", required=True)
+    bound.add_argument("--voice-approval", required=True)
+    bound.add_argument("--storyboard-approval", required=True)
+    bound.add_argument("--output-dir", required=True)
 
     validate = subparsers.add_parser("validate", help="Validate a motion plan")
     validate.add_argument("--plan", required=True)
@@ -65,7 +80,21 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        if args.command == "build":
+        if args.command == "export-author-editor":
+            from .author_editor import export_author_editor
+            print(json.dumps(export_author_editor(args.projection, args.output), ensure_ascii=True, indent=2))
+            return 0
+        elif args.command == "edit-author-timing":
+            from .author_editor import preview_author_edit, apply_author_edit
+            if args.confirm:
+                if not args.output:
+                    raise ContractError("confirmed draft requires --output")
+                result = apply_author_edit(args.projection, args.proposal, args.output, confirm=True)
+            else:
+                result = preview_author_edit(args.projection, read_json_object(args.proposal, "proposal"))
+            print(json.dumps(result, ensure_ascii=True, indent=2))
+            return 0
+        elif args.command == "build":
             spec = read_json_object(args.spec, "semantic motion build spec")
             plan = build_semantic_motion_plan(
                 args.packaging_plan,
@@ -98,6 +127,16 @@ def main(argv: list[str] | None = None) -> int:
                 "plan_sha256": plan["plan_sha256"],
                 "candidate_only": True,
             }
+        elif args.command == "build-author-bound":
+            from .author_bindings import build_author_bound_motion_bundle
+            paths = build_author_bound_motion_bundle(
+                args.spec, args.output_dir,
+                script_approval_path=args.script_approval,
+                voice_approval_path=args.voice_approval,
+                storyboard_approval_path=args.storyboard_approval,
+            )
+            payload = {"status": "author_bound_candidate_only", "candidate_only": True,
+                       "artifacts": {key: str(path) for key, path in paths.items()}}
         elif args.command == "validate":
             plan = read_json_object(args.plan, "semantic motion plan")
             validate_semantic_motion_plan(plan)

@@ -290,11 +290,14 @@ class SemanticRenderPlanTests(unittest.TestCase):
             source_or_evidence_refs=[f'semantic:segment-{i}'],visual_motif='comparison') for i in range(5)]
         rows[0]['information_advance'] = ''
         rows[1]['transition'] = dict(kind='dissolve',reason='a new time period')
+        rows[2]['scale_motion'] = {'targets':[
+            dict(start_s=.2,end_s=1.2,rect=[90,0,360,640])]}
         spec = atomic_write_json({'schema':'video_creation_pipeline.editorial_visual_spec.v1','scenes':rows},self.root/'beats-spec.json')
         beats = atomic_write_json(build_editorial_visual_beats(routing,spec),self.root/'beats.json')
         value = self.build(visual_beats_path=beats)
         self.assertIn('visual_semantics_review_required',value['readiness']['blockers'])
         self.assertIn('visual_effect_renderer_binding_required',value['readiness']['blockers'])
+        self.assertIn('scale_motion_requires_audio_timeline_visual_binding',value['readiness']['blockers'])
         validate_semantic_render_plan(value)
 
 

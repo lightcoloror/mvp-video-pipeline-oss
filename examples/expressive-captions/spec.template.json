@@ -1,0 +1,16 @@
+{
+  "font_file": "<path-to-cjk-font.ttc>",
+  "font_size_px": 72,
+  "typography_profile": "semantic_motion_1080x1920",
+  "speakers": {
+    "father": {
+      "label": "父亲",
+      "color": "65D8D0",
+      "identity_note": "占位：说明镜头/首次姓名如何让观众知道这是谁",
+      "color_reason": "占位：替换为当前项目已建立的父亲角色色；示例青色不是全局规则"
+    }
+  },
+  "effects": {
+    "father-laugh": {"mode":"float_fade", "x_px":540, "y_px":760, "end_scale":1.2, "rise_px":72, "tail_frames":8}
+  }
+}

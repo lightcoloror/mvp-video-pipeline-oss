@@ -12,7 +12,8 @@
     "layout_evidence",
     "required_roles",
     "reserved_regions",
-    "elements"
+    "elements",
+    "medical_disclosure"
   ],
   "properties": {
     "schema_version": {"const": "video-final-layout-safety.v1"},
@@ -20,6 +21,20 @@
     "duration_seconds": {"type": "number", "exclusiveMinimum": 0},
     "candidate": {"$ref": "#/$defs/artifact"},
     "layout_evidence": {"$ref": "#/$defs/artifact"},
+    "medical_disclosure": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "reason", "text"],
+      "properties": {
+        "decision": {"enum": ["required", "not_applicable"]},
+        "reason": {"type": "string", "minLength": 3},
+        "text": {"type": "string"}
+      },
+      "allOf": [{
+        "if": {"properties": {"decision": {"const": "required"}}},
+        "then": {"properties": {"text": {"const": "医学科普｜内容仅供参考，不替代个体诊疗建议。"}}},
+        "else": {"properties": {"text": {"const": ""}}}
+      }]
+    },
     "ai_disclosure": {
       "type": "object",
       "additionalProperties": false,

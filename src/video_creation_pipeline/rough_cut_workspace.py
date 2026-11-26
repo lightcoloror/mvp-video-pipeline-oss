@@ -28,9 +28,12 @@ ROUGH_CUT_FINALIZE_RECEIPT_SCHEMA = (
 )
 
 SCRIPT_ALIGNED_REVIEW_POLICY = {
-    "default_delivery_mode": "script_aligned_independent_clips",
+    "default_delivery_mode": "script_aligned_source_time_ranges",
     "alignment_key": "storyboard_shot_id",
-    "independent_clip_per_script_segment_required": True,
+    "independent_clip_per_script_segment_required": False,
+    "review_surface": "targeted-review.html",
+    "media_export_allowed": False,
+    "production_requires_separate_explicit_user_request": True,
     "material_index_required": True,
     "cross_segment_batch_browse_allowed": False,
     "continuous_review_reel_generated_by_default": False,
@@ -102,7 +105,7 @@ def build_rough_cut_workspace(
                 "script_segment_id": shot_id,
                 "candidate_ids": [_candidate_id(row) for row in candidate_map[shot_id]],
                 "review_mode": (
-                    "single_mapped_clip"
+                    "single_mapped_source_time_range"
                     if len(candidate_map[shot_id]) == 1
                     else "compare_candidates_within_segment"
                 ),
@@ -167,14 +170,14 @@ def validate_rough_cut_workspace(workspace: dict[str, Any]) -> None:
     if schema == ROUGH_CUT_WORKSPACE_SCHEMA:
         if workspace.get("review_delivery_policy") != SCRIPT_ALIGNED_REVIEW_POLICY:
             raise ContractError(
-                "rough-cut review delivery must use script-aligned independent clips"
+                "rough-cut review delivery must use script-aligned source time ranges; media export requires a separate production request"
             )
         expected_review_units = [
             {
                 "script_segment_id": shot_id,
                 "candidate_ids": expected_inventory[shot_id],
                 "review_mode": (
-                    "single_mapped_clip"
+                    "single_mapped_source_time_range"
                     if len(expected_inventory[shot_id]) == 1
                     else "compare_candidates_within_segment"
                 ),

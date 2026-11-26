@@ -5,6 +5,7 @@ import json
 import math
 import mimetypes
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -24,6 +25,12 @@ from .execution_receipts import (
     probe_media_metadata,
     validate_ffmpeg_execution_receipt,
 )
+from .object_scenes import (
+    THREE_PACKAGES,
+    object_project_sources,
+    object_scene_projection,
+)
+from .object_process_models import PROCESS_COMPONENTS, THREE_COMPONENTS
 from .photo_layout import (
     IMAGE_EXTENSIONS,
     VIDEO_EXTENSIONS,
@@ -31,6 +38,7 @@ from .photo_layout import (
 )
 from .remotion_skill_handoff import validate_remotion_skill_handoff
 from .safe_media_scene_plan import validate_safe_media_scene_plan
+from .subtitle_styles import check_font_glyph_coverage, resolve_managed_font, resolve_subtitle_style
 from .technical_qa import (
     build_technical_qa_report,
     validate_technical_qa_report,
@@ -161,6 +169,7 @@ def materialize_remotion_project(
     *,
     license_basis: str,
     include_safe_layout_media: bool = False,
+    allow_plain_fallback: bool = False,
 ) -> dict[str, Path]:
     handoff_file = Path(handoff_path).expanduser().resolve()
     handoff = read_json_object(handoff_file, "Remotion skill handoff")
@@ -191,14 +200,43 @@ def materialize_remotion_project(
         data = _project_data(
             handoff,
             include_safe_layout_media=include_safe_layout_media,
+            allow_plain_fallback=allow_plain_fallback,
         )
         subtitle_text = ""
         subtitle_reference = _object(handoff.get("inputs")).get("subtitle_artifact")
+        subtitle_materialization: dict[str, Any] | None = None
         if subtitle_reference is not None:
             subtitle_path = validate_artifact_reference(
                 _object(subtitle_reference), "Remotion subtitle artifact"
             )
             subtitle_text = subtitle_path.read_text(encoding="utf-8-sig")
+            sub_style = _object(data.get("subtitleStyle"))
+            resolved_font = resolve_managed_font(sub_style["fontId"])
+            caption_lines = [
+                line
+                for line in subtitle_text.splitlines()
+                if line.strip() and not line.strip().isdigit() and "-->" not in line
+            ]
+            check_font_glyph_coverage(resolved_font["source_path"], caption_lines)
+            font_public_rel = str(sub_style["fontPublicPath"])
+            staged_font = staging / "public" / Path(font_public_rel)
+            staged_font.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(resolved_font["source_path"], staged_font)
+            subtitle_materialization = {
+                "preset_id": sub_style["presetId"],
+                "policy_sha256": sub_style["policySha256"],
+                "implementation_sha256": sub_style["implementationSha256"],
+                "font_id": sub_style["fontId"],
+                "font_family": sub_style["fontFamily"],
+                "font_weight": sub_style["fontWeight"],
+                "public_path": font_public_rel,
+                "source_font": artifact_reference(
+                    resolved_font["source_path"], "managed subtitle font"
+                ),
+                "project_font": _staged_reference(
+                    staged_font, project / "public" / Path(font_public_rel)
+                ),
+            }
         files = _project_file_contents(data, subtitle_text=subtitle_text)
         for relative, value in files.items():
             target = staging / relative
@@ -217,13 +255,20 @@ def materialize_remotion_project(
         capabilities: dict[str, Any] = {
             "packaging_scene_projection": True,
             "subtitle_rendering": data["subtitleFile"] is not None,
+            "subtitle_capabilities": data.get("subtitleCapabilities"),
             "safe_layout_metadata_projection": _has_safe_layout_metadata(data),
             "semantic_motion_metadata_projection": bool(data["motionCues"]),
+            "external_motion_selection_projection": bool(
+                data["externalMotionSelections"]
+            ),
             "title_cover_still_compositions": bool(data["titleCoverVariants"]),
             "source_media_rendering": include_safe_layout_media,
             "studio_editable_project": True,
             "render_mode": _render_mode(media_mode),
         }
+        if data.get("objectScenes"):
+            capabilities["object_scene_authoring"] = True
+            capabilities["object_scene_3d_authoring"] = any(row["componentId"] in THREE_COMPONENTS for row in data["objectScenes"])
         if "safe_media_scene_plan" in _object(handoff.get("inputs")):
             capabilities["scene_media_assignment"] = True
         manifest: dict[str, Any] = {
@@ -232,6 +277,8 @@ def materialize_remotion_project(
                 handoff_file, "Remotion skill handoff"
             ),
             "runtime_source": source,
+            **({"object_scene_runtime_source": _three_runtime_source(Path(runtime_source_root))}
+               if capabilities.get("object_scene_3d_authoring") else {}),
             "license_basis": basis,
             "project": {
                 "root": str(project),
@@ -244,12 +291,17 @@ def materialize_remotion_project(
             "inputs": inputs,
             "generated_files": {
                 relative: _staged_reference(staging / relative, project / relative)
-                for relative in _PROJECT_FILES
+                for relative in (*files, "REMOTION_LICENSE.md")
             },
             "media_materialization": {
                 "mode": media_mode,
                 "assets": materialized_media,
             },
+            **(
+                {"subtitle_materialization": subtitle_materialization}
+                if subtitle_materialization is not None
+                else {}
+            ),
             "capabilities": capabilities,
             "authority_boundary": {
                 "candidate_only": True,
@@ -320,6 +372,13 @@ def validate_remotion_project_manifest(manifest: dict[str, Any]) -> None:
     )
     if data != expected:
         raise ContractError("Remotion project data drifted from the handoff")
+    uses_three = any(row["componentId"] in THREE_COMPONENTS for row in data.get("objectScenes", []))
+    if uses_three:
+        source_root = Path(manifest["runtime_source"]["core_package"]["path"]).parents[2]
+        if manifest.get("object_scene_runtime_source") != _three_runtime_source(source_root):
+            raise ContractError("object scene Three source drifted from the pinned local checkout")
+    elif "object_scene_runtime_source" in manifest:
+        raise ContractError("a project without 3D cannot declare a Three source")
     if project != {
         "root": str(root),
         "composition_id": data["compositionId"],
@@ -341,8 +400,29 @@ def validate_remotion_project_manifest(manifest: dict[str, Any]) -> None:
         root,
         media_mode=media_mode,
     )
+    if "subtitle_materialization" in manifest:
+        if expected.get("subtitleFile") is None:
+            raise ContractError("subtitle materialization present without subtitle input")
+        sub_mat = _object(manifest.get("subtitle_materialization"))
+        sub_style = _object(expected.get("subtitleStyle"))
+        if (
+            sub_mat.get("preset_id") != sub_style.get("presetId")
+            or sub_mat.get("policy_sha256") != sub_style.get("policySha256")
+            or sub_mat.get("implementation_sha256") != sub_style.get("implementationSha256")
+            or sub_mat.get("font_id") != sub_style.get("fontId")
+            or sub_mat.get("public_path") != sub_style.get("fontPublicPath")
+        ):
+            raise ContractError("Remotion subtitle materialization drifted from style policy")
+        proj_font = validate_artifact_reference(
+            _object(sub_mat.get("project_font")), "Remotion project subtitle font"
+        )
+        if proj_font != (root / "public" / Path(str(sub_style["fontPublicPath"]))).resolve():
+            raise ContractError("Remotion project subtitle font escaped project public directory")
+        if _object(sub_mat.get("project_font")).get("sha256") != sub_style.get("fontSha256"):
+            raise ContractError("Remotion project subtitle font hash drifted")
     files = _object(manifest.get("generated_files"))
-    if set(files) != set(_PROJECT_FILES):
+    expected_files = set(_PROJECT_FILES) | set(object_project_sources(expected.get("objectScenes", [])))
+    if set(files) != expected_files:
         raise ContractError("Remotion generated file inventory is incomplete")
     for relative, reference in files.items():
         path = validate_artifact_reference(
@@ -377,6 +457,15 @@ def validate_remotion_project_manifest(manifest: dict[str, Any]) -> None:
         expected["titleCoverVariants"]
     ):
         raise ContractError("Remotion title cover capability drifted")
+    if bool(capabilities.get("object_scene_authoring")) != bool(expected.get("objectScenes")):
+        raise ContractError("object scene capability drifted")
+    if bool(capabilities.get("object_scene_3d_authoring")) != any(row["componentId"] in THREE_COMPONENTS for row in expected.get("objectScenes", [])):
+        raise ContractError("object scene 3D capability drifted")
+    generated = _project_file_contents(expected, subtitle_text=(root / "public/subtitles.srt").read_text(encoding="utf-8"))
+    if expected.get("objectScenes"):
+        for relative, value in generated.items():
+            if (root / relative).read_text(encoding="utf-8") != value:
+                raise ContractError("object scene generated source differs from the bound authoring inputs")
     boundary = _object(manifest.get("authority_boundary"))
     expected_boundary = {
         "candidate_only": True,
@@ -460,6 +549,7 @@ def run_remotion_candidate(
                 "yuv420p",
                 "--concurrency",
                 "1",
+                "--log=verbose",
                 "--overwrite",
             ],
             project,
@@ -473,6 +563,36 @@ def run_remotion_candidate(
             raw_staging.unlink()
     render_log = evidence_dir / "remotion-render.log"
     _atomic_text(render["output"], render_log)
+    subtitle_runtime: dict[str, Any] | None = None
+    if _object(manifest.get("capabilities")).get("subtitle_rendering") is True:
+        font_load_events: list[dict[str, Any]] = []
+        for raw_line in render["output"].splitlines():
+            marker = "[subtitle-font-loaded]"
+            if marker in raw_line:
+                payload_text = re.sub(r"\x1b\[[0-9;]*m", "", raw_line.split(marker, 1)[1]).strip()
+                try:
+                    font_load_events.append(json.loads(payload_text))
+                except json.JSONDecodeError:
+                    font_load_events.append({"raw": payload_text})
+        sub_mat = _object(manifest.get("subtitle_materialization"))
+        if not font_load_events or not any(
+            evt.get("status") == "loaded"
+            and evt.get("sha256") == _object(sub_mat.get("project_font")).get("sha256")
+            for evt in font_load_events
+        ):
+            raise ContractError("Remotion subtitle font failed to load in Chromium before render")
+        subtitle_runtime = {
+            "preset_id": sub_mat.get("preset_id"),
+            "policy_sha256": sub_mat.get("policy_sha256"),
+            "implementation_sha256": sub_mat.get("implementation_sha256"),
+            "font_id": sub_mat.get("font_id"),
+            "font_family": sub_mat.get("font_family"),
+            "font_weight": sub_mat.get("font_weight"),
+            "font_sha256": _object(sub_mat.get("project_font")).get("sha256"),
+            "subtitle_artifact": dict(_object(manifest.get("inputs")).get("subtitle_artifact") or {}),
+            "browser_font_load_verified": True,
+            "browser_font_load_events": font_load_events,
+        }
 
     project_meta = _object(manifest["project"])
     capabilities = _object(manifest["capabilities"])
@@ -606,6 +726,11 @@ def run_remotion_candidate(
             normalize_receipt, "Remotion normalize receipt"
         ),
         "qa_report": artifact_reference(qa_path, "Remotion QA report"),
+        **(
+            {"subtitle_runtime": subtitle_runtime}
+            if subtitle_runtime is not None
+            else {}
+        ),
         "authority_boundary": {
             "candidate_only": True,
             "contract_preview_without_source_media": not source_media_rendered,
@@ -644,6 +769,11 @@ def validate_remotion_run_receipt(receipt: dict[str, Any]) -> None:
     _validate_runtime_source_snapshot(_object(receipt.get("runtime_source")))
     installed = _object(receipt.get("installed_runtime"))
     _validate_installed_runtime_snapshot(installed)
+    expected_packages = set(_RUNTIME_PACKAGES)
+    if _object(manifest.get("capabilities")).get("object_scene_3d_authoring"):
+        expected_packages.update(THREE_PACKAGES)
+    if set(installed["packages"]) != expected_packages:
+        raise ContractError("render receipt dependencies differ from its object scene manifest")
     validate_artifact_reference(_object(receipt.get("browser")), "Remotion browser")
     checks = receipt.get("checks")
     if not isinstance(checks, list) or len(checks) != 2:
@@ -687,6 +817,17 @@ def validate_remotion_run_receipt(receipt: dict[str, Any]) -> None:
         _object(qa.get("inputs")).get("media")
     ).get("sha256") != _object(receipt.get("candidate_video")).get("sha256"):
         raise ContractError("Remotion candidate is not bound to passing QA")
+    if "subtitle_runtime" in receipt:
+        sub_rt = _object(receipt.get("subtitle_runtime"))
+        sub_mat = _object(manifest.get("subtitle_materialization"))
+        if (
+            sub_rt.get("browser_font_load_verified") is not True
+            or sub_rt.get("font_sha256") != _object(sub_mat.get("project_font")).get("sha256")
+            or sub_rt.get("subtitle_artifact") != _object(manifest.get("inputs")).get("subtitle_artifact")
+            or sub_rt.get("preset_id") != sub_mat.get("preset_id")
+            or sub_rt.get("policy_sha256") != sub_mat.get("policy_sha256")
+        ):
+            raise ContractError("Remotion subtitle runtime drifted from materialized project")
     boundary = _object(receipt.get("authority_boundary"))
     if boundary != {
         "candidate_only": True,
@@ -976,6 +1117,19 @@ def _runtime_source(root: Path) -> dict[str, Any]:
     }
 
 
+def _three_runtime_source(root: Path) -> dict[str, Any]:
+    """Bind the Three adapter to the existing fixed Remotion source checkout."""
+    if _git_head(root) != REMOTION_RUNTIME_COMMIT:
+        raise ContractError("Three adapter source commit drifted")
+    package = root / "packages" / "three" / "package.json"
+    metadata = read_json_object(package, "local Remotion Three package")
+    if metadata.get("name") != "@remotion/three" or metadata.get("version") != REMOTION_RUNTIME_VERSION:
+        raise ContractError("local Remotion Three version drifted")
+    return {"source_commit": REMOTION_RUNTIME_COMMIT, "dependency_pins": dict(THREE_PACKAGES),
+            "source_files": {name: artifact_reference(root / "packages" / "three" / name, "local Three adapter source")
+                             for name in ("package.json", "src/index.ts", "src/ThreeCanvas.tsx", "src/SuspenseLoader.tsx")}}
+
+
 def _validate_runtime_source_snapshot(source: dict[str, Any]) -> None:
     if (
         source.get("name") != "remotion-dev/remotion"
@@ -1002,7 +1156,11 @@ def _installed_runtime(project: Path) -> dict[str, Any]:
     if not lock.is_file():
         raise ContractError("Remotion project requires an npm package-lock.json")
     package_rows: dict[str, Any] = {}
-    for name, version in _RUNTIME_PACKAGES.items():
+    package_definition = read_json_object(project / "package.json", "Remotion project package")
+    required_packages = dict(_RUNTIME_PACKAGES)
+    if "@remotion/three" in package_definition.get("dependencies", {}):
+        required_packages.update(THREE_PACKAGES)
+    for name, version in required_packages.items():
         package = project / "node_modules" / Path(*name.split("/")) / "package.json"
         metadata = read_json_object(package, f"installed Remotion package {name}")
         if metadata.get("name") != name or metadata.get("version") != version:
@@ -1027,7 +1185,10 @@ def _validate_installed_runtime_snapshot(snapshot: dict[str, Any]) -> None:
         _object(snapshot.get("package_lock")), "Remotion npm package lock"
     )
     packages = _object(snapshot.get("packages"))
-    if set(packages) != set(_RUNTIME_PACKAGES):
+    required_packages = dict(_RUNTIME_PACKAGES)
+    if "@remotion/three" in packages:
+        required_packages.update(THREE_PACKAGES)
+    if set(packages) != set(required_packages):
         raise ContractError("installed Remotion package inventory is incomplete")
     for name, reference in packages.items():
         package = validate_artifact_reference(
@@ -1036,7 +1197,7 @@ def _validate_installed_runtime_snapshot(snapshot: dict[str, Any]) -> None:
         metadata = read_json_object(package, f"installed Remotion package {name}")
         if (
             metadata.get("name") != name
-            or metadata.get("version") != _RUNTIME_PACKAGES[name]
+            or metadata.get("version") != required_packages[name]
         ):
             raise ContractError(f"installed Remotion package {name} drifted")
     validate_artifact_reference(
@@ -1075,8 +1236,32 @@ def _project_data(
     handoff: dict[str, Any],
     *,
     include_safe_layout_media: bool = False,
+    allow_plain_fallback: bool = False,
 ) -> dict[str, Any]:
     inputs = _object(handoff.get("inputs"))
+    handoff_sub_style = (
+        _object(handoff.get("subtitle_style"))
+        if handoff.get("subtitle_style") is not None
+        else {}
+    )
+    requested_sub_features: list[str] = []
+    if handoff_sub_style.get("speaker_colors"):
+        requested_sub_features.append("speaker_colors")
+    if inputs.get("expressive_cues") or handoff_sub_style.get("expressive_cues"):
+        requested_sub_features.append("expressive_cues")
+    if requested_sub_features and not allow_plain_fallback:
+        raise ContractError(
+            "remotion_path3_unsupported_expressive_or_speaker_colors: "
+            + ",".join(requested_sub_features)
+        )
+    subtitle_capabilities = {
+        "requested_features": requested_sub_features,
+        "applied_features": [],
+        "delivery_status": "PASS_WITH_FALLBACK" if requested_sub_features else "PASS",
+        "fallback_reason": (
+            "remotion_path3_plain_fallback_explicitly_allowed" if requested_sub_features else None
+        ),
+    }
     packaging_reference = _object(inputs["packaging_plan"])
     packaging_path = validate_artifact_reference(
         packaging_reference, "video packaging plan"
@@ -1132,10 +1317,77 @@ def _project_data(
     subtitle_region = (
         _default_subtitle_region(width, height) if subtitle_file is not None else None
     )
+    # Intent: public subtitle rendering must bind a reviewed type floor.
+    # Decision: only the reviewed 1080x1920 profile supplies a default binding.
+    # Reason/evidence/scope: typography-gates.v1.json; no renderer is duplicated.
+    subtitle_typography: dict[str, Any] | None = None
+    subtitle_style: dict[str, Any] | None = None
+    if subtitle_file is not None:
+        from .typography_gates import build_typography_gate
+
+        if (width, height) == (1080, 1920):
+            subtitle_typography = build_typography_gate(
+                "semantic_motion_1080x1920", width=width, height=height
+            )
+        elif (width, height) == (540, 960):
+            subtitle_typography = build_typography_gate(
+                "semantic_motion_540x960", width=width, height=height
+            )
+        else:
+            base_gate = build_typography_gate(
+                "semantic_motion_1080x1920", width=1080, height=1920
+            )
+            scale = min(width, height) / 1080
+            subtitle_typography = {
+                **base_gate,
+                "viewport": {"width": width, "height": height},
+                "roles": {
+                    role: max(1, round(px * scale))
+                    for role, px in base_gate["roles"].items()
+                },
+            }
+        handoff_sub_style = (
+            _object(handoff.get("subtitle_style"))
+            if handoff.get("subtitle_style") is not None
+            else {}
+        )
+        resolved_sub = resolve_subtitle_style(
+            width,
+            height,
+            preset_id=handoff_sub_style.get("preset_id"),
+            font_id=handoff_sub_style.get("font_id"),
+            background_opacity=handoff_sub_style.get("background_opacity"),
+        )
+        subtitle_style = {
+            "presetId": resolved_sub["preset_id"],
+            "policySha256": resolved_sub["policy_sha256"],
+            "implementationSha256": resolved_sub["implementation_sha256"],
+            "fontId": resolved_sub["font"]["font_id"],
+            "fontFamily": resolved_sub["font"]["family"],
+            "fontPostscriptName": resolved_sub["font"]["postscript_name"],
+            "fontWeight": resolved_sub["font"]["weight"],
+            "fontPublicPath": f"fonts/{resolved_sub['font']['filename']}",
+            "fontSha256": resolved_sub["font"]["sha256"],
+            **resolved_sub["css"],
+        }
     motion_cues: list[dict[str, Any]] = []
+    motion_typography: dict[str, Any] | None = None
     if "semantic_motion_plan" in inputs:
         motion_path = Path(str(_object(inputs["semantic_motion_plan"])["path"]))
         motion = read_json_object(motion_path, "semantic motion plan")
+        from .semantic_motion import validate_semantic_motion_plan
+        from .typography_gates import validate_typography_gate
+
+        validate_semantic_motion_plan(motion)
+        motion_typography = validate_typography_gate(
+            _object(motion.get("typography_gate")),
+            profile_id="semantic_motion_1080x1920",
+            width=width,
+            height=height,
+        )
+        # One reviewed 1080x1920 binding governs both motion labels and captions.
+        # The renderer may select an actual size at or above these minima.
+        subtitle_typography = motion_typography
         if subtitle_file is not None:
             subtitle_region = _semantic_subtitle_region(motion)
         cues = motion.get("cues")
@@ -1244,7 +1496,9 @@ def _project_data(
         raise ContractError(
             "explicit Remotion source media rendering requires a safe layout plan"
         )
+    object_scenes = object_scene_projection(inputs, packaging)
     return {
+        **({"objectScenes": object_scenes} if object_scenes else {}),
         "compositionId": str(_object(handoff["composition"])["id"]),
         "candidateOnly": True,
         "width": width,
@@ -1253,16 +1507,109 @@ def _project_data(
         "durationInFrames": duration_frames,
         "scenes": scenes,
         "motionCues": motion_cues,
+        "externalMotionSelections": _external_motion_selection_projection(inputs),
         "safeLayout": safe_layout,
         "subtitleFile": subtitle_file,
         "subtitleRegion": subtitle_region,
+        "subtitleCapabilities": subtitle_capabilities,
+        "subtitleTypography": subtitle_typography,
+        "subtitleStyle": subtitle_style,
+        "motionTypography": motion_typography,
         "sourceMediaRendered": include_safe_layout_media,
         "style": style,
-        "titleCoverVariants": _title_cover_variants(inputs),
+        "titleCoverVariants": _title_cover_variants(inputs, safe_layout=safe_layout),
     }
 
 
-def _title_cover_variants(inputs: dict[str, Any]) -> list[dict[str, Any]]:
+def _external_motion_selection_projection(
+    inputs: dict[str, Any],
+) -> list[dict[str, Any]]:
+    reference = inputs.get("external_motion_selection_plan")
+    if reference is None:
+        return []
+    from .external_motion_assets import validate_external_motion_selection_plan
+
+    path = validate_artifact_reference(
+        _object(reference), "external motion selection plan"
+    )
+    payload = read_json_object(path, "external motion selection plan")
+    validate_external_motion_selection_plan(payload)
+    projected: list[dict[str, Any]] = []
+    for raw in payload.get("selections") or []:
+        row = _object(raw)
+        component = _object(row.get("motion_component"))
+        sound = _object(row.get("sound_effect"))
+        projected.append(
+            {
+                "cueId": str(row.get("cue_id") or ""),
+                "sceneId": str(row.get("story_segment_ref") or ""),
+                "informationRole": str(row.get("information_role") or ""),
+                "componentSource": str(component.get("source_id") or ""),
+                "componentId": str(component.get("item_id") or ""),
+                "componentSelectionBasis": str(component.get("selection_basis") or ""),
+                "sourceItem": dict(_object(component.get("source_item"))),
+                "soundAssetId": sound.get("asset_id"),
+                "soundSelectionBasis": str(sound.get("selection_basis") or ""),
+                "centralTimelineAudio": sound.get("central_timeline_cue_required")
+                is True,
+                "componentEmbeddedAudioForbidden": True,
+            }
+        )
+    return projected
+
+
+def _title_cover_variants(
+    inputs: dict[str, Any], *, safe_layout: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    collection_reference = inputs.get("case_cover_visual_plan_collection")
+    if collection_reference is not None:
+        from .case_cover_visual_plan import (
+            case_cover_collection_variant_projection,
+            validate_case_cover_visual_plan_collection,
+        )
+
+        collection_path = validate_artifact_reference(
+            _object(collection_reference), "Lucas case cover visual plan collection"
+        )
+        collection = read_json_object(
+            collection_path, "Lucas case cover visual plan collection"
+        )
+        safe_layout_path = None
+        if "safe_media_layout_plan" in inputs:
+            safe_layout_path = validate_artifact_reference(
+                _object(inputs["safe_media_layout_plan"]),
+                "safe media layout plan",
+            )
+        plans = validate_case_cover_visual_plan_collection(
+            collection,
+            safe_media_layout_path=safe_layout_path,
+        )
+        return case_cover_collection_variant_projection(
+            plans,
+            safe_layout=safe_layout,
+        )
+    case_reference = inputs.get("case_cover_visual_plan")
+    if case_reference is not None:
+        from .case_cover_visual_plan import (
+            case_cover_variant_projection,
+            validate_case_cover_visual_plan,
+        )
+
+        case_path = validate_artifact_reference(
+            _object(case_reference), "Lucas case cover visual plan"
+        )
+        plan = read_json_object(case_path, "Lucas case cover visual plan")
+        safe_layout_path = None
+        if "safe_media_layout_plan" in inputs:
+            safe_layout_path = validate_artifact_reference(
+                _object(inputs["safe_media_layout_plan"]),
+                "safe media layout plan",
+            )
+        validate_case_cover_visual_plan(
+            plan,
+            safe_media_layout_path=safe_layout_path,
+        )
+        return case_cover_variant_projection(plan, safe_layout=safe_layout)
     reference = inputs.get("title_cover_candidate_plan")
     if reference is None:
         return []
@@ -1469,6 +1816,9 @@ def _project_file_contents(
         },
         "dependencies": dict(_RUNTIME_PACKAGES),
     }
+    object_sources = object_project_sources(data.get("objectScenes", []))
+    if any(row["componentId"] in THREE_COMPONENTS for row in data.get("objectScenes", [])):
+        package["dependencies"].update(THREE_PACKAGES)
     tsconfig = {
         "compilerOptions": {
             "target": "ES2022",
@@ -1489,12 +1839,22 @@ def _project_file_contents(
         "remotion.config.ts": _REMOTION_CONFIG,
         "src/index.ts": _INDEX_TS,
         "src/Root.tsx": _ROOT_TSX,
-        "src/Composition.tsx": _COMPOSITION_TSX,
+        "src/Composition.tsx": _object_composition_source(data) if data.get("objectScenes") else _COMPOSITION_TSX,
+        **object_sources,
         "src/Cover.tsx": _COVER_TSX,
         "src/Captions.tsx": _CAPTIONS_TSX,
         "src/project-data.json": json.dumps(data, ensure_ascii=False, indent=2) + "\n",
         "public/subtitles.srt": subtitle_text,
     }
+
+
+def _object_composition_source(data: dict[str, Any]) -> str:
+    entry = "ProcessObjectScene as ObjectScene" if any(row["componentId"] in PROCESS_COMPONENTS for row in data["objectScenes"]) else "ObjectScene"
+    file = "ProcessObjectScene" if entry != "ObjectScene" else "ObjectScene"
+    source = f"import {{{entry}}} from './object-scenes/{file}';\n" + _COMPOSITION_TSX
+    source = source.replace("  scenes: Scene[];", "  scenes: Scene[];\n  objectScenes: import('./object-scenes/object-motion').ObjectSceneData[];")
+    source = source.replace("      {data.subtitleFile && data.subtitleRegion", "      {data.objectScenes.map((scene) => <Sequence key={scene.id} from={scene.startFrame} durationInFrames={scene.durationInFrames}><ObjectScene scene={scene} palette={data.style}/></Sequence>)}\n      {data.subtitleFile && data.subtitleRegion")
+    return source
 
 
 def _manifest_inputs(handoff_path: Path, handoff: dict[str, Any]) -> dict[str, Any]:
@@ -2039,14 +2399,57 @@ type MotionCue = {
     runtimeRepositionAllowed: false;
   } | null;
 };
+type ExternalMotionSelection = {
+  cueId: string;
+  sceneId: string;
+  informationRole: string;
+  componentSource: string;
+  componentId: string;
+  componentSelectionBasis: string;
+  sourceItem: {path: string; sha256: string; bytes: number};
+  soundAssetId: string | null;
+  soundSelectionBasis: string;
+  centralTimelineAudio: boolean;
+  componentEmbeddedAudioForbidden: true;
+};
+type TypographyGate = {
+  hard_gate: true;
+  roles: Record<string, number>;
+};
+type SubtitleStyle = {
+  presetId: string;
+  policySha256: string;
+  implementationSha256: string;
+  fontId: string;
+  fontFamily: string;
+  fontPostscriptName: string;
+  fontWeight: number;
+  fontPublicPath: string;
+  fontSha256: string;
+  textColor: string;
+  backgroundColor: string;
+  backgroundHex: string | null;
+  backgroundOpacity: number;
+  outlineColor: string;
+  outlinePx: number;
+  shadowCss: string;
+  paddingY: number;
+  paddingX: number;
+  borderRadius: number;
+  fontPx: number;
+};
 type ProjectData = {
   height: number;
   candidateOnly: boolean;
   scenes: Scene[];
   motionCues: MotionCue[];
+  externalMotionSelections: ExternalMotionSelection[];
   safeLayout: SafeLayout | null;
   subtitleFile: string | null;
   subtitleRegion: Rect | null;
+  subtitleTypography: TypographyGate | null;
+  subtitleStyle?: SubtitleStyle | null;
+  motionTypography: TypographyGate | null;
   sourceMediaRendered: boolean;
   style: VisualStyle;
   titleCoverVariants: unknown[];
@@ -2098,7 +2501,8 @@ const SceneCard: FC<{
   safeLayout: ProjectData["safeLayout"];
   sourceMediaRendered: boolean;
   visualStyle: VisualStyle;
-}> = ({scene, cues, safeLayout, sourceMediaRendered, visualStyle}) => {
+  typography: TypographyGate | null;
+}> = ({scene, cues, safeLayout, sourceMediaRendered, visualStyle, typography}) => {
   const frame = useCurrentFrame();
   const sceneMediaRendered =
     sourceMediaRendered && Boolean(safeLayout?.placements?.length);
@@ -2117,12 +2521,15 @@ const SceneCard: FC<{
       {sceneMediaRendered && safeLayout?.placements ? (
         <MediaLayer placements={safeLayout.placements} />
       ) : null}
+      {/* Internal contract diagnostics are deliberately not in a publish candidate.
+          Intent/decision/reason/evidence/scope: typography hard-gate policy. */}
       <div
         style={{
           position: "absolute",
           left: "9%",
           top: "5%",
           width: "62%",
+          display: "none",
           overflowWrap: "anywhere",
         }}
       >
@@ -2148,7 +2555,7 @@ const SceneCard: FC<{
               : "Source media intentionally not rendered"}
         </div>
       </div>
-      {cues.map((cue) => (
+      {typography ? cues.map((cue) => (
         <Sequence
           key={cue.cueId}
           from={Math.max(0, cue.startFrame - scene.startFrame)}
@@ -2173,7 +2580,8 @@ const SceneCard: FC<{
                 bottom: -58,
                 backgroundColor: visualStyle.panel,
                 color: visualStyle.foreground,
-                fontSize: 26,
+                // Bound policy minimum is a floor; future cue-specific values may grow.
+                fontSize: Math.max(typography.roles.motion_label, 36),
                 padding: "10px 14px",
               }}
             >
@@ -2181,7 +2589,7 @@ const SceneCard: FC<{
             </div>
           </div>
         </Sequence>
-      ))}
+      )) : null}
     </AbsoluteFill>
   );
 };
@@ -2202,18 +2610,21 @@ export const CandidateComposition: FC<{data: ProjectData}> = ({data}) => {
             safeLayout={scene.mediaLayout ?? data.safeLayout}
             sourceMediaRendered={data.sourceMediaRendered}
             visualStyle={data.style}
+            typography={data.motionTypography}
           />
         </Sequence>
       ))}
-      {data.subtitleFile && data.subtitleRegion ? (
+      {data.subtitleFile && data.subtitleRegion && data.subtitleTypography ? (
         <Captions
           source={data.subtitleFile}
           fps={fps}
           frameHeight={data.height}
           region={data.subtitleRegion}
-          foreground={data.style.foreground}
-          panel={data.style.panel}
-          fontFamily={data.style.bodyFont}
+          foreground={data.subtitleStyle?.textColor ?? data.style.foreground}
+          panel={data.subtitleStyle?.backgroundColor ?? data.style.panel}
+          fontFamily={data.subtitleStyle?.fontFamily ?? data.style.bodyFont}
+          minimumFontSize={data.subtitleTypography.roles.subtitle}
+          subtitleStyle={data.subtitleStyle ?? null}
         />
       ) : null}
       <div
@@ -2227,6 +2638,8 @@ export const CandidateComposition: FC<{data: ProjectData}> = ({data}) => {
           fontSize: 24,
           fontWeight: 700,
           padding: "10px 14px",
+          // Internal diagnostic only: public candidate output must not carry unbound 24px text.
+          display: "none",
         }}
       >
         CANDIDATE ONLY
@@ -2236,7 +2649,7 @@ export const CandidateComposition: FC<{data: ProjectData}> = ({data}) => {
 };
 """
 
-_COVER_TSX = """import {AbsoluteFill} from "remotion";
+_COVER_TSX = """import {AbsoluteFill, Img, staticFile} from "remotion";
 import type {FC} from "react";
 
 type Rect = {x: number; y: number; width: number; height: number};
@@ -2265,6 +2678,106 @@ type CoverVariant = {
   height: number;
   safeZone: Rect;
   candidateOnly: true;
+  caseCover?: {
+    account: string;
+    palette?: Partial<Pick<VisualStyle, "background" | "foreground" | "primary" | "accent" | "muted" | "panel">>;
+    compositionStrategy: string;
+    compositionRecipeId?: string | null;
+    comparisonBasis?: string;
+    primaryReadingTarget: string;
+    renderKind: string;
+    graphicKind: string;
+    tag: string;
+    helperLabels: string[];
+    // Intent: render only the exact policy binding projected by Python.
+    // Decision/reason/evidence/scope: typography-gates.v1.json governance.
+    typography: { hard_gate: true; roles: Record<string, number> };
+    layout: {
+      text_box: Rect;
+      text_align: "left" | "center" | "right";
+      graphic_box?: Rect;
+      cover_layers?: {
+        schema: string;
+        background: string;
+        layers: Array<{id: string; type: string; box: Rect; asset_id?: string; text?: string; role?: string; font_px?: number; color?: string; align?: "left" | "center" | "right"; stroke_px?: number}>;
+      };
+      photo_editorial?: {
+        schema: string;
+        shade?: "bottom" | "none";
+        text_nodes: Array<{text: string; role: string; box: Rect; font_px: number; color: string; weight?: number; font_family?: string; shadow?: boolean; align?: "left" | "center" | "right"}>;
+      };
+      media: Array<{
+        asset_id: string;
+        public_path: string;
+        box: Rect;
+        fit_mode: "contain";
+        crop_allowed: false;
+        label?: string;
+        amount?: string;
+        recipe_role?: string;
+      }>;
+    };
+  };
+};
+
+const rectStyle = (rect: Rect) => ({
+  position: "absolute" as const,
+  left: `${rect.x * 100}%`,
+  top: `${rect.y * 100}%`,
+  width: `${rect.width * 100}%`,
+  height: `${rect.height * 100}%`,
+});
+
+const StructureGraphic: FC<{
+  kind: string;
+  labels: string[];
+  box: Rect;
+  visualStyle: VisualStyle;
+  scale: number;
+  typography: { hard_gate: true; roles: Record<string, number> };
+}> = ({kind, labels, box, visualStyle, scale, typography}) => {
+  // The policy supplies a floor.  Generous space may render larger type, never smaller.
+  const type = (role: string, preferred: number) => Math.max(typography.roles[role], preferred);
+  const frame = {
+    ...rectStyle(box),
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16 * scale,
+  };
+  const pill = {
+    border: `${Math.max(2, 2 * scale)}px solid ${visualStyle.primary}`,
+    backgroundColor: visualStyle.panel,
+    color: visualStyle.foreground,
+    padding: `${18 * scale}px ${22 * scale}px`,
+    fontSize: type("structure", 64 * scale),
+    fontWeight: 760,
+    lineHeight: 1.15,
+    textAlign: "center" as const,
+    minWidth: 140 * scale,
+  };
+  if (kind === "seven_treatment_weeks") {
+    return <div style={{...frame, flexDirection: "column"}}>
+      <div style={{display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 9 * scale, width: "100%"}}>
+        {Array.from({length: 7}).map((_, index) => <div key={index} style={{height: 96 * scale, border: `${2 * scale}px solid ${visualStyle.primary}`, backgroundColor: index === 0 || index === 6 ? visualStyle.panel : visualStyle.primary, color: index === 0 || index === 6 ? visualStyle.primary : visualStyle.panel, display: "grid", placeItems: "center", fontSize: type("structure", 64 * scale), fontWeight: 800}}>{index === 0 || index === 6 ? "" : "治"}</div>)}
+      </div>
+      <div style={{display: "flex", gap: 12 * scale, width: "100%", justifyContent: "center"}}>{labels.slice(0, 3).map((label) => <span key={label} style={pill}>{label}</span>)}</div>
+    </div>;
+  }
+  if (kind === "one_to_four") {
+    return <div style={frame}><div style={{...pill, backgroundColor: visualStyle.primary, color: visualStyle.panel, fontSize: type("number", 104 * scale)}}>1</div><div style={{color: visualStyle.accent, fontSize: type("number", 104 * scale)}}>→</div><div style={{display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 * scale, flex: 1}}>{labels.slice(0, 4).map((label) => <span key={label} style={pill}>{label}</span>)}</div></div>;
+  }
+  if (kind === "two_opinions_choice") {
+    return <div style={frame}><div style={{display: "grid", gap: 10 * scale}}>{labels.slice(0, 2).map((label) => <span key={label} style={pill}>{label}</span>)}</div><div style={{color: visualStyle.accent, fontSize: type("number", 104 * scale)}}>→</div><div style={{...pill, backgroundColor: visualStyle.primary, color: visualStyle.panel}}>{labels[2] || "患者决定"}</div></div>;
+  }
+  if (["boundary_split", "responsibility_boundary", "two_amount_relationship", "coverage_distance_tradeoff", "split_payment"].includes(kind)) {
+    return <div style={{...frame, alignItems: "center"}}>{labels.slice(0, 2).map((label, index) => <div key={label} style={{...pill, flex: 1, minHeight: 150 * scale, display: "grid", placeItems: "center", borderTop: `${8 * scale}px solid ${index === 0 ? visualStyle.primary : visualStyle.accent}`}}>{label}</div>)}</div>;
+  }
+  if (["three_layer_filter", "three_factor_tradeoff"].includes(kind)) {
+    return <div style={{...frame, alignItems: "center"}}>{labels.slice(0, 3).map((label, index) => <div key={label} style={{...pill, flex: 1, minHeight: 140 * scale, display: "grid", placeItems: "center", transform: `translateY(${index * 8 * scale}px)`}}>{label}</div>)}</div>;
+  }
+  const sequenceLabels = labels.length ? labels : ["事实", "核对", "决定"];
+  return <div style={frame}>{sequenceLabels.slice(0, 5).map((label, index) => <div key={`${label}-${index}`} style={{display: "contents"}}><span style={{...pill, flex: 1}}>{label}</span>{index < Math.min(sequenceLabels.length, 5) - 1 ? <span style={{color: visualStyle.accent, fontSize: type("number", 104 * scale)}}>→</span> : null}</div>)}</div>;
 };
 
 export const CoverStill: FC<{
@@ -2273,6 +2786,86 @@ export const CoverStill: FC<{
 }> = ({variant, visualStyle}) => {
   if (!variant.candidateOnly || !variant.renderEligible) {
     throw new Error(`Cover is not render eligible: ${variant.candidateId}`);
+  }
+  if (variant.caseCover) {
+    const cover = variant.caseCover;
+    const layout = cover.layout;
+    const style = {...visualStyle, ...(cover.palette ?? {})};
+    const scale = Math.min(variant.width / 1080, variant.height / 1080);
+    const typography = cover.typography;
+    if (!typography.hard_gate || !typography.roles.overlay) {
+      throw new Error(`Typography gate is absent: ${variant.candidateId}`);
+    }
+    const minimum = (role: string) => typography.roles[role];
+    const actual = (role: string, preferred: number) => Math.max(minimum(role), preferred);
+    const length = Array.from(variant.overlayText).length;
+    const overlayPreferred = (length <= 8 ? 172 : length <= 12 ? 156 : 144) * scale;
+    const graphicBox = layout.graphic_box ?? {x: 0.08, y: 0.48, width: 0.84, height: 0.36};
+    if (layout.cover_layers) {
+      const scene = layout.cover_layers;
+      return <AbsoluteFill style={{backgroundColor: scene.background, fontFamily: visualStyle.bodyFont}}>
+        {scene.layers.map((layer) => {
+          const position = rectStyle(layer.box);
+          if (layer.type === "image") {
+            const media = layout.media.find(m => m.asset_id === layer.asset_id);
+            if (!media) throw new Error(`Unbound cover layer ${layer.id}`);
+            return <Img key={layer.id} src={staticFile(media.public_path)} style={{...position, objectFit: "contain"}} />;
+          }
+          if (layer.type === "text") return <div key={layer.id} data-cover-layer={layer.id} style={{...position, fontSize: layer.font_px, fontWeight: layer.role === "overlay" ? 850 : 600, color: layer.color, lineHeight: 1.12, whiteSpace: "pre-wrap", textAlign: layer.align ?? "left"}}>{layer.text}</div>;
+          if (layer.type === "line") return <svg key={layer.id} style={position} viewBox="0 0 100 100" preserveAspectRatio="none"><line x1="2" y1="2" x2="98" y2="98" stroke={layer.color} strokeWidth={layer.stroke_px ?? 4} vectorEffect="non-scaling-stroke" /></svg>;
+          return <div key={layer.id} style={{...position, backgroundColor: layer.color, borderRadius: layer.type === "ellipse" ? "50%" : 0}} />;
+        })}
+      </AbsoluteFill>;
+    }
+    if (layout.photo_editorial) {
+      const editorial = layout.photo_editorial;
+      return <AbsoluteFill style={{backgroundColor: style.background, fontFamily: "Microsoft YaHei, sans-serif"}}>
+        {layout.media.map((m, i) => <Img key={m.asset_id} src={staticFile(m.public_path)} style={{...rectStyle(m.box), objectFit: "contain", zIndex: i === 0 ? 0 : 2}} />)}
+        {editorial.shade === "bottom" ? <AbsoluteFill style={{background: "linear-gradient(to bottom, transparent 62%, rgba(12,20,27,.10) 72%, rgba(12,20,27,.65) 100%)", zIndex: 1}} /> : null}
+        {editorial.text_nodes.map((node, i) => <div key={i} data-cover-text-role={node.role} data-cover-text-box={i} style={{...rectStyle(node.box), fontSize: actual(node.role, node.font_px), fontWeight: node.weight ?? 800, color: node.color, fontFamily: node.font_family ?? "Microsoft YaHei, sans-serif", lineHeight: 1.12, whiteSpace: "pre-wrap", textAlign: node.align ?? "left", textShadow: node.shadow ? "0 3px 14px rgba(0,0,0,.8)" : "none", zIndex: 3}}>{node.text}</div>)}
+      </AbsoluteFill>;
+    }
+    if (cover.compositionRecipeId) {
+      const recipe = cover.compositionRecipeId;
+      const known = ["minimal-whitespace", "person-side-whitespace", "partial-person-object-led", "product-ui-led", "comparison-cards", "editorial-collage", "evidence-focus"];
+      if (!known.includes(recipe)) throw new Error(`Unknown cover recipe: ${recipe}`);
+      const compare = recipe === "comparison-cards";
+      const collage = recipe === "editorial-collage";
+      const evidence = recipe === "evidence-focus";
+      const ui = recipe === "product-ui-led";
+      const minimal = recipe === "minimal-whitespace";
+      return <AbsoluteFill data-cover-recipe={recipe} style={{backgroundColor: style.background, color: style.foreground, fontFamily: visualStyle.bodyFont}}>
+        {layout.media.map((media, index) => <div key={media.asset_id} data-recipe-role={media.recipe_role} style={{...rectStyle(media.box), boxSizing: "border-box", padding: (ui || compare || evidence) ? 12 * scale : 0,
+          backgroundColor: (compare || ui) ? style.panel : "transparent",
+          border: evidence ? `${3 * scale}px solid ${style.primary}` : "none",
+          borderRadius: ui ? 18 * scale : 0,
+          boxShadow: collage ? `${8 * scale}px ${10 * scale}px 0 ${style.panel}` : "none"}}>
+          <Img src={staticFile(media.public_path)} style={{width: "100%", height: "100%", objectFit: "contain"}} />
+          {compare ? <div style={{position: "absolute", left: 0, bottom: "100%", fontSize: actual("media_label", 36 * scale), fontWeight: 750}}>{media.label}</div> : null}
+          {collage ? <span style={{position: "absolute", left: 0, top: 0, color: style.primary, background: style.background, fontSize: actual("tag", 34 * scale)}}>{String(index + 1).padStart(2, "0")}</span> : null}
+        </div>)}
+        <div style={{...rectStyle(layout.text_box), display: "flex", flexDirection: "column", justifyContent: "center", textAlign: layout.text_align}}>
+          {!minimal ? <div style={{color: style.primary, fontSize: actual("tag", 34 * scale), lineHeight: 1.15, marginBottom: 16 * scale}}>{compare ? cover.comparisonBasis : cover.tag}</div> : null}
+          <div style={{fontFamily: visualStyle.displayFont, fontSize: actual("overlay", overlayPreferred), fontWeight: 900, lineHeight: 1.08, overflowWrap: "anywhere", letterSpacing: "-0.025em"}}>{variant.overlayText}</div>
+        </div>
+        {evidence ? <div style={{position: "absolute", left: "12%", top: "89%", width: "76%", fontSize: actual("media_label", 32 * scale), color: style.primary}}>{cover.helperLabels[0]}</div> : null}
+        <div style={{position: "absolute", left: "7%", bottom: "2%", fontSize: actual("attribution", 22 * scale), color: style.muted}}>{cover.account}</div>
+      </AbsoluteFill>;
+    }
+    return <AbsoluteFill style={{backgroundColor: style.background, color: style.foreground, fontFamily: visualStyle.bodyFont, overflow: "hidden"}}>
+      <div style={{position: "absolute", width: 220 * scale, height: 220 * scale, right: -70 * scale, top: -80 * scale, borderRadius: "50%", backgroundColor: style.panel, border: `${2 * scale}px solid ${style.primary}`, opacity: 0.7}} />
+      {layout.media.map((media) => <div key={media.asset_id} style={{...rectStyle(media.box), backgroundColor: style.panel, overflow: "hidden", border: `${2 * scale}px solid ${style.primary}`}}>
+        <Img src={staticFile(media.public_path)} style={{width: "100%", height: "100%", objectFit: "contain"}} />
+        {media.label || media.amount ? <div style={{position: "absolute", left: 16 * scale, right: 16 * scale, bottom: 14 * scale, backgroundColor: "rgba(247,248,245,0.94)", borderLeft: `${6 * scale}px solid ${style.accent}`, padding: `${10 * scale}px ${14 * scale}px`, display: "flex", justifyContent: "space-between", gap: 12 * scale, fontSize: actual("media_label", 36 * scale), fontWeight: 760}}><span>{media.label}</span><strong>{media.amount}</strong></div> : null}
+      </div>)}
+      {cover.renderKind === "structure" || cover.graphicKind !== "none" ? <StructureGraphic kind={cover.graphicKind} labels={cover.helperLabels} box={graphicBox} visualStyle={style} scale={scale} typography={typography} /> : null}
+      <div style={{...rectStyle(layout.text_box), display: "flex", flexDirection: "column", justifyContent: "center", alignItems: layout.text_align === "center" ? "center" : layout.text_align === "right" ? "flex-end" : "flex-start", textAlign: layout.text_align, zIndex: 5}}>
+        <div style={{borderLeft: `${6 * scale}px solid ${style.accent}`, paddingLeft: 14 * scale, color: style.primary, fontSize: actual("tag", 34 * scale), fontWeight: 760, lineHeight: 1.1}}>{cover.tag}</div>
+        <div style={{marginTop: 22 * scale, fontFamily: visualStyle.displayFont, fontSize: actual("overlay", overlayPreferred), fontWeight: 900, lineHeight: 1.06, letterSpacing: "-0.035em", overflowWrap: "anywhere", textShadow: `0 ${2 * scale}px 0 ${style.background}`}}>{variant.overlayText}</div>
+      </div>
+      <div style={{position: "absolute", left: 0.05 * variant.width, bottom: 0.035 * variant.height, fontSize: actual("attribution", 22 * scale), fontWeight: 680, color: style.muted}}>{cover.account}</div>
+      {cover.renderKind === "illustration" ? <div style={{position: "absolute", right: 0.04 * variant.width, bottom: 0.035 * variant.height, fontSize: actual("ai_disclosure", 20 * scale), color: style.primary}}>AI示意图</div> : null}
+    </AbsoluteFill>;
   }
   const portrait = variant.height > variant.width;
   const titleSize = portrait ? 72 : 86;
@@ -2362,6 +2955,23 @@ import type {FC} from "react";
 import {Sequence, staticFile, useDelayRender} from "remotion";
 
 type Rect = {x: number; y: number; width: number; height: number};
+type SubtitleStyle = {
+  presetId: string;
+  fontId: string;
+  fontFamily: string;
+  fontWeight: number;
+  fontPublicPath: string;
+  fontSha256: string;
+  textColor: string;
+  backgroundColor: string;
+  outlineColor: string;
+  outlinePx: number;
+  shadowCss: string;
+  paddingY: number;
+  paddingX: number;
+  borderRadius: number;
+  fontPx: number;
+};
 
 export const Captions: FC<{
   source: string;
@@ -2371,23 +2981,57 @@ export const Captions: FC<{
   foreground: string;
   panel: string;
   fontFamily: string;
-}> = ({source, fps, frameHeight, region, foreground, panel, fontFamily}) => {
+  minimumFontSize: number;
+  subtitleStyle?: SubtitleStyle | null;
+}> = ({source, fps, frameHeight, region, foreground, panel, fontFamily, minimumFontSize, subtitleStyle}) => {
   const [captions, setCaptions] = useState<Caption[] | null>(null);
   const {delayRender, continueRender, cancelRender} = useDelayRender();
-  const [handle] = useState(() => delayRender("Loading reviewed SRT"));
+  const [handle] = useState(() => delayRender("Loading reviewed SRT and managed font"));
   const load = useCallback(async () => {
     try {
       const response = await fetch(staticFile(source));
       if (!response.ok) throw new Error(`Unable to load captions: ${response.status}`);
-      const parsed = parseSrt({input: await response.text()});
+      const srtText = await response.text();
+      if (subtitleStyle?.fontPublicPath) {
+        const resolvedFamily = subtitleStyle.fontFamily || fontFamily;
+        const face = new FontFace(
+          resolvedFamily,
+          `url(${staticFile(subtitleStyle.fontPublicPath)})`,
+          {weight: String(subtitleStyle.fontWeight || 700), style: "normal"}
+        );
+        await face.load();
+        document.fonts.add(face);
+        await document.fonts.ready;
+        console.log(
+          "[subtitle-font-loaded]",
+          JSON.stringify({
+            family: resolvedFamily,
+            weight: subtitleStyle.fontWeight,
+            status: face.status,
+            publicPath: subtitleStyle.fontPublicPath,
+            sha256: subtitleStyle.fontSha256,
+          })
+        );
+      }
+      const parsed = parseSrt({input: srtText});
       setCaptions(parsed.captions);
       continueRender(handle);
     } catch (error) {
       cancelRender(error instanceof Error ? error : new Error(String(error)));
     }
-  }, [cancelRender, continueRender, handle, source]);
+  }, [cancelRender, continueRender, fontFamily, handle, source, subtitleStyle]);
   useEffect(() => { void load(); }, [load]);
   if (!captions) return null;
+  const resolvedFamily = subtitleStyle?.fontFamily || fontFamily;
+  const resolvedWeight = subtitleStyle?.fontWeight ?? 700;
+  const textColor = subtitleStyle?.textColor ?? foreground;
+  const boxBg = subtitleStyle?.backgroundColor ?? panel;
+  const outlinePx = subtitleStyle?.outlinePx ?? 0;
+  const outlineColor = subtitleStyle?.outlineColor ?? "#243238";
+  const shadowCss = subtitleStyle?.shadowCss ?? "none";
+  const padY = subtitleStyle?.paddingY ?? 8;
+  const padX = subtitleStyle?.paddingX ?? 18;
+  const borderRadius = subtitleStyle?.borderRadius ?? 8;
   return (
     <>
       {captions.map((caption, index) => {
@@ -2395,33 +3039,53 @@ export const Captions: FC<{
         const duration = Math.max(1, Math.round(((caption.endMs - caption.startMs) / 1000) * fps));
         const regionFontSize = Math.floor(frameHeight * region.height * 0.32);
         const lengthPenalty = Math.max(0, caption.text.length - 22) * 0.45;
-        const fontSize = Math.max(24, Math.min(42, regionFontSize - lengthPenalty));
+        // The bound minimum is a floor, not a fixed size or an upper limit.
+        const baseFontSize = Math.max(minimumFontSize, regionFontSize - lengthPenalty);
+        const fontSize = subtitleStyle ? Math.max(baseFontSize, subtitleStyle.fontPx) : baseFontSize;
         return (
           <Sequence key={`${caption.startMs}-${index}`} from={from} durationInFrames={duration}>
             <div
               style={{
                 position: "absolute",
                 left: `${region.x * 100}%`,
-                top: `${region.y * 100}%`,
+                bottom: `${(1 - region.y - region.height) * 100}%`,
                 width: `${region.width * 100}%`,
-                height: `${region.height * 100}%`,
-                color: foreground,
-                backgroundColor: panel,
+                minHeight: `${region.height * 100}%`,
+                backgroundColor: "transparent",
                 boxSizing: "border-box",
                 display: "flex",
-                alignItems: "center",
+                alignItems: "flex-end",
                 justifyContent: "center",
-                fontFamily,
-                fontSize,
-                lineHeight: 1.35,
-                overflow: "hidden",
-                overflowWrap: "anywhere",
-                padding: "10px 16px",
-                textAlign: "center",
-                whiteSpace: "pre-wrap",
+                pointerEvents: "none",
               }}
             >
-              {caption.text}
+              <div
+                style={{
+                  display: "inline-block",
+                  maxWidth: "100%",
+                  color: textColor,
+                  backgroundColor: boxBg,
+                  borderRadius,
+                  boxSizing: "border-box",
+                  fontFamily: `"${resolvedFamily}", sans-serif`,
+                  fontWeight: resolvedWeight,
+                  fontSize,
+                  lineHeight: 1.32,
+                  overflowWrap: "anywhere",
+                  padding: `${padY}px ${padX}px`,
+                  textAlign: "center",
+                  whiteSpace: "pre-wrap",
+                  ...(outlinePx > 0
+                    ? {
+                        WebkitTextStroke: `${outlinePx * 2}px ${outlineColor}`,
+                        paintOrder: "stroke fill",
+                        textShadow: shadowCss,
+                      }
+                    : {}),
+                }}
+              >
+                {caption.text}
+              </div>
             </div>
           </Sequence>
         );

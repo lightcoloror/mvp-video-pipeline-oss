@@ -500,6 +500,11 @@ def render_delivery(
         "publish_authorized": False,
         "human_review_completed": False,
         "boundary_review_windows": plan.get("boundary_review_windows", []),
+        "post_cut_check": {
+            "required_before_fine_cut": True,
+            "status": "pending",
+            "command": "self_media_agent.py video-review post-cut --registration <rough-cut-registration.json> --candidate <candidate> --script <approved-script> --timeline <timeline-map> --identity <project-identity.json> --output-dir <new-directory> --serve --open",
+        },
         "audio_audition": "pending",
         "segment_leveling": plan.get("segment_leveling"),
         "rough_cut_audio_gate": "pending_measurement_of_this_render",
@@ -511,5 +516,8 @@ def render_delivery(
         "final_detector_findings": detection_findings(out / "decode.log"),
         "disk_preflight": disk,
     }
+    checks = _self_media_module("rough_cut_checks")
+    result["rough_cut_delivery"] = checks.register(candidate, mapping, out / "rough-cut-registration.json",
+                                                    render_receipt=out / "render-receipt.json")
     write(result, out / "delivery-result.json")
     return result

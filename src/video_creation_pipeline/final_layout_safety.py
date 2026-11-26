@@ -33,6 +33,23 @@ def _load_json(path: Path) -> dict[str, Any]:
     return read_json_object(path, "final layout artifact")
 
 
+def medical_disclosure_choice(decision: str, reason: str) -> dict[str, Any]:
+    """Use the single creator-policy text in the existing layout schema."""
+    schema = _load_json(SCHEMA_PATH)["properties"]["medical_disclosure"]
+    text = schema["allOf"][0]["then"]["properties"]["text"]["const"] if decision == "required" else ""
+    return validate_medical_disclosure(dict(decision=decision, reason=reason, text=text))
+
+
+def validate_medical_disclosure(value: Any) -> dict[str, Any]:
+    schema = _load_json(SCHEMA_PATH)["properties"]["medical_disclosure"]
+    errors = list(Draft202012Validator(schema).iter_errors(value))
+    if errors:
+        raise ContractError("medical disclosure decision/text required: " + errors[0].message)
+    if not value["reason"].strip():
+        raise ContractError("medical disclosure applicability reason must not be blank")
+    return dict(value)
+
+
 def _verify_artifact(workspace_root: Path, artifact: dict[str, Any]) -> None:
     root = workspace_root.resolve()
     target = (root / artifact["path"]).resolve()
@@ -146,9 +163,13 @@ def validate_final_layout(
     if not disclosure["reason"].strip():
         raise ContractError("AI disclosure reason must not be blank")
     ai_required = disclosure["mode"] != "no_ai"
+    medical = validate_medical_disclosure(document["medical_disclosure"])
+    medical_required = medical["decision"] == "required"
     required_roles = set(document["required_roles"])
     if ai_required:
         required_roles.add("ai_label")
+    if medical_required:
+        required_roles.add("disclaimer")
     missing_roles = required_roles - present_roles
     if missing_roles:
         raise ContractError(
@@ -169,6 +190,15 @@ def validate_final_layout(
             covered_until = max(covered_until, label["end_seconds"])
         if covered_until < duration - 1e-6:
             raise ContractError("AI label must cover the full video without gaps")
+    medical_labels = [e for e in elements if e["role"] == "disclaimer" and e.get("text") == medical["text"] and medical["text"]]
+    if medical_required:
+        covered_until = 0.0
+        for label in sorted(medical_labels, key=lambda e: e["start_seconds"]):
+            if label["start_seconds"] > covered_until + 1e-6:
+                raise ContractError("medical disclaimer must cover the full video without gaps")
+            covered_until = max(covered_until, label["end_seconds"])
+        if covered_until < duration - 1e-6:
+            raise ContractError("medical disclaimer text and full-duration coverage required")
     collisions: list[dict[str, str]] = []
     for index, left in enumerate(elements):
         for right in elements[index + 1 :]:
@@ -193,6 +223,12 @@ def validate_final_layout(
         "checked_elements": len(elements),
         "checked_reserved_regions": len(reserved),
         "required_roles": sorted(required_roles),
+        "medical_disclosure": {
+            **medical, "required": medical_required,
+            "policy_revision": "creator-medical-disclaimer-20261031",
+            "full_duration_covered": medical_required,
+            "verification_scope": "declared_layout_and_bound_evidence; not topic detection or OCR",
+        },
         "ai_disclosure": {
             **disclosure, "required": ai_required,
             "policy_revision": "creator-ai-disclosure-default-20261029",

@@ -3,9 +3,13 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import wave
+from pathlib import Path
 
-from .contract_io import read_json_object
+from .contract_io import atomic_write_json, file_sha256, payload_sha256, read_json_object
 from .errors import ContractError
+from .execution_receipts import probe_media_metadata
+from .music_diversity import MUSIC_ARRANGEMENT_REPORT_SCHEMA, build_music_arrangement_report
 from .music_benchmark import (
     MUSIC_RETRIEVAL_BENCHMARK_SCHEMA,
     build_music_retrieval_benchmark,
@@ -70,6 +74,9 @@ def build_parser() -> argparse.ArgumentParser:
     plan.add_argument("--subtitles")
     plan.add_argument("--contract-version", choices=("v1", "v2"), default="v2")
     plan.add_argument("--output", required=True)
+    audit = commands.add_parser("audit-arrangement")
+    audit.add_argument("--spec", required=True, help="Full BGM layers and hash-bound local asset_sources")
+    audit.add_argument("--output", required=True)
     return parser
 
 
@@ -77,7 +84,9 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
         payload, hash_field = _execute(args)
-        if payload.get("schema") == MUSIC_RETRIEVAL_BENCHMARK_SCHEMA:
+        if payload.get("schema") == MUSIC_ARRANGEMENT_REPORT_SCHEMA:
+            output = atomic_write_json(payload, args.output)
+        elif payload.get("schema") == MUSIC_RETRIEVAL_BENCHMARK_SCHEMA:
             output = write_music_retrieval_benchmark(payload, args.output)
         else:
             output = write_music_contract(payload, args.output)
@@ -94,10 +103,46 @@ def main(argv: list[str] | None = None) -> int:
             ensure_ascii=False,
         )
     )
+    if payload.get("schema") == MUSIC_ARRANGEMENT_REPORT_SCHEMA:
+        return 0 if payload["readiness"]["candidate_render_allowed"] else 3
     return 0
 
 
 def _execute(args: argparse.Namespace) -> tuple[dict[str, object], str]:
+    if args.command == "audit-arrangement":
+        spec = read_json_object(args.spec, "music arrangement specification")
+        assets = spec.get("asset_sources")
+        if not isinstance(assets, dict):
+            raise ContractError("music arrangement requires asset_sources")
+        verified = {}
+        for key, raw in assets.items():
+            if not isinstance(raw, dict):
+                raise ContractError("music arrangement asset must be an object")
+            path = Path(str(raw.get("path") or "")).expanduser().resolve()
+            if not path.is_file() or file_sha256(path) != raw.get("sha256"):
+                raise ContractError(f"music source missing or SHA changed: {key}")
+            value = dict(raw, path=str(path))
+            try:
+                if path.suffix.lower() == ".wav":
+                    try:
+                        with wave.open(str(path), "rb") as audio:
+                            duration = audio.getnframes() / audio.getframerate()
+                    except wave.Error:
+                        # Python wave does not accept the library's FLOAT WAVs.
+                        # Reuse the existing read-only FFprobe boundary.
+                        duration = float(probe_media_metadata(path)["format"]["duration"])
+                else:
+                    duration = float(probe_media_metadata(path)["format"]["duration"])
+                if "duration_s" in raw and abs(float(raw["duration_s"]) - duration) > 0.001:
+                    raise ContractError(f"music source duration changed: {key}")
+                value["duration_s"] = duration
+            except (wave.Error, EOFError, OSError, ValueError, TypeError, KeyError) as exc:
+                raise ContractError(f"unreadable audio duration: {key}") from exc
+            verified[key] = value
+        report = build_music_arrangement_report(spec.get("layers"), verified)
+        report["verified_asset_sources"] = verified
+        report["report_sha256"] = payload_sha256(report, "report_sha256")
+        return report, "report_sha256"
     if args.command == "build-intent":
         spec = read_json_object(args.spec, "music intent specification")
         return (

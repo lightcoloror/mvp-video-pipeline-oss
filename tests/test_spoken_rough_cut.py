@@ -212,7 +212,7 @@ class SpokenRoughCutTests(unittest.TestCase):
         decisions['rough_audio_review']=dict(levels_checked=True,clipping_checked=True,evidence='synthetic level and clipping review fixture')
         from segment_level_fixture import make_review
         levels = make_review(self.root/'audio-levels', self.video,
-            [dict(start=0,end=1),dict(start=2,end=6)], json.loads(self.tokens.read_text(encoding='utf-8')))
+            [dict(start=0,end=1),dict(start=2,end=6)], json.loads(self.tokens.read_text()))
         decisions['rough_audio_review']['segment_leveling'] = levels
         decisions['clip_gains'] = levels['clip_gains']
         decisions["decisions"][-1]["take_review"] = dict(complete_checked=True,meaning_checked=True,natural_delivery_checked=True,quality_checked=True,unique_information_accounted=True,evidence="synthetic comparison",retained_interval={"start":2.0,"end":2.8},compared_intervals=[{"start":1.0,"end":2.0},{"start":2.0,"end":2.8}])
@@ -291,9 +291,9 @@ class SpokenRoughCutTests(unittest.TestCase):
 
     def test_compile_cannot_skip_segment_audio_but_preserves_cut_recipe(self):
         self.test_completed_context_review_compiles_auditable_nle_segments()
-        plan=json.loads((self.root/'plan/spoken-edit-plan.json').read_text(encoding='utf-8'))
+        plan=json.loads((self.root/'plan/spoken-edit-plan.json').read_text())
         packet_path=Path(plan['source_packet']['path'])
-        decisions=json.loads((self.root/'agent-decisions.json').read_text(encoding='utf-8'))
+        decisions=json.loads((self.root/'agent-decisions.json').read_text())
         decisions['rough_audio_review'].pop('segment_leveling')
         decisions['clip_gains']=[]
         decisions['decisions_sha256']=payload_sha256(decisions,'decisions_sha256')
@@ -359,7 +359,7 @@ class SpokenRoughCutTests(unittest.TestCase):
         self.assertEqual(restored['decisions'][0],before['decisions'][0])
         self.assertEqual(restored['decisions'][1],current['decisions'][1])
         self.assertEqual(restored['authority_boundary'],current['authority_boundary'])
-        self.assertEqual(json.loads((self.root/'current.json').read_text(encoding='utf-8')),current)
+        self.assertEqual(json.loads((self.root/'current.json').read_text()),current)
 
     def test_restore_rejects_missing_id_and_tampered_version(self):
         packet,before,current = self._restore_versions()
@@ -377,7 +377,7 @@ class SpokenRoughCutTests(unittest.TestCase):
         packet,before,current = self._restore_versions()
         result = main(['restore-decision','--packet',str(packet),'--decisions',str(self.root/'current.json'),'--restore-from',str(self.root/'before.json'),'--decision-id','candidate-c0','--output',str(self.root/'current.json')])
         self.assertEqual(result,2)
-        self.assertEqual(json.loads((self.root/'current.json').read_text(encoding='utf-8')),current)
+        self.assertEqual(json.loads((self.root/'current.json').read_text()),current)
 
     def _packet(self) -> Path:
         candidates = self.root / "judge.candidates.json"

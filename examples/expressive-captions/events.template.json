@@ -1,0 +1,11 @@
+{
+  "schema": "video_creation_pipeline.expressive_captions.v1.events",
+  "program": {"path":"REPLACE_WITH_CURRENT_PROGRAM", "sha256":"REPLACE_WITH_ARTIFACT_REFERENCE"},
+  "packaging": {"path":"REPLACE_WITH_LOCKED_PACKAGING", "sha256":"REPLACE_WITH_ARTIFACT_REFERENCE"},
+  "evidence": {"path":"REPLACE_WITH_AUDIO_REVIEW_EVIDENCE", "sha256":"REPLACE_WITH_ARTIFACT_REFERENCE"},
+  "review_status": "REPLACE_AFTER_AUDIO_REVIEW",
+  "events": [
+    {"event_id":"father-laugh", "scene_id":"REPLACE_SCENE", "kind":"laughter", "speaker_id":"father",
+     "start_frame":48, "end_frame":84, "text":"哈哈哈", "fallback_text":"父亲笑"}
+  ]
+}

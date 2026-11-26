@@ -4,6 +4,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from .case_cover_visual_plan import (
+    validate_case_cover_visual_plan,
+    validate_case_cover_visual_plan_collection,
+)
 from .contract_io import (
     artifact_reference,
     atomic_write_json,
@@ -12,6 +16,7 @@ from .contract_io import (
     validate_artifact_reference,
 )
 from .errors import ContractError
+from .external_motion_assets import validate_external_motion_selection_plan
 from .photo_layout import validate_safe_media_layout_plan
 from .safe_media_scene_plan import validate_safe_media_scene_plan
 from .semantic_motion import validate_semantic_motion_plan
@@ -61,12 +66,19 @@ def build_remotion_skill_handoff(
     safe_media_layout_path: str | Path | None = None,
     safe_media_scene_plan_path: str | Path | None = None,
     semantic_motion_path: str | Path | None = None,
+    external_motion_selection_plan_path: str | Path | None = None,
+    object_scene_plan_path: str | Path | None = None,
     subtitle_path: str | Path | None = None,
     video_shotcraft_root: str | Path | None = None,
     video_shotcraft_recipes: list[dict[str, str]] | None = None,
     content_visual_routing_plan_path: str | Path | None = None,
     visual_style_profile_path: str | Path | None = None,
     title_cover_plan_path: str | Path | None = None,
+    case_cover_visual_plan_path: str | Path | None = None,
+    case_cover_visual_plan_collection_path: str | Path | None = None,
+    subtitle_style_preset: str | None = None,
+    subtitle_font_id: str | None = None,
+    subtitle_background_opacity: float | None = None,
 ) -> dict[str, Any]:
     if not composition_id.strip():
         raise ContractError("Remotion composition_id is required")
@@ -111,6 +123,32 @@ def build_remotion_skill_handoff(
         inputs["semantic_motion_plan"] = artifact_reference(
             semantic_motion_path, "semantic motion plan"
         )
+    if external_motion_selection_plan_path is not None:
+        if semantic_motion_path is None:
+            raise ContractError(
+                "external motion selection requires a semantic motion plan"
+            )
+        selection_path = (
+            Path(external_motion_selection_plan_path).expanduser().resolve()
+        )
+        selection = read_json_object(selection_path, "external motion selection plan")
+        validate_external_motion_selection_plan(selection)
+        if _object(selection.get("source_semantic_motion_plan")) != _object(
+            inputs.get("semantic_motion_plan")
+        ):
+            raise ContractError(
+                "external motion selection must bind the handoff semantic motion plan"
+            )
+        inputs["external_motion_selection_plan"] = artifact_reference(
+            selection_path, "external motion selection plan"
+        )
+    if object_scene_plan_path is not None:
+        from .object_scenes import validate_object_scene_plan
+        scene_plan = read_json_object(object_scene_plan_path, "object scene plan")
+        validate_object_scene_plan(scene_plan)
+        if scene_plan["source_packaging_plan"] != inputs["packaging_plan"]:
+            raise ContractError("object scene plan must bind the handoff packaging plan")
+        inputs["object_scene_plan"] = artifact_reference(object_scene_plan_path, "object scene plan")
     if subtitle_path is not None:
         inputs["subtitle_artifact"] = artifact_reference(
             subtitle_path, "subtitle artifact"
@@ -128,6 +166,34 @@ def build_remotion_skill_handoff(
         validate_title_cover_candidate_plan(title_cover)
         inputs["title_cover_candidate_plan"] = artifact_reference(
             title_cover_plan_path, "title cover candidate plan"
+        )
+    if case_cover_visual_plan_path is not None:
+        case_cover = read_json_object(
+            case_cover_visual_plan_path, "Lucas case cover visual plan"
+        )
+        validate_case_cover_visual_plan(
+            case_cover,
+            safe_media_layout_path=safe_media_layout_path,
+        )
+        inputs["case_cover_visual_plan"] = artifact_reference(
+            case_cover_visual_plan_path, "Lucas case cover visual plan"
+        )
+    if case_cover_visual_plan_collection_path is not None:
+        if case_cover_visual_plan_path is not None:
+            raise ContractError(
+                "use either one Lucas case cover plan or one collection"
+            )
+        collection = read_json_object(
+            case_cover_visual_plan_collection_path,
+            "Lucas case cover visual plan collection",
+        )
+        validate_case_cover_visual_plan_collection(
+            collection,
+            safe_media_layout_path=safe_media_layout_path,
+        )
+        inputs["case_cover_visual_plan_collection"] = artifact_reference(
+            case_cover_visual_plan_collection_path,
+            "Lucas case cover visual plan collection",
         )
     shot_recipe_selection = _optional_video_shotcraft_selection(
         video_shotcraft_root,
@@ -149,6 +215,7 @@ def build_remotion_skill_handoff(
             "technical_qa_required_after_render": True,
             "preserve_visual_route_and_style_bindings": True,
             "preserve_title_cover_candidate_bindings": True,
+            "preserve_case_cover_visual_bindings": True,
         },
         "authority_boundary": {
             "skill_execution_performed": False,
@@ -160,6 +227,18 @@ def build_remotion_skill_handoff(
     }
     if shot_recipe_selection is not None:
         payload["shot_recipe_selection"] = shot_recipe_selection
+    if any(
+        value is not None
+        for value in (subtitle_style_preset, subtitle_font_id, subtitle_background_opacity)
+    ):
+        subtitle_style_cfg: dict[str, Any] = {}
+        if subtitle_style_preset is not None:
+            subtitle_style_cfg["preset_id"] = str(subtitle_style_preset)
+        if subtitle_font_id is not None:
+            subtitle_style_cfg["font_id"] = str(subtitle_font_id)
+        if subtitle_background_opacity is not None:
+            subtitle_style_cfg["background_opacity"] = float(subtitle_background_opacity)
+        payload["subtitle_style"] = subtitle_style_cfg
     payload["handoff_sha256"] = payload_sha256(payload, "handoff_sha256")
     validate_remotion_skill_handoff(payload)
     return payload
@@ -208,6 +287,28 @@ def validate_remotion_skill_handoff(payload: dict[str, Any]) -> None:
         validate_semantic_motion_plan(
             read_json_object(motion_path, "semantic motion plan")
         )
+    if "external_motion_selection_plan" in inputs:
+        if "semantic_motion_plan" not in inputs:
+            raise ContractError(
+                "external motion selection requires a semantic motion plan"
+            )
+        selection_path = validate_artifact_reference(
+            _object(inputs["external_motion_selection_plan"]),
+            "external motion selection plan",
+        )
+        selection = read_json_object(selection_path, "external motion selection plan")
+        validate_external_motion_selection_plan(selection)
+        if _object(selection.get("source_semantic_motion_plan")) != _object(
+            inputs["semantic_motion_plan"]
+        ):
+            raise ContractError("external motion selection semantic binding drifted")
+    if "object_scene_plan" in inputs:
+        from .object_scenes import validate_object_scene_plan
+        object_path = validate_artifact_reference(_object(inputs["object_scene_plan"]), "object scene plan")
+        object_plan = read_json_object(object_path, "object scene plan")
+        validate_object_scene_plan(object_plan)
+        if object_plan["source_packaging_plan"] != packaging_reference:
+            raise ContractError("object scene plan packaging drifted")
     if "subtitle_artifact" in inputs:
         validate_artifact_reference(
             _object(inputs["subtitle_artifact"]), "subtitle artifact"
@@ -220,9 +321,56 @@ def validate_remotion_skill_handoff(payload: dict[str, Any]) -> None:
         validate_title_cover_candidate_plan(
             read_json_object(title_cover_path, "title cover candidate plan")
         )
+    if "case_cover_visual_plan" in inputs:
+        case_cover_path = validate_artifact_reference(
+            _object(inputs["case_cover_visual_plan"]),
+            "Lucas case cover visual plan",
+        )
+        safe_layout_path = None
+        if "safe_media_layout_plan" in inputs:
+            safe_layout_path = validate_artifact_reference(
+                _object(inputs["safe_media_layout_plan"]),
+                "safe media layout plan",
+            )
+        validate_case_cover_visual_plan(
+            read_json_object(case_cover_path, "Lucas case cover visual plan"),
+            safe_media_layout_path=safe_layout_path,
+        )
+    if "case_cover_visual_plan_collection" in inputs:
+        collection_path = validate_artifact_reference(
+            _object(inputs["case_cover_visual_plan_collection"]),
+            "Lucas case cover visual plan collection",
+        )
+        safe_layout_path = None
+        if "safe_media_layout_plan" in inputs:
+            safe_layout_path = validate_artifact_reference(
+                _object(inputs["safe_media_layout_plan"]),
+                "safe media layout plan",
+            )
+        validate_case_cover_visual_plan_collection(
+            read_json_object(
+                collection_path, "Lucas case cover visual plan collection"
+            ),
+            safe_media_layout_path=safe_layout_path,
+        )
     _validate_visual_routing_inputs(inputs, packaging_reference)
     if "shot_recipe_selection" in payload:
         _validate_video_shotcraft_selection(_object(payload["shot_recipe_selection"]))
+    if "subtitle_style" in payload:
+        from .subtitle_styles import load_subtitle_style_policy
+
+        cfg = _object(payload["subtitle_style"])
+        if set(cfg) - {"preset_id", "font_id", "background_opacity"}:
+            raise ContractError("Remotion subtitle_style has unsupported fields")
+        policy, _ = load_subtitle_style_policy()
+        if "preset_id" in cfg and cfg["preset_id"] not in (policy.get("presets") or {}):
+            raise ContractError(f"unknown subtitle preset: {cfg['preset_id']}")
+        if "font_id" in cfg and cfg["font_id"] not in (policy.get("fonts") or {}):
+            raise ContractError(f"unknown managed subtitle font_id: {cfg['font_id']}")
+        if "background_opacity" in cfg:
+            op = cfg["background_opacity"]
+            if isinstance(op, bool) or not isinstance(op, (int, float)) or not 0.0 <= float(op) <= 1.0:
+                raise ContractError("subtitle background_opacity must be in [0, 1]")
     route = payload.get("skill_route")
     required = {
         "remotion-best-practices",

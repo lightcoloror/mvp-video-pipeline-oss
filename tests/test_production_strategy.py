@@ -102,6 +102,17 @@ class ProductionStrategyTests(unittest.TestCase):
             strategy["vertical_layout_contract"]["zones"]["subtitle"]["y"],
             0.6458,
         )
+        corner_gate = strategy["vertical_layout_contract"][
+            "rounded_screen_corner_protection"
+        ]
+        self.assertEqual(corner_gate["status"], "hard_gate")
+        self.assertEqual(
+            corner_gate["pixel_reference"], {"horizontal": 108, "vertical": 144}
+        )
+        self.assertEqual(
+            set(corner_gate["regions"]),
+            {"top_left", "top_right", "bottom_left", "bottom_right"},
+        )
         self.assertEqual(
             strategy["composition_layout_policy"]["required_peer_layout_candidates"],
             ["vertical_list", "horizontal_row", "grid"],
@@ -176,6 +187,14 @@ class ProductionStrategyTests(unittest.TestCase):
 
         strategy = build_visual_production_plan(self.unit_path)
         strategy["vertical_layout_contract"]["zones"]["subtitle"]["y"] = 0.6
+        strategy["plan_sha256"] = payload_sha256(strategy, "plan_sha256")
+        with self.assertRaisesRegex(ContractError, "vertical layout contract"):
+            validate_visual_production_plan(strategy)
+
+        strategy = build_visual_production_plan(self.unit_path)
+        strategy["vertical_layout_contract"]["rounded_screen_corner_protection"][
+            "horizontal_inset_ratio"
+        ] = 0.02
         strategy["plan_sha256"] = payload_sha256(strategy, "plan_sha256")
         with self.assertRaisesRegex(ContractError, "vertical layout contract"):
             validate_visual_production_plan(strategy)

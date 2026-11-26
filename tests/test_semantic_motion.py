@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+# ruff: noqa: E402
+
 import copy
 import json
+import re
 import shutil
 import sys
 import unittest
@@ -98,6 +101,29 @@ class SemanticMotionTests(unittest.TestCase):
         self.assertTrue(first["authority_boundary"]["candidate_only"])
         self.assertFalse(first["authority_boundary"]["publish_performed"])
         self.assertEqual(first["cues"][0]["script_anchor"]["status"], "confirmed")
+        self.assertEqual(
+            "render_motion_segment_then_concat_master",
+            first["assembly_contract"]["assembly_order"],
+        )
+        self.assertFalse(first["assembly_contract"]["final_master_overlay_allowed"])
+        self.assertEqual(
+            "semantic_motion_1080x1920", first["typography_gate"]["profile_id"]
+        )
+        self.assertEqual(36, first["typography_gate"]["roles"]["motion_label"])
+
+    def test_customer_interview_segment_rejects_semantic_motion_overlay(self) -> None:
+        anchors = json.loads(self.script.read_text(encoding="utf-8"))
+        anchors["anchors"][0]["source_media_role"] = "customer_interview"
+        self.script.write_text(json.dumps(anchors), encoding="utf-8")
+        with self.assertRaisesRegex(ContractError, "cannot cover customer interview"):
+            self._build()
+
+    def test_assembly_order_cannot_be_changed_to_final_master_overlay(self) -> None:
+        plan = self._build()
+        plan["assembly_contract"]["assembly_order"] = "overlay_after_master_concat"
+        plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
+        with self.assertRaisesRegex(ContractError, "schema validation failed"):
+            validate_semantic_motion_plan(plan)
 
     def test_materialized_project_uses_native_waapi_without_remote_runtime(
         self,
@@ -108,10 +134,28 @@ class SemanticMotionTests(unittest.TestCase):
         source = paths["html"].read_text(encoding="utf-8")
 
         self.assertIn(".animate(", source)
+        self.assertIn('@font-face { font-family:"Microsoft YaHei";', source)
         self.assertNotIn("gsap", source.lower())
         self.assertNotIn("https://", source)
         self.assertIn('data-composition-id="main"', source)
+        label_sizes = [int(value) for value in re.findall(r'class="label"[^>]*font-size:(\d+)px', source)]
+        self.assertTrue(label_sizes)
+        self.assertTrue(all(value > 36 for value in label_sizes))
+        self.assertIn("font-size:22px", source)
         self.assertEqual(paths["asset"].read_bytes(), self.asset.read_bytes())
+
+    def test_missing_or_lower_typography_gate_fails_closed(self) -> None:
+        plan = self._build()
+        del plan["typography_gate"]
+        plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
+        with self.assertRaisesRegex(ContractError, "schema validation failed"):
+            validate_semantic_motion_plan(plan)
+
+        plan = self._build()
+        plan["typography_gate"]["roles"]["motion_label"] = 16
+        plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
+        with self.assertRaisesRegex(ContractError, "drifted"):
+            validate_semantic_motion_plan(plan)
 
     def test_static_fallback_is_explicit_and_deterministic(self) -> None:
         plan = self._build()
@@ -158,6 +202,18 @@ class SemanticMotionTests(unittest.TestCase):
         self.assertIn('stroke="#23777d"', source)
         self.assertIn("source_content_visual_routing_plan", plan)
         self.assertIn("source_visual_style_profile", plan)
+
+    def test_missing_style_uses_neutral_frame_and_preserves_source_pixels(self) -> None:
+        plan = self._build()
+        self.assertNotIn("source_visual_style_profile", plan)
+        source = build_hyperframes_html(plan, "assets/source.svg")
+        self.assertIn("background:#F5F6F8", source)
+        self.assertIn("border:2px solid #425466", source)
+        self.assertIn('stroke="#425466"', source)
+        original = self.asset.read_bytes()
+        plan_path = write_semantic_motion_plan(plan, self.root / "neutral-plan.json")
+        result = materialize_hyperframes_project(plan_path, self.root / "neutral-project")
+        self.assertEqual(result["asset"].read_bytes(), original)
 
     def test_source_hash_drift_fails_closed(self) -> None:
         plan = self._build()
@@ -289,12 +345,25 @@ class SemanticMotionTests(unittest.TestCase):
         cue["protected_regions"].append(
             {
                 "id": "person",
-                "rect": {"x": 0.05, "y": 0.05, "width": 0.2, "height": 0.12},
+                "rect": {"x": 0.12, "y": 0.08, "width": 0.2, "height": 0.12},
             }
         )
         plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
 
         validate_semantic_motion_plan(plan)
+
+    def test_critical_text_cannot_enter_rounded_screen_corner(self) -> None:
+        plan = self._build()
+        plan["cues"][0]["label"]["rect"] = {
+            "x": 0.01,
+            "y": 0.01,
+            "width": 0.08,
+            "height": 0.05,
+        }
+        plan["plan_sha256"] = payload_sha256(plan, "plan_sha256")
+
+        with self.assertRaisesRegex(ContractError, "rounded-screen corner protection"):
+            validate_semantic_motion_plan(plan)
 
     def test_person_window_requires_both_top_corner_candidates(self) -> None:
         plan = self._build()

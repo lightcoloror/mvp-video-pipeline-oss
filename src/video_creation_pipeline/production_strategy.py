@@ -20,6 +20,7 @@ from .generation_contracts import (
 )
 
 VISUAL_PRODUCTION_PLAN_SCHEMA = "video_creation_pipeline.visual_production_plan.v1"
+CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA = "video_creation_pipeline.visual_production_plan.v2"
 AUDIO_MASTERING_PLAN_SCHEMA = "video_creation_pipeline.audio_mastering_plan.v1"
 
 FULL_VIDEO_PRODUCTION_REPO = "waker240/FullVideoProductionSkill"
@@ -62,12 +63,86 @@ def build_visual_production_plan(
     if unit.get("schema") != SHOT_GENERATION_UNIT_SCHEMA:
         raise ContractError("visual production plan requires a current shot unit")
 
+    return _build_visual_strategy(
+        unit,
+        {"schema": VISUAL_PRODUCTION_PLAN_SCHEMA,
+         "source_unit": artifact_reference(source_path, "shot generation unit")},
+        argument_role=argument_role, effort_mode=effort_mode,
+        artifact_layer=artifact_layer, cinema_layer=cinema_layer,
+        emphasis_phrases=emphasis_phrases,
+        decomposition_adoption_path=decomposition_adoption_path,
+    )
+
+
+def content_visual_source(plan_path: str | Path, scene_id: str) -> tuple[dict, dict]:
+    """Validate provenance and reproduce the canonical planning projection.
+
+    A recomputed digest on an edited scene is not evidence that it came from
+    the brief. Reuse input validation, including the original freshness policy.
+    """
+    from .content_video_pipeline import (
+        build_content_video_project_plan, validate_content_video_inputs,
+        validate_content_video_project_plan,
+    )
+    content = read_json_object(plan_path, "content project plan")
+    validate_content_video_project_plan(content)
+    inputs = content["inputs"]
+    policy = inputs["freshness_policy"]
+    case = inputs.get("case_handoff_manifest") or {}
+    verified = validate_content_video_inputs(
+        inputs["content_video_brief"]["path"],
+        inputs["content_video_brief_schema"]["path"],
+        inputs["research_output"]["path"],
+        inputs["research_output_schema"]["path"],
+        max_age_hours=policy.get("max_age_hours") or 168.0,
+        time_sensitivity=policy["time_sensitivity"],
+        case_handoff_manifest_path=case.get("path"),
+        case_handoff_manifest_sha256=case.get("canonical_sha256"),
+    )
+    dimensions = content["shot_units"][0]["output"]
+    expected = build_content_video_project_plan(verified, **dimensions)
+    if content != expected:
+        raise ContractError("content plan is not the canonical brief projection")
+    units = [row for row in content["shot_units"] if row["scene_id"] == scene_id]
+    if len(units) != 1:
+        raise ContractError("content visual source requires one exact scene identity")
+    return content, units[0]
+
+
+def build_content_visual_production_plan(
+    content_plan_path: str | Path, scene_id: str, *,
+    argument_role: str = "neutral", effort_mode: str = "efficient",
+    artifact_layer: bool = False, cinema_layer: bool = True,
+    emphasis_phrases: list[str] | None = None,
+    decomposition_adoption_path: str | Path | None = None,
+) -> dict[str, Any]:
+    source_path = Path(content_plan_path).expanduser().resolve()
+    content, unit = content_visual_source(source_path, scene_id)
+    return _build_visual_strategy(
+        unit,
+        {"schema": CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA,
+         "source_kind": "content_project_plan",
+         "source_content_plan": artifact_reference(source_path, "content project plan"),
+         "source_content_plan_sha256": content["plan_sha256"],
+         "source_material_status": unit["material"]["status"]},
+        argument_role=argument_role, effort_mode=effort_mode,
+        artifact_layer=artifact_layer, cinema_layer=cinema_layer,
+        emphasis_phrases=emphasis_phrases,
+        decomposition_adoption_path=decomposition_adoption_path,
+    )
+
+
+def _build_visual_strategy(
+    unit: dict, source_fields: dict, *, argument_role: str, effort_mode: str,
+    artifact_layer: bool, cinema_layer: bool,
+    emphasis_phrases: list[str] | None,
+    decomposition_adoption_path: str | Path | None,
+) -> dict[str, Any]:
     role = _choice(argument_role, ARGUMENT_ROLES, "argument role")
     mode = _choice(effort_mode, EFFORT_MODES, "effort mode")
     phrases = _phrases(emphasis_phrases or [])
     plan: dict[str, Any] = {
-        "schema": VISUAL_PRODUCTION_PLAN_SCHEMA,
-        "source_unit": artifact_reference(source_path, "shot generation unit"),
+        **source_fields,
         "source_unit_sha256": unit["unit_sha256"],
         "scene_id": unit["scene_id"],
         "decomposition_adoption": _decomposition_adoption_reference(
@@ -127,7 +202,7 @@ def build_visual_production_plan(
             "highlight_ratio_max": 0.15,
         },
         "vertical_layout_contract": {
-            "profile": "vertical_social_1080x1920_v1",
+            "profile": "vertical_social_1080x1920_v2",
             "canvas": {"width": 1080, "height": 1920},
             "zones": {
                 "main_information": {
@@ -153,6 +228,39 @@ def build_visual_production_plan(
                     "y": 0.0,
                     "width": 0.2222,
                     "height": 1.0,
+                },
+            },
+            "rounded_screen_corner_protection": {
+                "status": "hard_gate",
+                "shape_model": "conservative_corner_rectangles",
+                "horizontal_inset_ratio": 0.10,
+                "vertical_inset_ratio": 0.075,
+                "pixel_reference": {"horizontal": 108, "vertical": 144},
+                "critical_content_forbidden": True,
+                "decorative_bleed_allowed": True,
+                "applies_to_roles": [
+                    "motion_label",
+                    "watermark",
+                    "attribution",
+                    "disclaimer",
+                    "evidence_focus",
+                    "presenter_window",
+                ],
+                "regions": {
+                    "top_left": {"x": 0.0, "y": 0.0, "width": 0.10, "height": 0.075},
+                    "top_right": {"x": 0.90, "y": 0.0, "width": 0.10, "height": 0.075},
+                    "bottom_left": {
+                        "x": 0.0,
+                        "y": 0.925,
+                        "width": 0.10,
+                        "height": 0.075,
+                    },
+                    "bottom_right": {
+                        "x": 0.90,
+                        "y": 0.925,
+                        "width": 0.10,
+                        "height": 0.075,
+                    },
                 },
             },
             "person_region_required_when_visible": True,
@@ -193,16 +301,27 @@ def build_visual_production_plan(
 
 
 def validate_visual_production_plan(plan: dict[str, Any]) -> None:
-    if plan.get("schema") != VISUAL_PRODUCTION_PLAN_SCHEMA:
+    if plan.get("schema") not in {VISUAL_PRODUCTION_PLAN_SCHEMA, CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA}:
         raise ContractError("unsupported visual production plan schema")
     if plan.get("plan_sha256") != payload_sha256(plan, "plan_sha256"):
         raise ContractError("visual production plan integrity check failed")
 
-    unit_path = validate_artifact_reference(
-        _object(plan.get("source_unit")), "shot generation unit"
-    )
-    unit = read_json_object(unit_path, "shot generation unit")
-    validate_shot_generation_unit(unit)
+    if plan["schema"] == CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA:
+        if plan.get("source_kind") != "content_project_plan" or "source_unit" in plan:
+            raise ContractError("content visual plan source kind is invalid")
+        path = validate_artifact_reference(_object(plan.get("source_content_plan")), "content project plan")
+        content, unit = content_visual_source(path, str(plan.get("scene_id") or ""))
+        if (plan.get("source_content_plan_sha256") != content["plan_sha256"]
+                or plan.get("source_material_status") != unit["material"]["status"]):
+            raise ContractError("content visual plan provenance or material status drifted")
+    else:
+        if any(key in plan for key in ("source_kind", "source_content_plan", "source_content_plan_sha256", "source_material_status")):
+            raise ContractError("legacy visual plan cannot carry content source fields")
+        unit_path = validate_artifact_reference(
+            _object(plan.get("source_unit")), "shot generation unit"
+        )
+        unit = read_json_object(unit_path, "shot generation unit")
+        validate_shot_generation_unit(unit)
     if plan.get("source_unit_sha256") != unit.get("unit_sha256") or plan.get(
         "scene_id"
     ) != unit.get("scene_id"):
@@ -274,7 +393,7 @@ def validate_visual_production_plan(plan: dict[str, Any]) -> None:
         raise ContractError("visual production reading priority contract is invalid")
     layout = _object(plan.get("vertical_layout_contract"))
     expected_layout = {
-        "profile": "vertical_social_1080x1920_v1",
+        "profile": "vertical_social_1080x1920_v2",
         "canvas": {"width": 1080, "height": 1920},
         "zones": {
             "main_information": {
@@ -300,6 +419,29 @@ def validate_visual_production_plan(plan: dict[str, Any]) -> None:
                 "y": 0.0,
                 "width": 0.2222,
                 "height": 1.0,
+            },
+        },
+        "rounded_screen_corner_protection": {
+            "status": "hard_gate",
+            "shape_model": "conservative_corner_rectangles",
+            "horizontal_inset_ratio": 0.10,
+            "vertical_inset_ratio": 0.075,
+            "pixel_reference": {"horizontal": 108, "vertical": 144},
+            "critical_content_forbidden": True,
+            "decorative_bleed_allowed": True,
+            "applies_to_roles": [
+                "motion_label",
+                "watermark",
+                "attribution",
+                "disclaimer",
+                "evidence_focus",
+                "presenter_window",
+            ],
+            "regions": {
+                "top_left": {"x": 0.0, "y": 0.0, "width": 0.10, "height": 0.075},
+                "top_right": {"x": 0.90, "y": 0.0, "width": 0.10, "height": 0.075},
+                "bottom_left": {"x": 0.0, "y": 0.925, "width": 0.10, "height": 0.075},
+                "bottom_right": {"x": 0.90, "y": 0.925, "width": 0.10, "height": 0.075},
             },
         },
         "person_region_required_when_visible": True,
@@ -505,7 +647,7 @@ def write_production_strategy_contract(
     payload: dict[str, Any], output_path: str | Path
 ) -> Path:
     schema = payload.get("schema")
-    if schema == VISUAL_PRODUCTION_PLAN_SCHEMA:
+    if schema in {VISUAL_PRODUCTION_PLAN_SCHEMA, CONTENT_VISUAL_PRODUCTION_PLAN_SCHEMA}:
         validate_visual_production_plan(payload)
     elif schema == AUDIO_MASTERING_PLAN_SCHEMA:
         validate_audio_mastering_plan(payload)

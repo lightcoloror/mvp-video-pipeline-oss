@@ -81,7 +81,7 @@ class MaterialCliTests(unittest.TestCase):
                 {
                     "script_segment_id": "shot-001",
                     "candidate_ids": ["asset-a"],
-                    "review_mode": "single_mapped_clip",
+                    "review_mode": "single_mapped_source_time_range",
                 }
             ],
         )

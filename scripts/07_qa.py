@@ -3,16 +3,16 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from common import PROJECT, ROOT, ffprobe_json, read_json, run, run_capture, write_json
+from common import PROJECT, ROOT, ffprobe_json, read_json, write_json
 
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from video_creation_pipeline.execution_receipts import (  # noqa: E402
-    build_ffmpeg_execution_receipt,
-    write_execution_contract,
+    execute_ffmpeg_with_receipt,
 )
+from video_creation_pipeline.contract_io import payload_sha256  # noqa: E402
 from video_creation_pipeline.technical_qa import (  # noqa: E402
     build_technical_qa_report,
     write_technical_qa_report,
@@ -44,19 +44,15 @@ def main() -> None:
         "null",
         "-",
     ]
-    detector_result = run_capture(detector_command)
-    detector_log.write_text(
-        detector_result.stderr + detector_result.stdout,
-        encoding="utf-8",
-    )
-    receipt = build_ffmpeg_execution_receipt(
+    receipt_path = qa_dir / "ffmpeg-technical-qa-receipt.json"
+    execute_ffmpeg_with_receipt(
         "technical_qa",
         detector_command,
         [{"role": "media", "path": final}],
         [{"role": "detector_log", "path": detector_log}],
+        receipt_path,
+        capture_log_path=detector_log,
     )
-    receipt_path = qa_dir / "ffmpeg-technical-qa-receipt.json"
-    write_execution_contract(receipt, receipt_path)
 
     edl = read_json(PROJECT / "edit" / "edl.json")
     expected_duration = round(3.0 + float(edl["total_duration_s"]), 3)
@@ -68,18 +64,29 @@ def main() -> None:
         packaging_plan_path=PROJECT / "render" / "video_packaging_plan.json",
         expected_duration_s=expected_duration,
     )
+    # This route has no verified same-run voice/BGM evidence. Informational
+    # only: preserve all existing checks, readiness and review decisions.
+    report["bgm_advisory"] = {
+        "status": "not_evaluated",
+        "reason": "verified_same_run_voice_music_evidence_unavailable",
+        "advisory_only": True,
+        "changes_delivery_status": False,
+    }
+    report["report_sha256"] = payload_sha256(report, "report_sha256")
     report_path = qa_dir / "qa_report.json"
     write_technical_qa_report(report, report_path)
     _write_markdown(report, qa_dir / "qa_report.md")
-    _extract_cover(final)
+    _extract_cover(final, qa_dir)
 
     if not report["readiness"]["technical_ready"]:
         raise SystemExit(2)
     print("automatic technical QA passed")
 
 
-def _extract_cover(final: Path) -> None:
-    run(
+def _extract_cover(final: Path, qa_dir: Path) -> None:
+    cover = PROJECT / "publish" / "cover.png"
+    execute_ffmpeg_with_receipt(
+        "frame_extract",
         [
             "ffmpeg",
             "-y",
@@ -91,8 +98,12 @@ def _extract_cover(final: Path) -> None:
             "1",
             "-update",
             "1",
-            str(PROJECT / "publish" / "cover.png"),
-        ]
+            str(cover),
+        ],
+        [{"role": "media", "path": final}],
+        [{"role": "frame", "path": cover, "media_time_s": 1.0}],
+        qa_dir / "ffmpeg-cover-receipt.json",
+        capture_log_path=qa_dir / "ffmpeg-cover.log",
     )
 
 
@@ -111,6 +122,7 @@ def _write_markdown(report: dict, output: Path) -> None:
         f"- 帧率：{metrics['fps']}",
         f"- 视频编码：{metrics['video_codec']}",
         f"- 音频编码：{metrics['audio_codec']}",
+        "- 伴奏遮盖提示：未评估（缺少可核验的同次分轨和语音区间）。",
         f"- 黑屏比例：{detector['black_ratio']}",
         f"- 静音比例：{detector['silence_ratio']}",
         f"- 静帧比例：{detector['freeze_ratio']}",

@@ -44,6 +44,7 @@ from video_creation_pipeline.safe_media_scene_plan import (
     build_safe_media_scene_plan,
     write_safe_media_scene_plan,
 )
+from video_creation_pipeline.typography_gates import build_typography_gate
 
 
 class RemotionProjectTests(unittest.TestCase):
@@ -131,6 +132,9 @@ class RemotionProjectTests(unittest.TestCase):
         motion_path.write_text(
             json.dumps(
                 {
+                    "typography_gate": build_typography_gate(
+                        "semantic_motion_1080x1920", width=1080, height=1920
+                    ),
                     "cues": [
                         {
                             "cue_id": "cue-privacy",
@@ -163,7 +167,7 @@ class RemotionProjectTests(unittest.TestCase):
                                 "runtime_reposition_allowed": False,
                             },
                         }
-                    ]
+                    ],
                 }
             ),
             encoding="utf-8",
@@ -173,7 +177,10 @@ class RemotionProjectTests(unittest.TestCase):
             motion_path, "semantic motion plan"
         )
 
-        data = _project_data(handoff)
+        with patch(
+            "video_creation_pipeline.semantic_motion.validate_semantic_motion_plan"
+        ):
+            data = _project_data(handoff)
 
         cue = data["motionCues"][0]
         self.assertEqual(

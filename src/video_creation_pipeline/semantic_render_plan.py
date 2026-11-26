@@ -55,6 +55,7 @@ def build_semantic_render_plan(
     safe_media_scene_plan_path: str | Path | None = None,
     materials_approval_path: str | Path | None = None,
     visual_beats_path: str | Path | None = None,
+    motion_reference_binding_path: str | Path | None = None,
 ) -> dict:
     plan = read_json_object(plan_path, "editorial plan")
     validate_editorial_artifact(plan)
@@ -86,6 +87,16 @@ def build_semantic_render_plan(
         inputs["materials_approval"] = _approval(
             materials_approval_path, safe_media_scene_plan_path, "materials"
         )
+    if motion_reference_binding_path is not None:
+        from .motion_entry_index import validate_motion_reference_binding
+
+        binding_value = read_json_object(
+            motion_reference_binding_path, "motion reference binding"
+        )
+        validate_motion_reference_binding(binding_value)
+        inputs["motion_reference_binding"] = artifact_reference(
+            motion_reference_binding_path, "motion reference binding"
+        )
 
     # This is the same converter used by materialize_remotion_project, not a mock.
     renderer_data = build_remotion_timeline_preview(
@@ -114,6 +125,8 @@ def build_semantic_render_plan(
         # transition or emphasis animation was rendered from metadata alone.
         if any(b['transition']['kind'] != 'cut' or b['emphasis_events'] for b in beats['beats']):
             visual_blockers.append('visual_effect_renderer_binding_required')
+        if any(b.get('scale_motion', {}).get('events') for b in beats['beats']):
+            visual_blockers.append('scale_motion_requires_audio_timeline_visual_binding')
     timeline = []
     last_end = 0
     for decision, scene in zip(plan["segments"], renderer_data["scenes"], strict=True):
@@ -207,6 +220,7 @@ def validate_semantic_render_plan(value: dict) -> None:
         "safe_media_scene_plan",
         "materials_approval",
         "visual_beats",
+        "motion_reference_binding",
     }:
         raise ContractError("semantic render input contract drift")
     paths = {key: validate_artifact_reference(ref, key) for key, ref in inputs.items()}
@@ -218,6 +232,7 @@ def validate_semantic_render_plan(value: dict) -> None:
         safe_media_scene_plan_path=paths.get("safe_media_scene_plan"),
         materials_approval_path=paths.get("materials_approval"),
         visual_beats_path=paths.get("visual_beats"),
+        motion_reference_binding_path=paths.get("motion_reference_binding"),
     )
     if value != expected:
         raise ContractError("semantic render projection or authority drift")

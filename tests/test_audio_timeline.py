@@ -53,6 +53,17 @@ class AudioTimelineTests(unittest.TestCase):
         self.assertEqual(before[0][0]['cache_key'], after[0][0]['cache_key'])
         self.assertNotEqual(before[1][0]['cache_key'], after[1][0]['cache_key'])
 
+    def test_scale_change_is_consumed_and_invalidates_only_its_scene(self):
+        before = self.run_prepare()
+        self.binding['segments'][1]['scale_motion'] = {'targets': [
+            dict(start_s=.1, end_s=.5, rect=[90, 0, 360, 640])
+        ]}
+        after = self.run_prepare()
+        self.assertEqual(before[0][0]['cache_key'], after[0][0]['cache_key'])
+        self.assertNotEqual(before[1][0]['cache_key'], after[1][0]['cache_key'])
+        self.assertEqual(before[1][1], after[1][1])
+        self.assertTrue(after[1][0]['scale_motion']['events'])
+
     def test_uncovered_audio_tail_rejected(self):
         self.packaging['scenes'].pop(); self.binding['segments'].pop()
         with self.assertRaisesRegex(ContractError, 'tail'):

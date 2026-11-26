@@ -5,7 +5,6 @@ import pytest
 
 from video_creation_pipeline.contract_io import atomic_write_json, file_sha256
 from video_creation_pipeline.errors import ContractError
-from video_creation_pipeline.final_layout_safety import validate_final_layout
 from video_creation_pipeline.progress_overlay import build, filtergraph, validate
 
 
@@ -25,17 +24,17 @@ def case(tmp_path, monkeypatch):
             'typography_profile': 'semantic_motion_1080x1920', 'typography_role': 'motion_label',
             'color_reason': 'neutral track and bright progress',
             'title_source': 'manual', 'title_override_reason': 'Explicit synthetic labels for legacy contract coverage',
-            'safe_area_mode': 'protected',
             'chapters': [{'scene_id': f'scene-{i}', 'title': title} for i, title in enumerate(['开场', '说明', '结尾'])]}
     layout = {'schema_version': 'video-final-layout-safety.v1', 'layout_id': 'progress-test',
+              'medical_disclosure': {'decision': 'not_applicable', 'reason': 'Synthetic nonmedical progress test.', 'text': ''},
               'duration_seconds': 6, 'candidate': {'path': 'base.mp4', 'expected_sha256': file_sha256(program)},
               'layout_evidence': {'path': 'evidence.txt', 'expected_sha256': ''},
-              'required_roles': ['subtitle', 'ai_label'], 'elements': [{'element_id': 'subtitles', 'role': 'subtitle',
+              'required_roles': ['subtitle'], 'elements': [{'element_id': 'subtitles', 'role': 'subtitle',
               'start_seconds': 0, 'end_seconds': 6, 'critical_content': True,
               'rect': {'x': .1, 'y': .72, 'width': .8, 'height': .1}},
-              {'element_id': 'ai-label', 'role': 'ai_label', 'text': 'AI 合成内容（测试夹具）',
-              'start_seconds': 0, 'end_seconds': 6, 'critical_content': True,
-              'rect': {'x': .2, 'y': .45, 'width': .5, 'height': .05}}],
+              {'element_id': 'ai-label', 'role': 'ai_label', 'text': '内容由AI辅助生成。',
+               'start_seconds': 0, 'end_seconds': 6, 'critical_content': True,
+               'rect': {'x': .12, 'y': .62, 'width': .5, 'height': .03}}],
               'reserved_regions': [{'region_id': f'corner-{i}', 'region_kind': 'rounded_corner',
               'rect': {'x': x, 'y': y, 'width': .02, 'height': .02}} for i, (x,y) in enumerate([(0,0),(.98,0),(0,.98),(.98,.98)])]}
     (tmp_path/'evidence.txt').write_text('synthetic manual layout')
@@ -73,6 +72,16 @@ def test_narrow_band_reserves_exact_width_without_shrinking_labels(case):
         create(case)
 
 
+def test_chapter_label_switches_by_frame_index(case):
+    plan = create(case)
+    fps = plan['output']['fps']
+    graph = filtergraph(plan, case['root'], write_texts=False)
+    for chapter in plan['chapters']:
+        first = round(chapter['start_s'] * fps)
+        past_last = round(chapter['end_s'] * fps)
+        assert f"enable='gte(n,{first})*lt(n,{past_last})'" in graph
+
+
 @pytest.mark.parametrize('position', ['top', 'bottom'])
 def test_plain_top_bottom_and_no_overflow(case, position):
     case['spec'].update(mode='plain', position=position, chapters=[])
@@ -105,6 +114,7 @@ def test_bad_inputs_fail_before_render(case, change, match):
     elif change == 'collision':
         case['spec']['edge_offset_px'] = 1400
     elif change == 'platform':
+        case['spec']['safe_area_mode'] = 'protected'
         case['layout']['reserved_regions'].append({'region_id': 'platform-top', 'region_kind': 'platform_overlay',
                                                    'rect': {'x': .05, 'y': .05, 'width': .9, 'height': .1}})
     elif change == 'gap':
@@ -112,16 +122,6 @@ def test_bad_inputs_fail_before_render(case, change, match):
     elif change == 'duration':
         case['metadata']['streams'][0]['duration'] = '7'
     with pytest.raises(ContractError, match=match):
-        create(case)
-
-
-def test_platform_reservation_passes_before_progress_overlay_insertion(case):
-    # The base layout plus the platform-top reservation is valid on its own; only
-    # build()'s critical progress overlay makes the 'platform' negative case fail.
-    case['layout']['reserved_regions'].append({'region_id': 'platform-top', 'region_kind': 'platform_overlay',
-                                               'rect': {'x': .05, 'y': .05, 'width': .9, 'height': .1}})
-    assert validate_final_layout(case['layout'], case['root'])['status'] == 'passed'
-    with pytest.raises(ContractError, match='reserved region'):
         create(case)
 
 
@@ -134,6 +134,22 @@ def test_edit_or_font_change_invalidates_plan(case):
     case['program'].write_bytes(b'new edit')
     with pytest.raises(ContractError, match='changed'):
         validate(path)
+
+
+def test_optional_navigation_can_enter_platform_reservation(case):
+    case['layout']['reserved_regions'].append({'region_id': 'platform-top', 'region_kind': 'platform_overlay',
+                                               'rect': {'x': .05, 'y': .05, 'width': .9, 'height': .1}})
+    plan = create(case)
+    overlay = plan['layout_with_progress']['elements'][-1]
+    assert overlay['critical_content'] is False
+    assert overlay['auxiliary_visibility']['mode'] == 'fullscreen_or_controls_hidden'
+    assert plan['layout_check']['auxiliary_reserved_region_overlaps']
+
+
+def test_unknown_safe_area_mode_is_rejected(case):
+    case['spec']['safe_area_mode'] = 'ignore-everything'
+    with pytest.raises(ContractError, match='safe_area_mode'):
+        create(case)
 
 
 def test_text_is_not_executed_as_filter_expression(case):
@@ -238,3 +254,41 @@ def test_shared_delivery_script_reference_preserves_hash_validation(case):
     case['packaging']['script_ref']['sha256']='0'*64
     with pytest.raises(ContractError,match='changed'):
         create(case)
+
+
+@pytest.mark.parametrize('preset', ['unknown','',None,True,[]])
+def test_render_options_reject_bad_preset_before_plan_io(preset):
+    from video_creation_pipeline import progress_overlay as module
+    with pytest.raises(ContractError,match='encoder_preset'):
+        module.render('missing-plan.json','unused-output',encoder_preset=preset)
+
+
+@pytest.mark.parametrize('timeout', [0,-1,3600.1,float('inf'),float('nan'),True,'1800'])
+def test_render_options_reject_bad_timeout_before_plan_io(timeout):
+    from video_creation_pipeline import progress_overlay as module
+    with pytest.raises(ContractError,match='timeout_s'):
+        module.render('missing-plan.json','unused-output',timeout_s=timeout)
+
+
+@pytest.mark.parametrize('options,preset,timeout', [({},'fast',600),
+    ({'encoder_preset':'veryfast','timeout_s':1800},'veryfast',1800)])
+def test_render_options_preserve_media_command_and_record_actual_execution(case,monkeypatch,options,preset,timeout):
+    from video_creation_pipeline import progress_overlay as module
+    plan=create(case);plan_path=atomic_write_json(plan,case['root']/'plan.json');calls=[]
+    def fake_outlet(operation,command,inputs,outputs,receipt_path,**kwargs):
+        # This is command/receipt plumbing only, never a live media fixture.
+        calls.append((operation,command,kwargs))
+        if operation=='render':
+            options_file=next(row['path'] for row in inputs if row['role']=='execution_options')
+            assert module.read_json_object(options_file,'execution options')=={'encoder_preset':preset,'timeout_s':timeout}
+        Path(outputs[0]['path']).write_bytes(b'synthetic-candidate' if operation=='render' else b'0\n'*plan['output']['frames'])
+        atomic_write_json({},receipt_path)
+    monkeypatch.setattr(module,'execute_ffmpeg_with_receipt',fake_outlet)
+    result=module.render(plan_path,case['root']/'output',**options)
+    command=calls[0][1]
+    assert command[command.index('-preset')+1]==preset
+    assert command[command.index('-crf')+1]=='18'
+    assert command[command.index('-c:a')+1]=='copy'
+    assert [call[2]['timeout_s'] for call in calls]==[timeout,timeout]
+    assert result['execution_options']=={'encoder_preset':preset,'timeout_s':timeout}
+    assert result['decoded_frames']==plan['output']['frames']

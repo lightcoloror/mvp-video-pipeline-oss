@@ -61,6 +61,8 @@ def recommend_scene_route(visual_job: str, *, needs_depth: bool = False,
         # A job label cannot establish that a crank, queue or relation diagram
         # matches the user's actual mechanism. Keep the old default as a candidate.
         result["base_component_candidate_id"] = result["component_id"]
+        if any(item.get("source_package") for items in result["module_selection"]["source_layers"].values() for item in items):
+            result["style_authority"] = "selected original style/example; explicit project constraints and factual encodings preserved"
         result["component_id"] = None
         if not result["source_media_required"] and visual_job != "evidence":
             result["requires_scene_design"] = True
@@ -114,6 +116,14 @@ def _source_evidence(project: dict) -> dict:
             "runtime_test_performed": False, "installed_or_callable_claimed": False}
 
 
+def source_bundle_for_project(project_id: str, *, verify_files: bool = False, entry: str | None = None) -> dict:
+    from .upstream_source_bundle import inspect_source_bundle
+    project = next((row for row in animation_source_catalog()["projects"] if row["id"] == project_id), None)
+    if project is None or not project.get("source_bundle"):
+        raise ContractError("project has no preserved upstream bundle: " + project_id)
+    return inspect_source_bundle(project["source_bundle"], verify_files=verify_files, entry=entry)
+
+
 def _recommend_sources(route: dict, techniques: list[str], delivery: str,
                        source_projects: list[str], narration_timing: str) -> dict:
     if delivery not in {"video", "interactive", "still"}:
@@ -141,6 +151,12 @@ def _recommend_sources(route: dict, techniques: list[str], delivery: str,
         evidence = _source_evidence(project)
         item["evidence_check"] = evidence
         reasons = []
+        if project.get("source_bundle"):
+            try:
+                item["source_package"] = source_bundle_for_project(identity)
+            except (ContractError, OSError, KeyError, TypeError, ValueError) as error:
+                item["source_package"] = {"status": "blocked", "error": str(error), "execution_authorized": False}
+                reasons.append("preserved_upstream_bundle_unavailable")
         if project.get("identity_status") in {"unresolved", "provisional"}:
             reasons.append("project_identity_" + project["identity_status"])
         if evidence["status"] in {"source_changed", "source_missing"}:
@@ -173,10 +189,30 @@ def _recommend_sources(route: dict, techniques: list[str], delivery: str,
         component_catalog_status = "existing_source_inventory_unavailable"
     components = [row for row in component_catalog["components"] if row["id"] == route["component_id"] and delivery == "video"]
     checkpoints = list(dict.fromkeys(c for t in chosen for c in recipes[t]["checks"]))
+    local_cases = []
+    if delivery == "video" and chosen:
+        for case in catalog.get("local_case_examples", []):
+            if not set(case.get("techniques", [])) & set(chosen):
+                continue
+            if source_projects and case.get("source_project") not in source_projects:
+                continue
+            item = deepcopy(case)
+            preview = Path(item["preview"])
+            try:
+                item["preview_status"] = (
+                    "verified" if preview.is_file() and file_sha256(preview) == item["preview_sha256"]
+                    else "changed" if preview.is_file() else "missing"
+                )
+            except OSError:
+                item["preview_status"] = "unreadable"
+            item["recommendation_only"] = True
+            local_cases.append(item)
     return {
         "schema": "video_creation_pipeline.animation_source_selection.v1",
         "catalog_sha256": catalog["catalog_sha256"],
+        "source_preservation_policy": deepcopy(catalog.get("source_preservation_policy", {})),
         "techniques": chosen, "delivery": delivery,
+        "local_case_examples": local_cases,
         "selection_basis": "explicit_semantic_choices_not_keyword_score",
         "source_selection_mode": "explicit_sources_only" if source_projects else "technique_sources",
         "status": "source_recommendations_ready" if ids else "needs_technique_or_source",

@@ -40,6 +40,7 @@ from .previs_contracts import (
 from .production_strategy import (
     build_audio_mastering_plan,
     build_visual_production_plan,
+    build_content_visual_production_plan,
     write_production_strategy_contract,
 )
 
@@ -61,7 +62,10 @@ def build_parser() -> argparse.ArgumentParser:
     unit.add_argument("--output", required=True)
 
     visual = subparsers.add_parser("build-visual-strategy")
-    visual.add_argument("--unit", required=True)
+    visual_source = visual.add_mutually_exclusive_group(required=True)
+    visual_source.add_argument("--unit")
+    visual_source.add_argument("--content-plan")
+    visual.add_argument("--scene-id")
     visual.add_argument(
         "--argument-role",
         choices=("neutral", "system", "tension", "insight"),
@@ -201,8 +205,12 @@ def _execute(args: argparse.Namespace) -> dict[str, object]:
         output = write_generation_contract(payload, args.output)
         return _written(output, payload, "unit_sha256")
     if args.command == "build-visual-strategy":
-        payload = build_visual_production_plan(
-            args.unit,
+        if bool(args.content_plan) != bool(args.scene_id):
+            raise ContractError("--scene-id is required only with --content-plan")
+        builder = build_content_visual_production_plan if args.content_plan else build_visual_production_plan
+        source_args = (args.content_plan, args.scene_id) if args.content_plan else (args.unit,)
+        payload = builder(
+            *source_args,
             argument_role=args.argument_role,
             effort_mode=args.effort_mode,
             artifact_layer=args.artifact_layer,

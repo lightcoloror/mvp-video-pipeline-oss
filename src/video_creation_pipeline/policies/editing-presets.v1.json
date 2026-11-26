@@ -9,6 +9,7 @@
   "bgm": {"existing_policy": "spoken-bgm-policy.v1.json", "allow_none": true, "respect_protected_sound": true},
   "subtitles": {"max_lines": 2, "max_chars_per_line": 18, "reading_speed_warning_cps": 9.0, "minimum_duration_warning_s": 0.7, "auto_shrink": false, "semantic_breaks_required": true},
   "visuals": {"fixed_interval_cutting": false, "information_advance_required": true, "trigger_kinds": ["information", "action", "gaze", "reaction", "location", "time", "structure"]},
-  "transitions": {"default": "cut", "exception_reason_required": true, "max_simultaneous_primary_emphasis": 1, "whole_sentence_continuous_motion": false},
+  "transitions": {"default": "cut", "exception_reason_required": true, "max_simultaneous_primary_emphasis": 1, "whole_sentence_continuous_motion": false,
+    "scale_motion": {"version": "creator_scale_motion_v1", "default": "smooth", "easing": "cubic_smoothstep", "scale_interpolation": "log", "min_duration_s": 0.4, "max_duration_s": 1.4, "fallback_duration_s": 0.7, "onsets_per_transition": 3, "cadence_window_s": 4.0, "seconds_per_log_scale": 0.65, "same_pose_bridge_s": 0.8, "cut_reason_required": true, "audio_clock_unchanged": true}},
   "timebase": {"default_speed": 1.0, "speed_change_requires_audition": true, "dependent_roles": ["subtitles", "sound_effects", "chapters", "progress", "review"]}
 }

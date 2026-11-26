@@ -99,6 +99,19 @@ class TitleCoverTests(unittest.TestCase):
             )
         )
 
+    def test_case_cover_accepts_canonical_title_plan_without_legacy_repackaging(self) -> None:
+        from video_creation_pipeline.case_cover_visual_plan import _bound_title_item
+        plan = build_title_cover_candidate_plan(self.project_path, self.spec_path)
+        source = plan['candidates'][0]
+        selected = _bound_title_item(plan, {'candidate_id':source['candidate_id']})
+        self.assertEqual(selected['publication_title'],source['title'])
+        self.assertEqual(selected['cover_overlay'],[source['cover_hypothesis']['overlay_text']])
+        with self.assertRaises(ContractError):
+            _bound_title_item(plan, {'candidate_id':'nonexistent'})
+        plan['candidates'][0]['title'] = 'tampered'
+        with self.assertRaises(ContractError):
+            _bound_title_item(plan, {'candidate_id':source['candidate_id']})
+
     def test_duplicate_title_unbound_evidence_and_repeated_overlay_fail_closed(
         self,
     ) -> None:
@@ -710,6 +723,58 @@ class TitleCoverTests(unittest.TestCase):
             )
         cli = project / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
         cli.write_text("// synthetic CLI", encoding="utf-8")
+
+    def test_aspect_ratio_coverage_gate_rules(self) -> None:
+        from video_creation_pipeline.title_cover import (
+            validate_aspect_ratio_coverage,
+            ContractError,
+        )
+
+        # 1. Preview mode allows 1 landscape (16:9) + 1 vertical (3:4 or 9:16)
+        preview_res = validate_aspect_ratio_coverage(
+            ["bilibili_16_9", "vertical_profile_3_4"], stage="preview"
+        )
+        self.assertTrue(preview_res["gate_passed"])
+        self.assertEqual(preview_res["aspect_ratios"], ["16:9", "3:4"])
+
+        # 2. Preview mode blocks single orientation (only landscape or only vertical)
+        with self.assertRaises(ContractError) as ctx:
+            validate_aspect_ratio_coverage(["bilibili_16_9", "youtube_16_9"], stage="preview")
+        self.assertIn("at least 1 landscape", str(ctx.exception))
+
+        with self.assertRaises(ContractError) as ctx:
+            validate_aspect_ratio_coverage(["vertical_first_frame_9_16"], stage="preview")
+        self.assertIn("at least 1 landscape", str(ctx.exception))
+
+        # 3. Final / Matrix PK mode strictly requires all 4 aspect ratios
+        # If missing 4:3 or 9:16, must raise ContractError
+        with self.assertRaises(ContractError) as ctx:
+            validate_aspect_ratio_coverage(
+                ["bilibili_16_9", "vertical_profile_3_4"], stage="final"
+            )
+        self.assertIn("requires all 4 platform aspect ratios", str(ctx.exception))
+
+        with self.assertRaises(ContractError) as ctx:
+            validate_aspect_ratio_coverage(
+                ["bilibili_16_9", "vertical_profile_3_4"], stage="matrix_pk"
+            )
+        self.assertIn("requires all 4 platform aspect ratios", str(ctx.exception))
+
+        # 4. Final / Matrix PK mode passes when all 4 aspect ratios are present
+        final_res = validate_aspect_ratio_coverage(
+            [
+                "bilibili_16_9",
+                "vertical_first_frame_9_16",
+                "vertical_profile_3_4",
+                "bilibili_4_3",
+            ],
+            stage="final",
+        )
+        self.assertTrue(final_res["gate_passed"])
+        self.assertTrue(final_res["covered_all_four"])
+        self.assertEqual(
+            final_res["aspect_ratios"], ["16:9", "3:4", "4:3", "9:16"]
+        )
 
 
 if __name__ == "__main__":

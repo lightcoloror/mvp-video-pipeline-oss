@@ -284,14 +284,29 @@ def filtergraph(plan, folder, *, write_texts=True):
     lines.append(f"[0:v:0][bar]overlay=x={g['x']}:y={g['bar_y']}:shortest=1[withbar]")
     labels = []
     for i, chapter in enumerate(plan['chapters']):
+        # The locked program is CFR. Frame indices avoid rounding at chapter boundaries.
+        start_frame = round(chapter['start_s'] * fps)
+        end_frame = round(chapter['end_s'] * fps)
         text_file = folder / f'chapter-{i:02d}.txt'
         if write_texts: atomic_write_text(chapter['text'], text_file)
-        labels.append(f"drawtext=fontfile='{_filter_path(plan['font']['path'])}':textfile='{_filter_path(text_file)}':expansion=none:fontsize={plan['typography']['font_size_px']}:fontcolor=0x{spec.get('text_color', 'FFFFFF')}:x={g['x']}:y={g['band_y']}:enable='gte(t,{chapter['start_s']})*lt(t,{chapter['end_s']})'")
+        labels.append(f"drawtext=fontfile='{_filter_path(plan['font']['path'])}':textfile='{_filter_path(text_file)}':expansion=none:fontsize={plan['typography']['font_size_px']}:fontcolor=0x{spec.get('text_color', 'FFFFFF')}:x={g['x']}:y={g['band_y']}:enable='gte(n,{start_frame})*lt(n,{end_frame})'")
     lines.append('[withbar]' + (','.join(labels) if labels else 'null') + '[vout]')
     return ';\n'.join(lines)
 
 
-def render(plan_path, output_root, *, resource_policy=None, runner=None):
+def render_options(encoder_preset='fast', timeout_s=600):
+    presets={'ultrafast','superfast','veryfast','faster','fast','medium','slow','slower','veryslow','placebo'}
+    if not isinstance(encoder_preset,str) or encoder_preset not in presets:
+        raise ContractError('progress encoder_preset must be a supported libx264 preset')
+    if (isinstance(timeout_s,bool) or not isinstance(timeout_s,(int,float)) or
+            not math.isfinite(timeout_s) or not 0<timeout_s<=3600):
+        raise ContractError('progress timeout_s must be finite, positive and <= 3600')
+    return {'encoder_preset':encoder_preset,'timeout_s':timeout_s}
+
+
+def render(plan_path, output_root, *, resource_policy=None, runner=None,
+           encoder_preset='fast', timeout_s=600):
+    options=render_options(encoder_preset,timeout_s)
     plan = validate(plan_path)
     folder = Path(output_root).resolve()
     folder.relative_to(Path(plan['workspace_root']))
@@ -299,28 +314,30 @@ def render(plan_path, output_root, *, resource_policy=None, runner=None):
     if folder.exists() and any(folder.iterdir()):
         raise ContractError('progress output directory must be new or empty')
     folder.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(options,folder/'execution-options.json')
     candidate = folder / 'candidate.mp4'
     graph = atomic_write_text(filtergraph(plan, folder), folder / 'filtergraph.txt')
     inputs = [{'role': 'program', 'path': plan['program']['path']},
-              {'role': 'progress_plan', 'path': Path(plan_path)}, {'role': 'filtergraph', 'path': graph}]
+              {'role': 'progress_plan', 'path': Path(plan_path)}, {'role': 'filtergraph', 'path': graph},
+              {'role': 'execution_options', 'path': folder/'execution-options.json'}]
     if plan['font']:
         inputs.append({'role': 'font', 'path': plan['font']['path']})
     inputs.extend({'role': 'chapter_text', 'path': p} for p in sorted(folder.glob('chapter-*.txt')))
     threads = resource_policy.ffmpeg_threads if resource_policy is not None else None
     command = ['ffmpeg', '-nostdin', '-v', 'error', '-n', '-filter_complex_threads','1','-i', plan['program']['path'],
                '-filter_complex_script', str(graph), '-map', '[vout]', '-map', '0:a?',
-               '-c:v', 'libx264', '-preset', 'fast', '-crf', '18', '-pix_fmt', 'yuv420p',
+               '-c:v', 'libx264', '-preset', options['encoder_preset'], '-crf', '18', '-pix_fmt', 'yuv420p',
                '-c:a', 'copy', '-map_metadata', '-1', '-movflags', '+faststart', str(candidate)]
     if threads: command[-1:-1]=['-threads',str(threads)]
     execute_ffmpeg_with_receipt('render', command, inputs, [{'role': 'candidate', 'path': candidate}],
                                 folder/'render-receipt.json', capture_log_path=folder/'render.log',
-                                guard_resource=True, timeout_s=600,resource_policy=resource_policy,runner=runner)
+                                guard_resource=True, timeout_s=options['timeout_s'],resource_policy=resource_policy,runner=runner)
     o = plan['output']
     _media_matches(candidate, o['width'], o['height'], o['fps'], o['duration_s'])
     decoded = folder / 'decoded.framemd5'
     execute_ffmpeg_with_receipt('technical_qa', ['ffmpeg', '-nostdin', '-v', 'error', '-n', '-i', str(candidate),
         '-map', '0:v:0', '-an', '-f', 'framemd5', str(decoded)], [{'role': 'candidate', 'path': candidate}],
-        [{'role': 'decode', 'path': decoded}], folder/'decode-receipt.json', guard_resource=True, timeout_s=600,
+        [{'role': 'decode', 'path': decoded}], folder/'decode-receipt.json', guard_resource=True, timeout_s=options['timeout_s'],
         resource_policy=resource_policy,runner=runner)
     frames = sum(bool(line.strip()) and not line.startswith('#') for line in decoded.read_text().splitlines())
     if frames != o['frames']:
@@ -335,6 +352,8 @@ def render(plan_path, output_root, *, resource_policy=None, runner=None):
     atomic_write_json(layout_check, folder/'layout-receipt.json')
     receipt = {'schema': SCHEMA + '.result', 'candidate': artifact_reference(candidate, 'candidate'),
                'plan': artifact_reference(plan_path, 'plan'), 'decoded_frames': frames,
+               'execution_options':options,
+               'execution_options_ref':artifact_reference(folder/'execution-options.json','execution options'),
                'render_receipt':artifact_reference(folder/'render-receipt.json','render receipt'),
                'decode_receipt':artifact_reference(folder/'decode-receipt.json','decode receipt'),
                'decoded_media':artifact_reference(decoded,'decoded frames'),

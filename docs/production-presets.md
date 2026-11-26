@@ -68,6 +68,6 @@ python scripts/spoken_rough_cut.py inspect-source --source-video original.mp4 --
 
 ## 验证与回滚
 
-公开版验收结果须依据本次独立测试与回执；原本机历史路径和项目结果不随源码分发。
+合成与回归证据在 `<workspace>/outputs/production-presets-20261026/`。原片审阅测试使用真实 VKP 生成器并确认零媒体副本；短合成视频验证 J/L、底声滤镜、规格、解码和原文件哈希不变。所有实际人声听感、画面自然度、真实主体和手机可读性仍需真实项目复核。
 
 改动前快照位于证据目录 `before/`；回滚仅恢复本次文件差异，保留已有未提交工作。当前任务不自动提交、推送、清理或上传媒体。

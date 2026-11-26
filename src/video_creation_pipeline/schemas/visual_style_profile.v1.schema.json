@@ -20,7 +20,8 @@
         "editorial_clean",
         "documentary_warm",
         "technical_diagram",
-        "evidence_neutral"
+        "evidence_neutral",
+        "pixel_narrative"
       ]
     },
     "tokens": {

@@ -52,6 +52,7 @@ class StockMediaTests(unittest.TestCase):
         self.assertEqual(
             [row["source_id"] for row in registry["sources"]],
             [
+                "clipkit_sfx",
                 "freesound",
                 "lobe_icons",
                 "mixkit",

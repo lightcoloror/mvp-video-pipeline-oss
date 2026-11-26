@@ -1,13 +1,20 @@
 {
   "schema_version": "agent-tool-manifest.v1",
   "id": "mvp-video-pipeline",
-  "manifest_version": "1.9.0",
-  "description": "Candidate-only video planning, deterministic synthetic rendering, evidence-driven smart reframing, technical QA, and review handoff over content-video-brief.v1.",
+  "manifest_version": "1.17.1",
+  "description": "Candidate-only video planning, deterministic synthetic rendering, script-and-motion synchronized sound-effect candidates, hash-bound external motion-recipe adaptation, evidence-driven smart reframing, technical QA, and review handoff over content-video-brief.v1.",
   "capabilities": [
+    "required_rough_cut_segment_speech_leveling_and_remeasurement",
+    "transparent_variety_laughter_sticker_recipe",
+    "cue_bound_expressive_laughter_overlay",
+    "editorial_enrichment_selection_catalog",
+    "optional_timeline_bound_progress_overlay",
     "video_brief_validation",
     "candidate_video_plan",
     "synthetic_mp4",
     "technical_qa",
+    "guarded_video_review_execution",
+    "exact_hash_video_review_receipt_reuse",
     "release_gate_v2_export_qa_binding",
     "gateway_consumer",
     "privacy_quality_gate",
@@ -20,6 +27,11 @@
     "cross_renderer_style_profile",
     "hyperframes_music_analysis_handoff",
     "spoken_bgm_minimum_correct_mix",
+    "script_motion_sound_effect_candidate",
+    "external_motion_recipe_candidate",
+    "external_motion_component_catalog",
+    "deterministic_local_sfx_source",
+    "motion_entry_and_mobile_readability_gate",
     "hyperframes_render_assurance",
     "title_cover_candidate_packaging",
     "remotion_still_cover_candidates",
@@ -33,20 +45,46 @@
   ],
   "interfaces": {
     "canonical": [
+      {"kind":"cli","command":"python scripts/spoken_rough_cut.py inspect-segment-levels --audio <dialogue-only.wav> --spec <segment-level-spec.json> --output <new-levels.json>","mode":"local_candidate_write"},
+      {"kind":"cli","command":"python scripts/spoken_rough_cut.py segment-leveling-template --report <before-levels.json> --output <new-review.json>","mode":"local_candidate_write"},
+      {"kind":"cli","command":"python scripts/spoken_rough_cut.py check-segment-leveling --review <review.json> --measured-media <current-media-or-project> --output <new-gate-result.json>","mode":"local_candidate_write"},
+      {"kind": "cli", "command": "python scripts/spoken_rough_cut.py select-delivery --plan <spoken-edit-plan.json> --request <delivery-request.json> --output <new-selection.json>", "mode": "local_candidate_write"},
+      {"kind": "cli", "command": "python scripts/spoken_rough_cut.py prepare-delivery --selection <selection.json> --output-dir <new-delivery-dir>", "mode": "local_candidate_write"},
+      {"kind": "cli", "command": "python scripts/spoken_rough_cut.py render-delivery --selection <selection.json> --output-dir <new-render-dir> --project-root <project-root> --lifecycle-manifest <manifest.json> --estimated-output-bytes <positive-bytes>", "mode": "explicit_local_candidate_export_only"},
       {
         "kind": "cli",
-        "command": "python scripts/spoken_rough_cut.py select-delivery --plan <spoken-edit-plan.json> --request <delivery-request.json> --output <new-selection.json>",
+        "command": "python scripts/expressive_captions.py build --program <base.mp4> --packaging <packaging.json> --layout <final-layout.json> --events <events.json> --spec <spec.json> --workspace-root <project-root> --output <caption-plan.json>",
         "mode": "local_candidate_write"
       },
       {
         "kind": "cli",
-        "command": "python scripts/spoken_rough_cut.py prepare-delivery --selection <selection.json> --output-dir <new-delivery-dir>",
+        "command": "python scripts/expressive_captions.py validate --plan <caption-plan.json>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/expressive_captions.py render --plan <caption-plan.json> --output-root <new-output>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/semantic_editorial.py enrichment-catalog",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/progress_overlay.py build --program <base.mp4> --packaging <packaging.json> --layout <final-layout.json> --spec <progress-spec.json> --workspace-root <project-root> --output <progress-plan.json>",
         "mode": "local_candidate_write"
       },
       {
         "kind": "cli",
-        "command": "python scripts/spoken_rough_cut.py render-delivery --selection <selection.json> --output-dir <new-render-dir> --project-root <project-root> --lifecycle-manifest <manifest.json> --estimated-output-bytes <positive-bytes>",
-        "mode": "explicit_local_candidate_export_only"
+        "command": "python scripts/progress_overlay.py validate --plan <progress-plan.json>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "python scripts/progress_overlay.py render --plan <progress-plan.json> --output-root <new-output>",
+        "mode": "local_candidate_write_fail_closed"
       },
       {
         "kind": "cli",
@@ -75,6 +113,11 @@
       },
       {
         "kind": "cli",
+        "command": "python scripts/context_manifest_consumer.py execute-review --plan <plan.json> --output <mvp-execution-receipt.json>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
         "command": "python scripts/ffmpeg_outlet.py --operation <operation> --input <role=path> --output <role=path> --receipt <receipt.json> [--capture-log <log>] -- ffmpeg <args>",
         "mode": "local_candidate_write_fail_closed"
       },
@@ -92,6 +135,61 @@
         "kind": "cli",
         "command": "video-music-pipeline build-edit-plan --candidates <music-candidate-set.json> [--word-timestamps <words.json> | --subtitles <dialogue.srt>] --contract-version v2 --output <music-edit-plan.json>",
         "mode": "local_candidate_write"
+      },
+      {
+        "kind": "cli",
+        "command": "video-music-pipeline audit-arrangement --spec <full-program-bgm-layers.json> --output <arrangement-report.json>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-motion-sfx doctor [--video-shotcraft-root <fixed-video-shotcraft-source>]",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-motion-sfx bootstrap-pack --video-shotcraft-root <fixed-video-shotcraft-source> --output-root <managed-pack-output>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-motion-sfx plan --packaging-plan <packaging.json> [--semantic-motion-plan <motion.json> | --remotion-project-data <project-data.json>] [--script <script.txt> | --subtitles <dialogue.srt> | --word-timestamps <words.json>] --pack-receipt <pack-receipt.json> --output-root <managed-output>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-motion-sfx run --packaging-plan <packaging.json> --program <candidate.mp4> --pack-receipt <pack-receipt.json> --output-root <managed-output>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-external-motion-assets catalog --onda-root <fixed-onda-source> [--remotion-bits-root <fixed-remotion-bits-source>] [--clipkit-root <fixed-clipkit-source>] --output <catalog.json>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-external-motion-assets plan --catalog <catalog.json> --semantic-motion-plan <motion.json> [--overrides <overrides.json>] --output <selection-plan.json>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-external-motion-assets bootstrap-clipkit --clipkit-root <fixed-clipkit-source> --output-root <managed-pack-output>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-talkcraft-adapter doctor --source-root <fixed-video-talkcraft-source>",
+        "mode": "read_only_offline"
+      },
+      {
+        "kind": "cli",
+        "command": "video-talkcraft-adapter plan --semantic-motion-plan <motion.json> --source-root <fixed-video-talkcraft-source> [--word-timestamps <words.json>] [--selections <selections.json>] --output <recipe-plan.json>",
+        "mode": "local_candidate_write_fail_closed"
+      },
+      {
+        "kind": "cli",
+        "command": "video-talkcraft-adapter verify --recipe-plan <recipe-plan.json> --render-receipt <render-receipt.json> --observations <motion-entry-observations.json> --output <execution-receipt.json>",
+        "mode": "local_candidate_write_fail_closed"
       },
       {
         "kind": "cli",
@@ -205,8 +303,23 @@
       "required": false
     },
     {
+      "name": "motion_sfx_sources",
+      "contract": "video_packaging_plan.v1 plus optional semantic_motion_plan.v1, external_motion_selection_plan.v1, Remotion project data, script/SRT/word timing and fixed local sound-effect pack receipt",
+      "required": false
+    },
+    {
+      "name": "external_motion_sources",
+      "contract": "explicit fixed source roots for Onda, optional Remotion Bits and optional ClipKit SFX; no automatic clone or install",
+      "required": false
+    },
+    {
       "name": "smart_reframe_evidence",
       "contract": "video_creation_pipeline.smart_reframe_evidence.v1 plus source media SHA-256",
+      "required": false
+    },
+    {
+      "name": "self_media_video_review_plan",
+      "contract": "self-media-video-review-plan.v1 with video-review-resource-guard-v1 policy reference",
       "required": false
     },
     {
@@ -232,6 +345,11 @@
       "required": true
     },
     {
+      "name": "video_review_execution_receipt",
+      "contract": "video_creation_pipeline.video_review_execution_receipt.v1 plus exact media/profile hash-bound QA report",
+      "required": false
+    },
+    {
       "name": "content_visual_routing_plan",
       "contract": "video_creation_pipeline.content_visual_routing_plan.v1",
       "required": false
@@ -254,6 +372,21 @@
     {
       "name": "spoken_bgm_candidate",
       "contract": "candidate-only mixed audio/video plus FFmpeg receipt, decode QA, duration/peak checks, and source/music SHA-256",
+      "required": false
+    },
+    {
+      "name": "music_arrangement_audit",
+      "contract": "video_creation_pipeline.music_arrangement_report.v1; full-program SHA/source-interval audit required before BGM native-editor writes or new mixing, exit nonzero on repetitive arrangement",
+      "required": false
+    },
+    {
+      "name": "motion_sfx_candidate",
+      "contract": "motion_sfx_source_manifest.v1, existing sound_effect_cue_sheet/edit_plan.v1, motion_sfx_batch_receipt.v1 and candidate-only MP4 through the single FFmpeg outlet",
+      "required": false
+    },
+    {
+      "name": "external_motion_asset_plan",
+      "contract": "external_motion_catalog.v1, external_motion_selection_plan.v1 and optional clipkit_sfx_pack_receipt.v1",
       "required": false
     },
     {
@@ -316,21 +449,21 @@
       "contract_id": "evidence-bundle.v1",
       "bundle_id": "local-tools-portable-contracts",
       "bundle_version": "1.0.0",
-      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "distribution_repository": "https://github.com/lightcoloror/research-content-production",
       "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
     },
     {
       "contract_id": "content-brief.v1",
       "bundle_id": "local-tools-portable-contracts",
       "bundle_version": "1.0.0",
-      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "distribution_repository": "https://github.com/lightcoloror/research-content-production",
       "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
     },
     {
       "contract_id": "review-packet.v1",
       "bundle_id": "local-tools-portable-contracts",
       "bundle_version": "1.0.0",
-      "distribution_repository": "https://github.com/lightcoloror/codex-local-governance-oss",
+      "distribution_repository": "https://github.com/lightcoloror/research-content-production",
       "bundle_path": "contracts/portable/v1/portable-contract-bundle.v1.json"
     }
   ],
@@ -390,12 +523,6 @@
         "contains": "generate-synthetic"
       },
       {
-        "id": "ffmpeg_outlet_cli",
-        "kind": "file",
-        "path": "scripts/ffmpeg_outlet.py",
-        "contains": "video_creation_pipeline.single_ffmpeg_outlet"
-      },
-      {
         "id": "visual_routing_cli",
         "kind": "file",
         "path": "src/video_creation_pipeline/visual_routing_cli.py",
@@ -414,10 +541,52 @@
         "contains": "spoken-bgm-minimum-correct-v1"
       },
       {
+        "id": "spoken_bgm_arrangement_guard",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/music_diversity.py",
+        "contains": "build_music_arrangement_report"
+      },
+      {
         "id": "music_edit_plan_v2_schema",
         "kind": "file",
         "path": "src/video_creation_pipeline/schemas/music_edit_plan.v2.schema.json",
         "contains": "video_creation_pipeline.music_edit_plan.v2"
+      },
+      {
+        "id": "motion_sfx_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/motion_sfx_cli.py",
+        "contains": "bootstrap-pack"
+      },
+      {
+        "id": "motion_sfx_fixture",
+        "kind": "file",
+        "path": "examples/motion-sfx/packaging-plan.json",
+        "contains": "video_creation_pipeline.video_packaging_plan.v1"
+      },
+      {
+        "id": "external_motion_assets_cli",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/external_motion_assets_cli.py",
+        "contains": "bootstrap-clipkit"
+      },
+      {
+        "id": "external_motion_catalog_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/external_motion_catalog.v1.schema.json",
+        "contains": "video_creation_pipeline.external_motion_catalog.v1"
+      },
+      {
+        "id": "external_motion_selection_schema",
+        "kind": "file",
+        "path": "src/video_creation_pipeline/schemas/external_motion_selection_plan.v1.schema.json",
+        "contains": "video_creation_pipeline.external_motion_selection_plan.v1"
+      },
+      {
+        "id": "external_motion_override_fixture",
+        "kind": "file",
+        "path": "examples/external-motion-assets/overrides.json",
+        "contains": "video_creation_pipeline.external_motion_overrides.v1"
       },
       {
         "id": "visual_routing_fixture",
@@ -551,7 +720,7 @@
     "in_repo_discovery": true,
     "canonical_cross_platform_entry": true,
     "gaps": [
-      "central_registry_and_source_inventory_sync_not_authorized_in_this_change",
+      "central_registry_snapshot_may_lag_repository_manifest_and_is_not_a_runtime_gate",
       "real_media_provider_and_nle_execution_require_separate_authorization_and_runtime_evidence"
     ]
   },

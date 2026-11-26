@@ -152,6 +152,13 @@ class SpokenPacingTests(unittest.TestCase):
         self.assertIsNotNone(target)
         decisions['boundary_review']=dict(opening_checked=True,ending_checked=True,cut_boundaries_checked=True,events_checked=True,evidence='synthetic boundary review')
         decisions['rough_audio_review']=dict(levels_checked=True,clipping_checked=True,evidence='synthetic level and clipping review fixture')
+        from segment_level_fixture import make_review
+        from video_creation_pipeline.spoken_pacing import pause_cut_window
+        a,b=pause_cut_window(target['start'],target['end'],target['preserve_s'],target['where'])
+        levels=make_review(self.root/'audio-levels',self.fixture.video,
+            [dict(start=0,end=a),dict(start=b,end=6)],json.loads(self.fixture.tokens.read_text()))
+        decisions['rough_audio_review']['segment_leveling']=levels
+        decisions['clip_gains']=levels['clip_gains']
         decisions['status']='agent_review_complete'
         decisions['reviewed_fulltext_sha256']=packet['judge_fulltext']['sha256']
         decisions['review'].update(fulltext_read=True,semantic_retry_scan_completed=True)
